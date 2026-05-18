@@ -1,0 +1,1994 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gold HQ — Gold Service Detailing</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@300;400;500&family=Syne:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   GOLD HQ — COMMAND CENTER
+   Christ Pierre / Gold Service Detailing
+   Stack: Vanilla HTML/CSS/JS + Google Sheets API + Claude API
+   Aesthetic: Industrial luxury — dark, gold, monospace data
+   ============================================================ */
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --gold: #C9A84C;
+  --gold-bright: #F0C040;
+  --gold-dim: #8B6914;
+  --gold-glow: rgba(201,168,76,0.15);
+  --black: #080808;
+  --surface: #111111;
+  --surface2: #181818;
+  --surface3: #202020;
+  --border: rgba(201,168,76,0.15);
+  --border-bright: rgba(201,168,76,0.4);
+  --text: #E8E0D0;
+  --text-muted: #666;
+  --text-dim: #444;
+  --green: #2ECC71;
+  --red: #E74C3C;
+  --blue: #3498DB;
+  --orange: #E67E22;
+  --font-display: 'Bebas Neue', sans-serif;
+  --font-body: 'Syne', sans-serif;
+  --font-mono: 'DM Mono', monospace;
+  --sidebar: 220px;
+  --header: 56px;
+}
+
+html { scroll-behavior: smooth; }
+body {
+  font-family: var(--font-body);
+  background: var(--black);
+  color: var(--text);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ── NOISE TEXTURE OVERLAY ── */
+body::before {
+  content: '';
+  position: fixed; inset: 0; z-index: 0;
+  opacity: 0.03;
+  pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+}
+
+/* ── SIDEBAR ── */
+.sidebar {
+  position: fixed; left: 0; top: 0; bottom: 0;
+  width: var(--sidebar);
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  display: flex; flex-direction: column;
+  z-index: 100;
+  transition: transform 0.3s;
+}
+.sidebar-logo {
+  padding: 20px 20px 16px;
+  border-bottom: 1px solid var(--border);
+}
+.sidebar-logo .wordmark {
+  font-family: var(--font-display);
+  font-size: 1.8rem;
+  color: var(--gold);
+  letter-spacing: 2px;
+  line-height: 1;
+}
+.sidebar-logo .sub {
+  font-size: 0.62rem;
+  color: var(--text-muted);
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  margin-top: 2px;
+  font-family: var(--font-mono);
+}
+.sidebar-status {
+  padding: 10px 20px;
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 8px;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  color: var(--text-muted);
+}
+.status-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--green);
+  box-shadow: 0 0 6px var(--green);
+  animation: pulse-dot 2s infinite;
+}
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+.nav { flex: 1; padding: 12px 0; overflow-y: auto; }
+.nav-section-label {
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  padding: 12px 20px 6px;
+}
+.nav-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 20px;
+  cursor: pointer;
+  transition: all 0.15s;
+  border-left: 2px solid transparent;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.nav-item:hover { color: var(--text); background: var(--gold-glow); }
+.nav-item.active {
+  color: var(--gold);
+  border-left-color: var(--gold);
+  background: var(--gold-glow);
+}
+.nav-item .icon { font-size: 1rem; width: 20px; text-align: center; }
+.nav-item .badge {
+  margin-left: auto;
+  background: var(--gold);
+  color: var(--black);
+  font-size: 0.6rem;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 10px;
+  font-family: var(--font-mono);
+}
+.sidebar-footer {
+  padding: 16px 20px;
+  border-top: 1px solid var(--border);
+}
+.ai-chat-btn {
+  width: 100%;
+  background: linear-gradient(135deg, var(--gold-dim), var(--gold));
+  color: var(--black);
+  border: none;
+  padding: 10px;
+  border-radius: 4px;
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+}
+.ai-chat-btn:hover { filter: brightness(1.1); transform: translateY(-1px); }
+
+/* ── MAIN CONTENT ── */
+.main {
+  margin-left: var(--sidebar);
+  min-height: 100vh;
+  position: relative; z-index: 1;
+}
+.topbar {
+  height: var(--header);
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 28px;
+  position: sticky; top: 0; z-index: 50;
+}
+.topbar-title {
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+  color: var(--gold);
+  letter-spacing: 2px;
+}
+.topbar-right { display: flex; align-items: center; gap: 16px; }
+.topbar-date {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--text-muted);
+}
+.sync-btn {
+  background: transparent;
+  border: 1px solid var(--border-bright);
+  color: var(--gold);
+  padding: 6px 14px;
+  border-radius: 3px;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+.sync-btn:hover { background: var(--gold-glow); }
+.hamburger {
+  display: none;
+  background: none; border: none;
+  color: var(--gold); font-size: 1.4rem; cursor: pointer;
+}
+
+.page { display: none; padding: 28px; animation: fadeIn 0.2s ease; }
+.page.active { display: block; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+/* ── GRID SYSTEM ── */
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+.grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+.grid-auto { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; }
+
+/* ── CARDS ── */
+.card {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 20px;
+  position: relative;
+  overflow: hidden;
+}
+.card::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--gold-dim), transparent);
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+.card:hover::before { opacity: 1; }
+.card-label {
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+}
+.card-value {
+  font-family: var(--font-display);
+  font-size: 2.8rem;
+  color: var(--gold);
+  line-height: 1;
+  margin-bottom: 4px;
+}
+.card-sub { font-size: 0.75rem; color: var(--text-muted); }
+.card-trend {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  margin-top: 8px;
+  padding: 3px 8px;
+  border-radius: 2px;
+}
+.card-trend.up { color: var(--green); background: rgba(46,204,113,0.1); }
+.card-trend.down { color: var(--red); background: rgba(231,76,60,0.1); }
+
+.section-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 16px;
+}
+.section-title {
+  font-family: var(--font-display);
+  font-size: 1.6rem;
+  color: var(--gold);
+  letter-spacing: 2px;
+}
+.section-sub {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  margin-top: 2px;
+  font-family: var(--font-mono);
+}
+
+/* ── GOAL PROGRESS BAR ── */
+.goal-bar-wrap { margin: 20px 0; }
+.goal-bar-header { display: flex; justify-content: space-between; margin-bottom: 8px; font-family: var(--font-mono); font-size: 0.72rem; }
+.goal-bar-track { height: 8px; background: var(--surface3); border-radius: 4px; overflow: hidden; position: relative; }
+.goal-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--gold-dim), var(--gold-bright));
+  border-radius: 4px;
+  transition: width 1s ease;
+  position: relative;
+}
+.goal-bar-fill::after {
+  content: '';
+  position: absolute; right: 0; top: 0; bottom: 0;
+  width: 40px;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3));
+  animation: shimmer 2s infinite;
+}
+@keyframes shimmer { 0% { opacity: 0; } 50% { opacity: 1; } 100% { opacity: 0; } }
+.milestones { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+.milestone {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  padding: 4px 10px;
+  border-radius: 2px;
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+}
+.milestone.reached { border-color: var(--gold); color: var(--gold); background: var(--gold-glow); }
+
+/* ── TABLES ── */
+.data-table { width: 100%; border-collapse: collapse; }
+.data-table th {
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  padding: 10px 12px;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+.data-table td {
+  padding: 12px 12px;
+  font-size: 0.82rem;
+  border-bottom: 1px solid rgba(201,168,76,0.06);
+  vertical-align: middle;
+}
+.data-table tr:hover td { background: var(--gold-glow); }
+.data-table tr:last-child td { border-bottom: none; }
+
+/* ── STATUS PILLS ── */
+.pill {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  padding: 3px 8px;
+  border-radius: 2px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+.pill-contact { background: rgba(52,152,219,0.15); color: #3498DB; border: 1px solid rgba(52,152,219,0.3); }
+.pill-contacted { background: rgba(230,126,34,0.15); color: #E67E22; border: 1px solid rgba(230,126,34,0.3); }
+.pill-meeting { background: rgba(155,89,182,0.15); color: #9B59B6; border: 1px solid rgba(155,89,182,0.3); }
+.pill-won { background: rgba(46,204,113,0.15); color: #2ECC71; border: 1px solid rgba(46,204,113,0.3); }
+.pill-lost { background: rgba(231,76,60,0.15); color: #E74C3C; border: 1px solid rgba(231,76,60,0.3); }
+.pill-priority { background: rgba(201,168,76,0.2); color: var(--gold); border: 1px solid var(--border-bright); }
+
+/* ── BUTTONS ── */
+.btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 8px 16px; border-radius: 3px;
+  font-family: var(--font-body); font-size: 0.78rem; font-weight: 600;
+  letter-spacing: 0.5px; text-transform: uppercase;
+  cursor: pointer; border: none; transition: all 0.2s;
+}
+.btn-gold { background: var(--gold); color: var(--black); }
+.btn-gold:hover { background: var(--gold-bright); transform: translateY(-1px); }
+.btn-outline { background: transparent; border: 1px solid var(--border-bright); color: var(--gold); }
+.btn-outline:hover { background: var(--gold-glow); }
+.btn-ghost { background: transparent; border: 1px solid var(--border); color: var(--text-muted); }
+.btn-ghost:hover { color: var(--text); border-color: var(--text-muted); }
+.btn-sm { padding: 5px 10px; font-size: 0.7rem; }
+.btn-danger { background: transparent; border: 1px solid rgba(231,76,60,0.3); color: var(--red); }
+.btn-danger:hover { background: rgba(231,76,60,0.1); }
+
+/* ── FORMS ── */
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+.form-group { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
+.form-group label { font-family: var(--font-mono); font-size: 0.65rem; letter-spacing: 2px; text-transform: uppercase; color: var(--text-muted); }
+.form-group input, .form-group select, .form-group textarea {
+  background: var(--surface3);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  padding: 9px 12px;
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  outline: none;
+  transition: border-color 0.2s;
+}
+.form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color: var(--gold); }
+.form-group select option { background: var(--surface2); }
+.form-group textarea { resize: vertical; min-height: 80px; }
+
+/* ── MODAL ── */
+.modal-overlay {
+  position: fixed; inset: 0; z-index: 200;
+  background: rgba(0,0,0,0.8);
+  backdrop-filter: blur(4px);
+  display: none; align-items: center; justify-content: center;
+}
+.modal-overlay.open { display: flex; }
+.modal {
+  background: var(--surface2);
+  border: 1px solid var(--border-bright);
+  border-radius: 6px;
+  padding: 28px;
+  width: 90%; max-width: 560px;
+  max-height: 85vh; overflow-y: auto;
+  animation: slideUp 0.2s ease;
+}
+@keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+.modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+.modal-title { font-family: var(--font-display); font-size: 1.4rem; color: var(--gold); letter-spacing: 2px; }
+.modal-close { background: none; border: none; color: var(--text-muted); font-size: 1.4rem; cursor: pointer; transition: color 0.2s; }
+.modal-close:hover { color: var(--text); }
+
+/* ── AI PANEL ── */
+.ai-panel {
+  background: var(--surface);
+  border: 1px solid var(--border-bright);
+  border-radius: 6px;
+  overflow: hidden;
+}
+.ai-panel-header {
+  background: linear-gradient(135deg, var(--surface2), rgba(201,168,76,0.05));
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 10px;
+}
+.ai-panel-header .label { font-family: var(--font-display); font-size: 1rem; color: var(--gold); letter-spacing: 2px; }
+.ai-panel-header .sub { font-family: var(--font-mono); font-size: 0.62rem; color: var(--text-muted); margin-top: 2px; }
+.ai-messages { padding: 16px; min-height: 200px; max-height: 400px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; }
+.ai-msg { display: flex; gap: 10px; }
+.ai-msg.user { flex-direction: row-reverse; }
+.ai-msg-bubble {
+  max-width: 80%;
+  padding: 10px 14px;
+  border-radius: 4px;
+  font-size: 0.83rem;
+  line-height: 1.6;
+}
+.ai-msg.assistant .ai-msg-bubble { background: var(--surface3); border: 1px solid var(--border); color: var(--text); }
+.ai-msg.user .ai-msg-bubble { background: var(--gold-dim); color: var(--black); font-weight: 500; }
+.ai-msg-avatar {
+  width: 28px; height: 28px; border-radius: 50%; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.75rem; font-weight: 700;
+}
+.ai-msg.assistant .ai-msg-avatar { background: var(--gold-glow); border: 1px solid var(--border-bright); color: var(--gold); }
+.ai-msg.user .ai-msg-avatar { background: var(--gold); color: var(--black); }
+.ai-input-row { display: flex; gap: 8px; padding: 12px 16px; border-top: 1px solid var(--border); }
+.ai-input {
+  flex: 1;
+  background: var(--surface3);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  padding: 8px 12px;
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 0.83rem;
+  outline: none;
+  transition: border-color 0.2s;
+}
+.ai-input:focus { border-color: var(--gold); }
+.ai-send-btn {
+  background: var(--gold);
+  color: var(--black);
+  border: none;
+  padding: 8px 16px;
+  border-radius: 3px;
+  font-family: var(--font-body);
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.ai-send-btn:hover { background: var(--gold-bright); }
+.ai-send-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* ── TOAST ── */
+.toast-container { position: fixed; bottom: 24px; right: 24px; z-index: 300; display: flex; flex-direction: column; gap: 8px; }
+.toast {
+  background: var(--surface2);
+  border: 1px solid var(--border-bright);
+  border-radius: 4px;
+  padding: 12px 18px;
+  font-size: 0.82rem;
+  color: var(--text);
+  animation: toastIn 0.3s ease;
+  min-width: 240px;
+  display: flex; align-items: center; gap: 10px;
+}
+.toast.success { border-color: rgba(46,204,113,0.4); }
+.toast.error { border-color: rgba(231,76,60,0.4); }
+@keyframes toastIn { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
+
+/* ── TASK ITEMS ── */
+.task-item {
+  display: flex; align-items: flex-start; gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid rgba(201,168,76,0.06);
+}
+.task-item:last-child { border-bottom: none; }
+.task-check {
+  width: 18px; height: 18px; flex-shrink: 0;
+  border: 1px solid var(--border-bright);
+  border-radius: 2px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  margin-top: 2px; transition: all 0.2s;
+}
+.task-check:hover { border-color: var(--gold); background: var(--gold-glow); }
+.task-check.done { background: var(--gold); border-color: var(--gold); }
+.task-check.done::after { content: '✓'; color: var(--black); font-size: 0.7rem; font-weight: 700; }
+.task-body { flex: 1; }
+.task-title { font-size: 0.88rem; font-weight: 600; margin-bottom: 3px; }
+.task-title.done { text-decoration: line-through; color: var(--text-muted); }
+.task-meta { font-family: var(--font-mono); font-size: 0.65rem; color: var(--text-muted); }
+.task-priority {
+  font-family: var(--font-mono); font-size: 0.6rem;
+  padding: 2px 6px; border-radius: 2px;
+  flex-shrink: 0; margin-top: 2px;
+}
+.priority-high { background: rgba(231,76,60,0.15); color: var(--red); }
+.priority-med { background: rgba(230,126,34,0.15); color: var(--orange); }
+.priority-low { background: rgba(52,152,219,0.15); color: var(--blue); }
+
+/* ── SCHEDULE ── */
+.schedule-day {
+  background: var(--surface3);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 12px;
+}
+.schedule-day-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 16px;
+  background: var(--surface2);
+  border-bottom: 1px solid var(--border);
+}
+.schedule-day-name { font-family: var(--font-display); font-size: 1rem; color: var(--gold); letter-spacing: 1px; }
+.schedule-day-date { font-family: var(--font-mono); font-size: 0.68rem; color: var(--text-muted); }
+.schedule-event { display: flex; gap: 12px; padding: 10px 16px; border-bottom: 1px solid rgba(201,168,76,0.04); }
+.schedule-event:last-child { border-bottom: none; }
+.event-time { font-family: var(--font-mono); font-size: 0.68rem; color: var(--text-muted); width: 70px; flex-shrink: 0; padding-top: 2px; }
+.event-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; margin-top: 5px; }
+.event-body { flex: 1; }
+.event-title { font-size: 0.85rem; font-weight: 600; margin-bottom: 2px; }
+.event-sub { font-size: 0.72rem; color: var(--text-muted); }
+
+/* ── FINANCE ── */
+.finance-bar { height: 6px; background: var(--surface3); border-radius: 3px; overflow: hidden; margin-top: 8px; }
+.finance-fill { height: 100%; border-radius: 3px; transition: width 0.8s ease; }
+.expense-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid rgba(201,168,76,0.06); }
+.expense-row:last-child { border-bottom: none; }
+.expense-name { font-size: 0.85rem; }
+.expense-amount { font-family: var(--font-mono); font-size: 0.85rem; color: var(--red); }
+.income-amount { font-family: var(--font-mono); font-size: 0.85rem; color: var(--green); }
+
+/* ── LEAD FINDER (AI) ── */
+.lead-result {
+  background: var(--surface3);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 14px 16px;
+  margin-bottom: 10px;
+  display: flex; align-items: flex-start; justify-content: space-between; gap: 12px;
+}
+.lead-result-info h4 { font-size: 0.9rem; font-weight: 600; margin-bottom: 4px; }
+.lead-result-info p { font-family: var(--font-mono); font-size: 0.68rem; color: var(--text-muted); line-height: 1.6; }
+
+/* ── MOBILE ── */
+@media (max-width: 768px) {
+  :root { --sidebar: 0px; }
+  .sidebar { transform: translateX(-240px); width: 240px; }
+  .sidebar.open { transform: translateX(0); }
+  .main { margin-left: 0; }
+  .hamburger { display: block; }
+  .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
+  .form-row { grid-template-columns: 1fr; }
+  .page { padding: 16px; }
+  .topbar { padding: 0 16px; }
+  .mobile-only { display: block; }
+}
+
+/* ── QUICK LOG (MOBILE FOCUSED) ── */
+.quick-log-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+.quick-log-card {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 20px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.quick-log-card:hover { border-color: var(--gold); background: var(--gold-glow); transform: translateY(-2px); }
+.quick-log-card .ql-icon { font-size: 2rem; margin-bottom: 8px; }
+.quick-log-card .ql-label { font-size: 0.82rem; font-weight: 700; color: var(--gold); text-transform: uppercase; letter-spacing: 1px; }
+
+/* ── TABS ── */
+.tab-bar { display: flex; gap: 4px; margin-bottom: 16px; border-bottom: 1px solid var(--border); }
+.tab-btn {
+  padding: 8px 16px; background: none; border: none;
+  color: var(--text-muted); font-family: var(--font-body);
+  font-size: 0.78rem; font-weight: 600; cursor: pointer;
+  text-transform: uppercase; letter-spacing: 0.5px;
+  border-bottom: 2px solid transparent; margin-bottom: -1px;
+  transition: all 0.2s;
+}
+.tab-btn.active { color: var(--gold); border-bottom-color: var(--gold); }
+.tab-content { display: none; }
+.tab-content.active { display: block; }
+
+/* ── DIVIDER ── */
+.divider { height: 1px; background: var(--border); margin: 20px 0; }
+.mb-16 { margin-bottom: 16px; }
+.mb-20 { margin-bottom: 20px; }
+.mt-16 { margin-top: 16px; }
+.flex { display: flex; }
+.gap-8 { gap: 8px; }
+.gap-12 { gap: 12px; }
+.flex-between { display: flex; justify-content: space-between; align-items: center; }
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-logo">
+    <div class="wordmark">GOLD HQ</div>
+    <div class="sub">Christ Pierre · GSD</div>
+  </div>
+  <div class="sidebar-status">
+    <div class="status-dot"></div>
+    <span id="live-clock">Loading...</span>
+  </div>
+  <nav class="nav">
+    <div class="nav-section-label">Main</div>
+    <div class="nav-item active" onclick="showPage('dashboard')">
+      <span class="icon">⚡</span> Dashboard
+    </div>
+    <div class="nav-item" onclick="showPage('leads')">
+      <span class="icon">🎯</span> CRM / Leads
+      <span class="badge" id="leads-badge">59</span>
+    </div>
+    <div class="nav-item" onclick="showPage('jobs')">
+      <span class="icon">🔧</span> Jobs
+    </div>
+    <div class="nav-item" onclick="showPage('schedule')">
+      <span class="icon">📅</span> Schedule
+    </div>
+    <div class="nav-section-label">Growth</div>
+    <div class="nav-item" onclick="showPage('ai-leads')">
+      <span class="icon">🤖</span> AI Lead Finder
+    </div>
+    <div class="nav-item" onclick="showPage('automations')">
+      <span class="icon">⚙️</span> Automations
+    </div>
+    <div class="nav-item" onclick="showPage('content')">
+      <span class="icon">📣</span> Content
+    </div>
+    <div class="nav-section-label">Finance</div>
+    <div class="nav-item" onclick="showPage('finances')">
+      <span class="icon">💰</span> Finances
+    </div>
+    <div class="nav-section-label">Tools</div>
+    <div class="nav-item" onclick="showPage('tasks')">
+      <span class="icon">✅</span> Tasks
+    </div>
+    <div class="nav-item" onclick="showPage('ai-chat')">
+      <span class="icon">💬</span> AI Assistant
+    </div>
+  </nav>
+  <div class="sidebar-footer">
+    <button class="ai-chat-btn" onclick="showPage('ai-chat')">
+      ✦ Ask Gold HQ AI
+    </button>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<div class="main">
+  <header class="topbar">
+    <div style="display:flex;align-items:center;gap:12px;">
+      <button class="hamburger" onclick="toggleSidebar()">☰</button>
+      <div class="topbar-title" id="page-title">DASHBOARD</div>
+    </div>
+    <div class="topbar-right">
+      <div class="topbar-date" id="today-date"></div>
+      <button class="sync-btn" onclick="syncAll()">↻ Sync</button>
+    </div>
+  </header>
+
+  <!-- ══════════════════════════════════════
+       PAGE: DASHBOARD
+  ══════════════════════════════════════ -->
+  <div class="page active" id="page-dashboard">
+
+    <!-- GOAL PROGRESS -->
+    <div class="card mb-20">
+      <div class="flex-between mb-16">
+        <div>
+          <div class="card-label">2026 Revenue Goal</div>
+          <div style="font-family:var(--font-display);font-size:1.8rem;color:var(--gold);letter-spacing:1px;">$10,000 – $15,000 / Month</div>
+        </div>
+        <div style="text-align:right;">
+          <div class="card-label">Current MRR</div>
+          <div style="font-family:var(--font-display);font-size:2rem;color:var(--green);" id="current-mrr">$0</div>
+        </div>
+      </div>
+      <div class="goal-bar-wrap">
+        <div class="goal-bar-header">
+          <span style="color:var(--text-muted);font-family:var(--font-mono);font-size:0.7rem;">Progress to $10k</span>
+          <span style="color:var(--gold);font-family:var(--font-mono);font-size:0.7rem;" id="goal-pct">0%</span>
+        </div>
+        <div class="goal-bar-track">
+          <div class="goal-bar-fill" id="goal-bar" style="width:0%"></div>
+        </div>
+      </div>
+      <div class="milestones">
+        <div class="milestone" id="m1">$1K</div>
+        <div class="milestone" id="m2">$2.5K</div>
+        <div class="milestone" id="m3">$5K</div>
+        <div class="milestone" id="m4">$7.5K</div>
+        <div class="milestone" id="m5">$10K ✦</div>
+        <div class="milestone" id="m6">$15K 🏆</div>
+      </div>
+    </div>
+
+    <!-- KPI CARDS -->
+    <div class="grid-4 mb-20">
+      <div class="card">
+        <div class="card-label">Fleet Clients</div>
+        <div class="card-value" id="kpi-clients">1</div>
+        <div class="card-sub">Active contracts</div>
+        <div class="card-trend up">↑ Goal: 5 by Q3</div>
+      </div>
+      <div class="card">
+        <div class="card-label">Vehicles / Month</div>
+        <div class="card-value" id="kpi-vehicles">80</div>
+        <div class="card-sub">Amazon DSP fleet (10/wk)</div>
+        <div class="card-trend up">↑ Capacity for more</div>
+      </div>
+      <div class="card">
+        <div class="card-label">Leads in Pipeline</div>
+        <div class="card-value" id="kpi-leads">59</div>
+        <div class="card-sub">Across all statuses</div>
+        <div class="card-trend up">↑ 4 high priority</div>
+      </div>
+      <div class="card">
+        <div class="card-label">Available Days</div>
+        <div class="card-value">3</div>
+        <div class="card-sub">Tue · Fri · Sat</div>
+        <div class="card-trend up">+ Evenings 8–10pm</div>
+      </div>
+    </div>
+
+    <!-- TWO COLUMN -->
+    <div class="grid-2 mb-20">
+
+      <!-- TOP PRIORITY LEADS -->
+      <div class="card">
+        <div class="section-header">
+          <div>
+            <div class="section-title">HOT LEADS</div>
+            <div class="section-sub">Highest value — contact today</div>
+          </div>
+          <button class="btn btn-outline btn-sm" onclick="showPage('leads')">View All</button>
+        </div>
+        <table class="data-table">
+          <thead><tr>
+            <th>Company</th>
+            <th>Fleet</th>
+            <th>Status</th>
+          </tr></thead>
+          <tbody>
+            <tr><td><strong>Leonard Logistics</strong><br><span style="font-size:0.7rem;color:var(--text-muted)">Carteret, NJ</span></td><td><span style="font-family:var(--font-mono);color:var(--gold)">25</span></td><td><span class="pill pill-contact">To Contact</span></td></tr>
+            <tr><td><strong>Goodwin Trucking</strong><br><span style="font-size:0.7rem;color:var(--text-muted)">Linden, NJ</span></td><td><span style="font-family:var(--font-mono);color:var(--gold)">28</span></td><td><span class="pill pill-contact">To Contact</span></td></tr>
+            <tr><td><strong>A. Duie Pyle</strong><br><span style="font-size:0.7rem;color:var(--text-muted)">Carteret, NJ</span></td><td><span style="font-family:var(--font-mono);color:var(--gold)">50+</span></td><td><span class="pill pill-contact">To Contact</span></td></tr>
+            <tr><td><strong>FFJ Logistics</strong><br><span style="font-size:0.7rem;color:var(--text-muted)">Perth Amboy, NJ</span></td><td><span style="font-family:var(--font-mono);color:var(--gold)">12</span></td><td><span class="pill pill-contact">To Contact</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- TODAY'S TASKS -->
+      <div class="card">
+        <div class="section-header">
+          <div>
+            <div class="section-title">TODAY'S FOCUS</div>
+            <div class="section-sub" id="tasks-date-sub">Loading...</div>
+          </div>
+          <button class="btn btn-outline btn-sm" onclick="openAddTask()">+ Task</button>
+        </div>
+        <div id="today-tasks-list">
+          <div class="task-item">
+            <div class="task-check" onclick="toggleTask(this)"></div>
+            <div class="task-body">
+              <div class="task-title">Call Leonard Logistics — (732) 248-5300</div>
+              <div class="task-meta">Fleet outreach · High priority</div>
+            </div>
+            <div class="task-priority priority-high">HIGH</div>
+          </div>
+          <div class="task-item">
+            <div class="task-check" onclick="toggleTask(this)"></div>
+            <div class="task-body">
+              <div class="task-title">Email Goodwin Trucking — courtney@goodwintrucking.com</div>
+              <div class="task-meta">Use Trucking Template · Follow up in 3 days</div>
+            </div>
+            <div class="task-priority priority-high">HIGH</div>
+          </div>
+          <div class="task-item">
+            <div class="task-check" onclick="toggleTask(this)"></div>
+            <div class="task-body">
+              <div class="task-title">Log employer fleet vehicles (10 this week)</div>
+              <div class="task-meta">Amazon DSP · Interior only · $31–35/vehicle</div>
+            </div>
+            <div class="task-priority priority-med">MED</div>
+          </div>
+          <div class="task-item">
+            <div class="task-check" onclick="toggleTask(this)"></div>
+            <div class="task-body">
+              <div class="task-title">Post before/after on Instagram</div>
+              <div class="task-meta">Content · @goldservicedetailing</div>
+            </div>
+            <div class="task-priority priority-low">LOW</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- QUICK LOG MOBILE BUTTONS -->
+    <div class="card">
+      <div class="section-title mb-16">QUICK LOG</div>
+      <div class="quick-log-grid">
+        <div class="quick-log-card" onclick="openModal('modal-log-job')">
+          <div class="ql-icon">🔧</div>
+          <div class="ql-label">Log a Job</div>
+        </div>
+        <div class="quick-log-card" onclick="openModal('modal-add-lead')">
+          <div class="ql-icon">🎯</div>
+          <div class="ql-label">Add a Lead</div>
+        </div>
+        <div class="quick-log-card" onclick="openAddTask()">
+          <div class="ql-icon">✅</div>
+          <div class="ql-label">Add Task</div>
+        </div>
+        <div class="quick-log-card" onclick="showPage('ai-leads')">
+          <div class="ql-icon">🤖</div>
+          <div class="ql-label">Find Leads</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════
+       PAGE: CRM / LEADS
+  ══════════════════════════════════════ -->
+  <div class="page" id="page-leads">
+    <div class="section-header mb-20">
+      <div>
+        <div class="section-title">CRM — LEADS</div>
+        <div class="section-sub">59 fleet prospects · Carteret / NJ area</div>
+      </div>
+      <div style="display:flex;gap:8px;">
+        <select id="lead-filter" onchange="filterLeads()" style="background:var(--surface3);border:1px solid var(--border);color:var(--text);padding:6px 10px;border-radius:3px;font-family:var(--font-mono);font-size:0.72rem;">
+          <option value="all">All Status</option>
+          <option value="To Contact">To Contact</option>
+          <option value="Contacted">Contacted</option>
+          <option value="Meeting Set">Meeting Set</option>
+          <option value="Closed Won">Closed Won</option>
+          <option value="Closed Lost">Closed Lost</option>
+        </select>
+        <button class="btn btn-gold btn-sm" onclick="openModal('modal-add-lead')">+ Add Lead</button>
+      </div>
+    </div>
+    <div class="card" style="padding:0;overflow:hidden;">
+      <div style="overflow-x:auto;">
+        <table class="data-table" id="leads-table">
+          <thead><tr>
+            <th>#</th>
+            <th>Company</th>
+            <th>Category</th>
+            <th>City</th>
+            <th>Contact</th>
+            <th>Email</th>
+            <th>Fleet</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr></thead>
+          <tbody id="leads-tbody">
+            <!-- Populated by JS -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════
+       PAGE: JOBS
+  ══════════════════════════════════════ -->
+  <div class="page" id="page-jobs">
+    <div class="section-header mb-20">
+      <div>
+        <div class="section-title">JOBS TRACKER</div>
+        <div class="section-sub">Log completed jobs and track revenue</div>
+      </div>
+      <button class="btn btn-gold" onclick="openModal('modal-log-job')">+ Log Job</button>
+    </div>
+    <div class="grid-3 mb-20">
+      <div class="card">
+        <div class="card-label">This Month Revenue</div>
+        <div class="card-value" id="month-revenue">$0</div>
+        <div class="card-sub">Logged jobs only</div>
+      </div>
+      <div class="card">
+        <div class="card-label">Jobs This Month</div>
+        <div class="card-value" id="month-jobs">0</div>
+        <div class="card-sub">Completed</div>
+      </div>
+      <div class="card">
+        <div class="card-label">Avg Per Job</div>
+        <div class="card-value" id="avg-job">$0</div>
+        <div class="card-sub">Average ticket</div>
+      </div>
+    </div>
+    <div class="card" style="padding:0;overflow:hidden;">
+      <div style="overflow-x:auto;">
+        <table class="data-table">
+          <thead><tr>
+            <th>Date</th>
+            <th>Client</th>
+            <th>Service</th>
+            <th>Vehicles</th>
+            <th>Revenue</th>
+            <th>Notes</th>
+          </tr></thead>
+          <tbody id="jobs-tbody">
+            <tr><td colspan="6" style="text-align:center;color:var(--text-muted);padding:32px;font-family:var(--font-mono);font-size:0.75rem;">NO JOBS LOGGED YET — HIT "+ LOG JOB" TO START</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════
+       PAGE: SCHEDULE
+  ══════════════════════════════════════ -->
+  <div class="page" id="page-schedule">
+    <div class="section-header mb-20">
+      <div>
+        <div class="section-title">SCHEDULE</div>
+        <div class="section-sub">Your week · Available: Tue · Fri · Sat + Evenings</div>
+      </div>
+    </div>
+    <div id="schedule-container"><!-- Built by JS --></div>
+  </div>
+
+  <!-- ══════════════════════════════════════
+       PAGE: AI LEAD FINDER
+  ══════════════════════════════════════ -->
+  <div class="page" id="page-ai-leads">
+    <div class="section-header mb-20">
+      <div>
+        <div class="section-title">AI LEAD FINDER</div>
+        <div class="section-sub">Powered by Claude · Searches for qualified fleet businesses near Carteret, NJ</div>
+      </div>
+    </div>
+    <div class="grid-2">
+      <div>
+        <div class="card mb-16">
+          <div class="card-label mb-16">Search Parameters</div>
+          <div class="form-group">
+            <label>Business Type</label>
+            <select id="lead-search-type">
+              <option>Trucking & Freight</option>
+              <option>Delivery & Courier</option>
+              <option>Moving Companies</option>
+              <option>Cold Storage / Reefer</option>
+              <option>Auto Transport</option>
+              <option>Construction Fleet</option>
+              <option>Any Fleet Business</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Location Radius</label>
+            <select id="lead-search-radius">
+              <option>Carteret, NJ (5 miles)</option>
+              <option>Central NJ (15 miles)</option>
+              <option>NJ / NY metro (30 miles)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Min Fleet Size</label>
+            <select id="lead-search-fleet">
+              <option>5+ vehicles</option>
+              <option>10+ vehicles</option>
+              <option>20+ vehicles</option>
+              <option>Any size</option>
+            </select>
+          </div>
+          <button class="btn btn-gold" style="width:100%" onclick="findLeads()">
+            🤖 Find New Leads
+          </button>
+        </div>
+        <div class="card">
+          <div class="card-label">Search History</div>
+          <div style="font-family:var(--font-mono);font-size:0.72rem;color:var(--text-muted);padding:16px 0;">No searches yet. Run your first search above.</div>
+        </div>
+      </div>
+      <div>
+        <div class="card" style="min-height:400px;">
+          <div class="section-header mb-16">
+            <div class="card-label">AI Results</div>
+            <button class="btn btn-outline btn-sm" id="add-all-btn" style="display:none" onclick="addAllLeads()">+ Add All to CRM</button>
+          </div>
+          <div id="lead-finder-results">
+            <div style="text-align:center;padding:60px 20px;color:var(--text-muted);">
+              <div style="font-size:3rem;margin-bottom:16px;">🤖</div>
+              <div style="font-family:var(--font-display);font-size:1.2rem;color:var(--gold);letter-spacing:2px;margin-bottom:8px;">READY TO SEARCH</div>
+              <div style="font-family:var(--font-mono);font-size:0.72rem;">Set your parameters and hit Find New Leads</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════
+       PAGE: AUTOMATIONS
+  ══════════════════════════════════════ -->
+  <div class="page" id="page-automations">
+    <div class="section-title mb-20">AUTOMATIONS</div>
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-label">Email Outreach System</div>
+        <div style="font-family:var(--font-display);font-size:1.1rem;color:var(--text);margin:8px 0;">Fleet Cold Email Automation</div>
+        <div style="font-size:0.8rem;color:var(--text-muted);margin-bottom:12px;">Sends personalized emails to "To Contact" leads daily via Google Apps Script. Auto-follows up on days 3 and 7.</div>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:16px;">
+          <div class="status-dot"></div>
+          <span style="font-family:var(--font-mono);font-size:0.72rem;color:var(--green);">READY TO DEPLOY</span>
+        </div>
+        <a href="GSD-FleetOutreach-System.html" class="btn btn-gold btn-sm">Open Outreach System</a>
+      </div>
+      <div class="card">
+        <div class="card-label">Social Auto-DM</div>
+        <div style="font-family:var(--font-display);font-size:1.1rem;color:var(--text);margin:8px 0;">Instagram & Facebook Scripts</div>
+        <div style="font-size:0.8rem;color:var(--text-muted);margin-bottom:12px;">Auto-reply scripts for Instagram instant replies and Facebook automation. Answers price, availability, and booking questions.</div>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:16px;">
+          <div class="status-dot"></div>
+          <span style="font-family:var(--font-mono);font-size:0.72rem;color:var(--green);">READY TO DEPLOY</span>
+        </div>
+        <a href="GSD-AutoDM-and-FAQ-Toolkit.html" class="btn btn-gold btn-sm">Open DM Toolkit</a>
+      </div>
+      <div class="card">
+        <div class="card-label">Booking Confirmation</div>
+        <div style="font-family:var(--font-display);font-size:1.1rem;color:var(--text);margin:8px 0;">Auto Email on Booking</div>
+        <div style="font-size:0.8rem;color:var(--text-muted);margin-bottom:12px;">Fires a branded HTML confirmation email when someone books through your website. Owner notification included.</div>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:16px;">
+          <div style="width:6px;height:6px;border-radius:50%;background:var(--orange);"></div>
+          <span style="font-family:var(--font-mono);font-size:0.72rem;color:var(--orange);">NEEDS DEPLOY</span>
+        </div>
+        <a href="GSD-AutoEmail-Script.js" class="btn btn-outline btn-sm">View Script</a>
+      </div>
+      <div class="card">
+        <div class="card-label">Review Request (Coming Soon)</div>
+        <div style="font-family:var(--font-display);font-size:1.1rem;color:var(--text);margin:8px 0;">Post-Job Review Ask</div>
+        <div style="font-size:0.8rem;color:var(--text-muted);margin-bottom:12px;">Automatically texts or emails customers 24 hours after a job is logged, asking for a Google review with your direct link.</div>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:16px;">
+          <div style="width:6px;height:6px;border-radius:50%;background:var(--text-dim);"></div>
+          <span style="font-family:var(--font-mono);font-size:0.72rem;color:var(--text-muted);">NOT BUILT YET</span>
+        </div>
+        <button class="btn btn-ghost btn-sm" onclick="showPage('ai-chat')">Build with AI →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════
+       PAGE: FINANCES
+  ══════════════════════════════════════ -->
+  <div class="page" id="page-finances">
+    <div class="section-title mb-20">FINANCES</div>
+    <div class="grid-2 mb-20">
+      <div class="card">
+        <div class="card-label">Monthly Fixed Expenses</div>
+        <div class="expense-row"><span class="expense-name">Car payment (50%)</span><span class="expense-amount">-$300</span></div>
+        <div class="expense-row"><span class="expense-name">Insurance (50%)</span><span class="expense-amount">-$190</span></div>
+        <div class="expense-row"><span class="expense-name">Generator gas</span><span class="expense-amount">-$40</span></div>
+        <div class="expense-row"><span class="expense-name">Supplies</span><span class="expense-amount">-$55</span></div>
+        <div class="divider"></div>
+        <div class="expense-row">
+          <span style="font-weight:700;">Total Fixed</span>
+          <span style="font-family:var(--font-mono);color:var(--red);font-weight:700;">-$585/mo</span>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-label">Path to $10K — Contract Mix</div>
+        <div style="font-size:0.8rem;color:var(--text-muted);margin-bottom:12px;font-family:var(--font-mono);">Based on your fleet pricing model</div>
+        <div class="expense-row"><span class="expense-name">Amazon DSP (20 vehicles, T1 monthly)</span><span class="income-amount">+$740</span></div>
+        <div class="expense-row"><span class="expense-name">2× 15-vehicle contracts (T1 monthly)</span><span class="income-amount">+$1,140</span></div>
+        <div class="expense-row"><span class="expense-name">3× 10-vehicle contracts (T1 monthly)</span><span class="income-amount">+$1,170</span></div>
+        <div class="expense-row"><span class="expense-name">5× 5-vehicle contracts (T1 monthly)</span><span class="income-amount">+$1,000</span></div>
+        <div class="expense-row"><span class="expense-name">Retail / individual jobs</span><span class="income-amount">+$500</span></div>
+        <div class="divider"></div>
+        <div class="expense-row">
+          <span style="font-weight:700;">Projected Total</span>
+          <span style="font-family:var(--font-mono);color:var(--green);font-weight:700;">$4,550/mo</span>
+        </div>
+        <div style="font-family:var(--font-mono);font-size:0.68rem;color:var(--text-muted);margin-top:8px;">↑ Add more contracts to hit $10K. You need ~12 active fleet accounts total.</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="section-header mb-16">
+        <div class="section-title">P&L TRACKER</div>
+        <button class="btn btn-gold btn-sm" onclick="openModal('modal-log-income')">+ Log Income</button>
+      </div>
+      <table class="data-table" id="pl-table">
+        <thead><tr>
+          <th>Month</th><th>Revenue</th><th>Expenses</th><th>Net Profit</th><th>Margin</th><th>Goal %</th>
+        </tr></thead>
+        <tbody id="pl-tbody"><!-- JS --></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════
+       PAGE: TASKS
+  ══════════════════════════════════════ -->
+  <div class="page" id="page-tasks">
+    <div class="section-header mb-20">
+      <div><div class="section-title">TASKS</div><div class="section-sub">Daily focus & to-do list</div></div>
+      <button class="btn btn-gold" onclick="openAddTask()">+ Add Task</button>
+    </div>
+    <div class="tab-bar">
+      <button class="tab-btn active" onclick="switchTab(this,'tab-today')">Today</button>
+      <button class="tab-btn" onclick="switchTab(this,'tab-week')">This Week</button>
+      <button class="tab-btn" onclick="switchTab(this,'tab-all')">All Tasks</button>
+    </div>
+    <div class="tab-content active" id="tab-today">
+      <div class="card" id="tasks-today-list"><!-- JS --></div>
+    </div>
+    <div class="tab-content" id="tab-week">
+      <div class="card"><div style="color:var(--text-muted);font-family:var(--font-mono);font-size:0.75rem;padding:20px 0;text-align:center;">Add tasks with due dates to see weekly view</div></div>
+    </div>
+    <div class="tab-content" id="tab-all">
+      <div class="card" id="tasks-all-list"><!-- JS --></div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════
+       PAGE: CONTENT
+  ══════════════════════════════════════ -->
+  <div class="page" id="page-content">
+    <div class="section-header mb-20">
+      <div><div class="section-title">CONTENT CALENDAR</div><div class="section-sub">@goldservicedetailing · IG · FB · TikTok</div></div>
+      <button class="btn btn-gold" onclick="generateContent()">🤖 Generate This Week</button>
+    </div>
+    <div class="card">
+      <div id="content-calendar-output">
+        <div style="text-align:center;padding:40px;color:var(--text-muted);">
+          <div style="font-size:2.5rem;margin-bottom:12px;">📣</div>
+          <div style="font-family:var(--font-display);color:var(--gold);font-size:1.2rem;letter-spacing:2px;margin-bottom:8px;">HIT GENERATE TO BUILD YOUR WEEK</div>
+          <div style="font-family:var(--font-mono);font-size:0.72rem;">AI will write 5 posts tailored to GSD — before/afters, fleet pitches, promos</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════
+       PAGE: AI CHAT
+  ══════════════════════════════════════ -->
+  <div class="page" id="page-ai-chat">
+    <div class="section-header mb-20">
+      <div><div class="section-title">AI ASSISTANT</div><div class="section-sub">Powered by Claude · Full GSD context loaded</div></div>
+    </div>
+    <div class="ai-panel">
+      <div class="ai-panel-header">
+        <div style="font-size:1.4rem;">🤖</div>
+        <div>
+          <div class="label">GOLD HQ AI</div>
+          <div class="sub">Knows your business, leads, pricing, schedule, and goals</div>
+        </div>
+      </div>
+      <div class="ai-messages" id="ai-messages">
+        <div class="ai-msg assistant">
+          <div class="ai-msg-avatar">AI</div>
+          <div class="ai-msg-bubble">
+            Hey Christ! I'm your Gold HQ AI, fully loaded with everything about GSD — your 59 leads, fleet pricing, schedule (Amazon DSP Sun/Mon/Wed/Thu, GSD available Tue/Fri/Sat), revenue goal of $10–15k/month, and all your automations.<br><br>
+            What do you want to work on? I can write outreach emails, build proposals, generate content, analyze your pipeline, or anything else to grow the business. 🏆
+          </div>
+        </div>
+      </div>
+      <div class="ai-input-row">
+        <input class="ai-input" id="ai-input" placeholder="Ask anything about your business..." onkeydown="if(event.key==='Enter')sendAiMessage()">
+        <button class="ai-send-btn" id="ai-send" onclick="sendAiMessage()">Send</button>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /main -->
+
+<!-- ══════════ MODALS ══════════ -->
+
+<!-- LOG JOB -->
+<div class="modal-overlay" id="modal-log-job">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">LOG A JOB</div>
+      <button class="modal-close" onclick="closeModal('modal-log-job')">✕</button>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Date</label><input type="date" id="job-date"></div>
+      <div class="form-group"><label>Client Name</label><input type="text" id="job-client" placeholder="e.g. Amazon DSP"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Service Type</label>
+        <select id="job-service">
+          <option>Fleet Interior (T1)</option>
+          <option>Fleet Exterior (T1)</option>
+          <option>Fleet Full Detail (T2)</option>
+          <option>Full Detail (Retail)</option>
+          <option>Exterior Only (Retail)</option>
+          <option>Interior Only (Retail)</option>
+          <option>Paint Correction</option>
+          <option>Ceramic Coating</option>
+          <option>Other</option>
+        </select>
+      </div>
+      <div class="form-group"><label>Vehicles</label><input type="number" id="job-vehicles" value="1" min="1"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Revenue ($)</label><input type="number" id="job-revenue" placeholder="0.00"></div>
+      <div class="form-group"><label>Duration (hrs)</label><input type="number" id="job-duration" placeholder="2" step="0.5"></div>
+    </div>
+    <div class="form-group"><label>Notes</label><textarea id="job-notes" placeholder="Any notes about this job..."></textarea></div>
+    <button class="btn btn-gold" style="width:100%" onclick="logJob()">✓ Save Job</button>
+  </div>
+</div>
+
+<!-- ADD LEAD -->
+<div class="modal-overlay" id="modal-add-lead">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">ADD LEAD</div>
+      <button class="modal-close" onclick="closeModal('modal-add-lead')">✕</button>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Company Name</label><input type="text" id="lead-company" placeholder="Company name"></div>
+      <div class="form-group"><label>Category</label><input type="text" id="lead-category" placeholder="e.g. Trucking"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>City</label><input type="text" id="lead-city" placeholder="e.g. Carteret, NJ"></div>
+      <div class="form-group"><label>Fleet Size</label><input type="text" id="lead-fleet" placeholder="e.g. 10–20"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Contact Name</label><input type="text" id="lead-contact" placeholder="Decision maker name"></div>
+      <div class="form-group"><label>Phone</label><input type="tel" id="lead-phone" placeholder="(000) 000-0000"></div>
+    </div>
+    <div class="form-group"><label>Email</label><input type="email" id="lead-email" placeholder="email@company.com"></div>
+    <div class="form-group"><label>Notes / Pitch Angle</label><textarea id="lead-notes" placeholder="Key notes, how to pitch, what they need..."></textarea></div>
+    <button class="btn btn-gold" style="width:100%" onclick="addLead()">✓ Add to CRM</button>
+  </div>
+</div>
+
+<!-- ADD TASK -->
+<div class="modal-overlay" id="modal-add-task">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">ADD TASK</div>
+      <button class="modal-close" onclick="closeModal('modal-add-task')">✕</button>
+    </div>
+    <div class="form-group"><label>Task</label><input type="text" id="task-title-input" placeholder="What needs to get done?"></div>
+    <div class="form-row">
+      <div class="form-group"><label>Priority</label>
+        <select id="task-priority-input">
+          <option value="high">High</option>
+          <option value="med" selected>Medium</option>
+          <option value="low">Low</option>
+        </select>
+      </div>
+      <div class="form-group"><label>Due Date</label><input type="date" id="task-due"></div>
+    </div>
+    <div class="form-group"><label>Category</label>
+      <select id="task-category">
+        <option>Outreach</option>
+        <option>Fleet Job</option>
+        <option>Content</option>
+        <option>Admin</option>
+        <option>Other</option>
+      </select>
+    </div>
+    <button class="btn btn-gold" style="width:100%" onclick="addTask()">✓ Add Task</button>
+  </div>
+</div>
+
+<!-- LOG INCOME -->
+<div class="modal-overlay" id="modal-log-income">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">LOG INCOME</div>
+      <button class="modal-close" onclick="closeModal('modal-log-income')">✕</button>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Month</label>
+        <select id="income-month">
+          <option>January 2026</option><option>February 2026</option><option>March 2026</option>
+          <option>April 2026</option><option selected>May 2026</option><option>June 2026</option>
+          <option>July 2026</option><option>August 2026</option><option>September 2026</option>
+          <option>October 2026</option><option>November 2026</option><option>December 2026</option>
+        </select>
+      </div>
+      <div class="form-group"><label>Revenue ($)</label><input type="number" id="income-amount" placeholder="0.00"></div>
+    </div>
+    <button class="btn btn-gold" style="width:100%" onclick="logIncome()">✓ Save</button>
+  </div>
+</div>
+
+<!-- TOAST CONTAINER -->
+<div class="toast-container" id="toast-container"></div>
+
+<script>
+// ============================================================
+//  GOLD HQ — JAVASCRIPT ENGINE
+//  Christ Pierre / Gold Service Detailing
+// ============================================================
+
+// ── CONFIG ──
+const GSD = {
+  name: "Christ Pierre",
+  business: "Gold Service Detailing",
+  phone: "(732) 430-6468",
+  email: "Goldservicedetailing@gmail.com",
+  website: "www.goldservicedetailing.com",
+  instagram: "@goldservicedetailing",
+  location: "Carteret, NJ",
+  goal: 10000,
+  expenses: 585,
+  // IMPORTANT: Replace with your actual Claude API key via a proxy
+  // For GitHub Pages: use a Cloudflare Worker or similar proxy to protect the key
+  claudeApiUrl: "https://api.anthropic.com/v1/messages",
+};
+
+// ── STATE (persists via localStorage) ──
+let state = {
+  leads: [],
+  jobs: [],
+  tasks: [],
+  income: {},
+  aiHistory: [],
+};
+
+function loadState() {
+  try {
+    const saved = localStorage.getItem('goldhq_state');
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      state = { ...state, ...parsed };
+    }
+    if (!state.leads.length) state.leads = getDefaultLeads();
+    if (!state.tasks.length) state.tasks = getDefaultTasks();
+  } catch(e) { console.error('State load error:', e); }
+}
+
+function saveState() {
+  localStorage.setItem('goldhq_state', JSON.stringify(state));
+}
+
+// ── NAVIGATION ──
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-' + id).classList.add('active');
+  const titles = { dashboard:'Dashboard', leads:'CRM / Leads', jobs:'Jobs', schedule:'Schedule', 'ai-leads':'AI Lead Finder', automations:'Automations', finances:'Finances', tasks:'Tasks', content:'Content', 'ai-chat':'AI Assistant' };
+  document.getElementById('page-title').textContent = titles[id] || id.toUpperCase();
+  const navItems = document.querySelectorAll('.nav-item');
+  navItems.forEach(item => { if (item.textContent.toLowerCase().includes(id.replace('-',' '))) item.classList.add('active'); });
+  if (id === 'leads') renderLeads();
+  if (id === 'schedule') renderSchedule();
+  if (id === 'tasks') renderTasks();
+  if (id === 'finances') renderFinances();
+  if (id === 'jobs') renderJobs();
+  if (window.innerWidth <= 768) closeSidebar();
+}
+
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('open');
+}
+function closeSidebar() {
+  document.getElementById('sidebar').classList.remove('open');
+}
+
+// ── CLOCK ──
+function updateClock() {
+  const now = new Date();
+  const days = ['SUN','MON','TUE','WED','THU','FRI','SAT'];
+  const day = days[now.getDay()];
+  const time = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+  document.getElementById('live-clock').textContent = `${day} ${time}`;
+  const dateStr = now.toLocaleDateString('en-US', { weekday:'long', month:'long', day:'numeric', year:'numeric' });
+  document.getElementById('today-date').textContent = dateStr;
+  if (document.getElementById('tasks-date-sub')) {
+    document.getElementById('tasks-date-sub').textContent = dateStr;
+  }
+}
+
+// ── LEADS ──
+function getDefaultLeads() {
+  return [
+    { id:1, company:"Leonard Logistics LLC", category:"Freight / Drayage", city:"Carteret, NJ", contact:"Josh Landau", phone:"(732) 248-5300", email:"operations@leonard-logistics.com", fleet:"25", status:"To Contact", notes:"Est. 1981. 130k sqft warehouse. HIGHEST PRIORITY.", priority:true },
+    { id:2, company:"Goodwin Trucking Group", category:"Trucking", city:"Linden, NJ", contact:"Courtney (ext.195)", phone:"(908) 367-7200", email:"courtney@goodwintrucking.com", fleet:"28", status:"To Contact", notes:"28 trucks FMCSA verified. Direct contact found. HIGH PRIORITY.", priority:true },
+    { id:3, company:"A. Duie Pyle", category:"LTL / 3PL", city:"Carteret, NJ", contact:"TBD — call main", phone:"(732) 541-5900", email:"customer.service@aduiepyle.com", fleet:"50+", status:"To Contact", notes:"Large terminal. Pitch terminal wash contract.", priority:true },
+    { id:4, company:"Transways Motor Express", category:"Trucking", city:"Carteret, NJ", contact:"Jerry Dooley", phone:"(732) 442-4630", email:"dispatch@twme-gerard.com", fleet:"11", status:"To Contact", notes:"Est. 1984. 125-mile radius. Dispatch email is best entry.", priority:false },
+    { id:5, company:"Global Logistic & Distribution", category:"Logistics", city:"Carteret, NJ", contact:"TBD", phone:"(732) 855-2200", email:"solomon@gldi.net", fleet:"10–20", status:"Contacted", notes:"FDA-registered. Active Mon–Fri 9am–5pm.", priority:false },
+    { id:6, company:"NIWO Partners", category:"Courier / Last-Mile", city:"Carteret, NJ", contact:"TBD", phone:"(929) 450-1916", email:"cs@usniwo.com", fleet:"8–15", status:"Contacted", notes:"Sprinter vans. High interior turnover. Pitch interior sub.", priority:false },
+    { id:7, company:"Royalty Moving Systems", category:"Moving", city:"Carteret, NJ", contact:"Owner-operated", phone:"(855) 257-6925", email:"info@royaltymovingsystems.com", fleet:"2", status:"To Contact", notes:"Small fleet — easy close. Clean trucks = better reviews.", priority:false },
+    { id:8, company:"FFJ Logistics LLC", category:"Freight Carrier", city:"Perth Amboy, NJ", contact:"TBD", phone:"(732) 925-8492", email:"ffjlogistics@gmail.com", fleet:"12", status:"To Contact", notes:"12 trucks FMCSA verified. High priority.", priority:true },
+    { id:9, company:"Preferred Freezer / Lineage", category:"Cold Storage", city:"Perth Amboy, NJ", contact:"John Galiher", phone:"(732) 324-2000", email:"", fleet:"25+", status:"To Contact", notes:"National scale. Call main — ask for fleet/facilities mgr.", priority:true },
+    { id:10, company:"Carteret Transport Solutions", category:"Trucking", city:"Carteret, NJ", contact:"TBD", phone:"(848) 218-6417", email:"carterettransport@gmail.com", fleet:"5–10", status:"To Contact", notes:"Gmail = small owner-op. Easy entry.", priority:false },
+    { id:11, company:"Goodwin Trucking Group", category:"Trucking", city:"Linden, NJ", contact:"Courtney", phone:"(908) 367-7200", email:"courtney@goodwintrucking.com", fleet:"28", status:"To Contact", notes:"HIGH PRIORITY — 28 verified trucks.", priority:true },
+    { id:12, company:"Gebruder Weiss Inc", category:"Global Logistics", city:"Woodbridge, NJ", contact:"TBD", phone:"(732) 636-5500", email:"info.us@gebruder-weiss.com", fleet:"20+", status:"To Contact", notes:"Global company. Corporate compliance standards.", priority:false },
+    { id:13, company:"BTX Global Logistics", category:"Freight Forwarding", city:"Keasbey, NJ", contact:"TBD", phone:"(908) 576-7805", email:"Tradeshow@btxglobal.com", fleet:"20+", status:"To Contact", notes:"Trade show division — vehicles must look professional.", priority:false },
+    { id:14, company:"Amazon DSP (Current)", category:"Delivery Fleet", city:"Carteret, NJ", contact:"Direct", phone:"", email:"", fleet:"20", status:"Closed Won", notes:"ACTIVE CONTRACT. Interior only. Monthly. 10 vehicles/week.", priority:false },
+  ];
+}
+
+function getStatusClass(status) {
+  const map = { 'To Contact':'pill-contact', 'Contacted':'pill-contacted', 'Meeting Set':'pill-meeting', 'Closed Won':'pill-won', 'Closed Lost':'pill-lost' };
+  return map[status] || 'pill-contact';
+}
+
+function renderLeads() {
+  const filter = document.getElementById('lead-filter').value;
+  const filtered = filter === 'all' ? state.leads : state.leads.filter(l => l.status === filter);
+  const tbody = document.getElementById('leads-tbody');
+  if (!tbody) return;
+  tbody.innerHTML = filtered.map((l, i) => `
+    <tr>
+      <td style="font-family:var(--font-mono);font-size:0.7rem;color:var(--text-muted)">${l.id || i+1}</td>
+      <td>
+        <strong>${l.company}</strong>
+        ${l.priority ? ' <span class="pill pill-priority" style="font-size:0.55rem">🔥 HOT</span>' : ''}
+        ${l.notes ? `<div style="font-size:0.68rem;color:var(--text-muted);margin-top:2px;max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${l.notes}</div>` : ''}
+      </td>
+      <td style="font-size:0.78rem;color:var(--text-muted)">${l.category}</td>
+      <td style="font-size:0.78rem">${l.city}</td>
+      <td style="font-size:0.78rem">${l.contact || '—'}</td>
+      <td style="font-size:0.75rem;font-family:var(--font-mono)">${l.email ? `<a href="mailto:${l.email}" style="color:var(--gold);text-decoration:none">${l.email}</a>` : '—'}</td>
+      <td style="font-family:var(--font-mono);color:var(--gold);text-align:center">${l.fleet || '?'}</td>
+      <td><span class="pill ${getStatusClass(l.status)}">${l.status}</span></td>
+      <td>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          <select onchange="updateLeadStatus(${i}, this.value)" style="background:var(--surface3);border:1px solid var(--border);color:var(--text);padding:3px 6px;border-radius:2px;font-size:0.65rem;font-family:var(--font-mono)">
+            <option>Update...</option>
+            <option>To Contact</option><option>Contacted</option><option>Meeting Set</option><option>Proposal Sent</option><option>Closed Won</option><option>Closed Lost</option>
+          </select>
+          ${l.email ? `<button class="btn btn-outline btn-sm" onclick="copyEmail('${l.company}','${l.category}','${l.contact}','${l.city}')" style="font-size:0.6rem;padding:3px 7px">📋 Email</button>` : ''}
+        </div>
+      </td>
+    </tr>
+  `).join('');
+  document.getElementById('leads-badge').textContent = state.leads.length;
+  document.getElementById('kpi-leads').textContent = state.leads.length;
+}
+
+function filterLeads() { renderLeads(); }
+
+function updateLeadStatus(idx, status) {
+  if (status === 'Update...') return;
+  const filter = document.getElementById('lead-filter').value;
+  const filtered = filter === 'all' ? state.leads : state.leads.filter(l => l.status === filter);
+  const lead = filtered[idx];
+  const realIdx = state.leads.indexOf(lead);
+  if (realIdx >= 0) {
+    state.leads[realIdx].status = status;
+    saveState();
+    renderLeads();
+    showToast(`${lead.company} → ${status}`, 'success');
+  }
+}
+
+function addLead() {
+  const lead = {
+    id: state.leads.length + 1,
+    company: document.getElementById('lead-company').value,
+    category: document.getElementById('lead-category').value,
+    city: document.getElementById('lead-city').value,
+    fleet: document.getElementById('lead-fleet').value,
+    contact: document.getElementById('lead-contact').value,
+    phone: document.getElementById('lead-phone').value,
+    email: document.getElementById('lead-email').value,
+    notes: document.getElementById('lead-notes').value,
+    status: 'To Contact',
+    priority: false,
+  };
+  if (!lead.company) { showToast('Enter a company name', 'error'); return; }
+  state.leads.push(lead);
+  saveState();
+  closeModal('modal-add-lead');
+  renderLeads();
+  showToast(`${lead.company} added to CRM!`, 'success');
+  ['lead-company','lead-category','lead-city','lead-fleet','lead-contact','lead-phone','lead-email','lead-notes'].forEach(id => document.getElementById(id).value = '');
+}
+
+function copyEmail(company, category, contact, city) {
+  const templates = {
+    trucking: `Hi ${contact || 'Team'},\n\nMy name is Christ Pierre and I run Gold Service Detailing, a professional mobile fleet cleaning service based in Carteret, NJ.\n\nI noticed ${company} operates a fleet out of ${city} and wanted to reach out — we specialize in keeping commercial fleets clean without disrupting your operations.\n\n✦ Mobile service — we come to your yard, no downtime\n✦ Flexible scheduling around dispatch windows\n✦ Monthly and weekly contract pricing\n✦ Before & after photos for every vehicle\n\nWould you be open to a quick 10-minute call this week?\n\nBest,\nChrist Pierre\nGold Service Detailing\n📞 (732) 430-6468\n🌐 www.goldservicedetailing.com`,
+    default: `Hi ${contact || 'Team'},\n\nI run Gold Service Detailing, a mobile commercial fleet cleaning service in Carteret, NJ — and I'd love to keep ${company}'s fleet looking professional.\n\nWe're mobile, local, and work around your schedule with zero downtime.\n\nOpen to a quick 10-minute call this week?\n\nChrist Pierre\nGold Service Detailing\n📞 (732) 430-6468\n🌐 www.goldservicedetailing.com`,
+  };
+  const cat = category.toLowerCase();
+  const text = (cat.includes('truck') || cat.includes('freight') || cat.includes('logist')) ? templates.trucking : templates.default;
+  navigator.clipboard.writeText(text).then(() => showToast('Email template copied!', 'success'));
+}
+
+// ── JOBS ──
+function logJob() {
+  const job = {
+    date: document.getElementById('job-date').value || new Date().toISOString().split('T')[0],
+    client: document.getElementById('job-client').value,
+    service: document.getElementById('job-service').value,
+    vehicles: parseInt(document.getElementById('job-vehicles').value) || 1,
+    revenue: parseFloat(document.getElementById('job-revenue').value) || 0,
+    duration: parseFloat(document.getElementById('job-duration').value) || 0,
+    notes: document.getElementById('job-notes').value,
+  };
+  if (!job.client) { showToast('Enter a client name', 'error'); return; }
+  state.jobs.push(job);
+  saveState();
+  closeModal('modal-log-job');
+  renderJobs();
+  updateDashboardMetrics();
+  showToast(`Job logged — $${job.revenue.toFixed(2)} added!`, 'success');
+}
+
+function renderJobs() {
+  const tbody = document.getElementById('jobs-tbody');
+  if (!tbody) return;
+  if (!state.jobs.length) {
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text-muted);padding:32px;font-family:var(--font-mono);font-size:0.75rem;">NO JOBS LOGGED YET — HIT "+ LOG JOB" TO START</td></tr>';
+    return;
+  }
+  const sorted = [...state.jobs].sort((a,b) => new Date(b.date) - new Date(a.date));
+  tbody.innerHTML = sorted.map(j => `
+    <tr>
+      <td style="font-family:var(--font-mono);font-size:0.75rem">${j.date}</td>
+      <td><strong>${j.client}</strong></td>
+      <td style="font-size:0.8rem">${j.service}</td>
+      <td style="font-family:var(--font-mono);text-align:center;color:var(--gold)">${j.vehicles}</td>
+      <td style="font-family:var(--font-mono);color:var(--green)">$${j.revenue.toFixed(2)}</td>
+      <td style="font-size:0.75rem;color:var(--text-muted)">${j.notes || '—'}</td>
+    </tr>
+  `).join('');
+
+  const thisMonth = new Date().getMonth();
+  const monthJobs = state.jobs.filter(j => new Date(j.date).getMonth() === thisMonth);
+  const monthRev = monthJobs.reduce((s,j) => s + j.revenue, 0);
+  const avgRev = monthJobs.length ? monthRev / monthJobs.length : 0;
+  if (document.getElementById('month-revenue')) document.getElementById('month-revenue').textContent = '$' + monthRev.toFixed(0);
+  if (document.getElementById('month-jobs')) document.getElementById('month-jobs').textContent = monthJobs.length;
+  if (document.getElementById('avg-job')) document.getElementById('avg-job').textContent = '$' + avgRev.toFixed(0);
+}
+
+// ── TASKS ──
+function getDefaultTasks() {
+  return [
+    { id:1, title:'Call Leonard Logistics — (732) 248-5300', priority:'high', category:'Outreach', done:false, due:new Date().toISOString().split('T')[0] },
+    { id:2, title:'Email Goodwin Trucking — courtney@goodwintrucking.com', priority:'high', category:'Outreach', done:false, due:new Date().toISOString().split('T')[0] },
+    { id:3, title:'Log employer fleet vehicles (10 this week)', priority:'med', category:'Fleet Job', done:false, due:new Date().toISOString().split('T')[0] },
+    { id:4, title:'Post before/after on Instagram @goldservicedetailing', priority:'low', category:'Content', done:false, due:new Date().toISOString().split('T')[0] },
+  ];
+}
+
+function renderTasks() {
+  const today = new Date().toISOString().split('T')[0];
+  const todayTasks = state.tasks.filter(t => t.due === today || !t.due);
+  const allTasks = state.tasks;
+
+  ['tasks-today-list','today-tasks-list'].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.innerHTML = todayTasks.length ? todayTasks.map(t => taskHTML(t)).join('') : '<div style="color:var(--text-muted);font-family:var(--font-mono);font-size:0.75rem;padding:16px 0;text-align:center">No tasks for today. Add one!</div>';
+  });
+  const allEl = document.getElementById('tasks-all-list');
+  if (allEl) allEl.innerHTML = allTasks.map(t => taskHTML(t)).join('');
+}
+
+function taskHTML(t) {
+  return `<div class="task-item">
+    <div class="task-check ${t.done ? 'done' : ''}" onclick="toggleTaskById(${t.id})"></div>
+    <div class="task-body">
+      <div class="task-title ${t.done ? 'done' : ''}">${t.title}</div>
+      <div class="task-meta">${t.category}${t.due ? ' · Due ' + t.due : ''}</div>
+    </div>
+    <div class="task-priority priority-${t.priority}">${t.priority.toUpperCase()}</div>
+  </div>`;
+}
+
+function toggleTask(el) {
+  el.classList.toggle('done');
+  const title = el.nextElementSibling?.querySelector('.task-title');
+  if (title) title.classList.toggle('done');
+}
+function toggleTaskById(id) {
+  const idx = state.tasks.findIndex(t => t.id === id);
+  if (idx >= 0) { state.tasks[idx].done = !state.tasks[idx].done; saveState(); renderTasks(); }
+}
+
+function addTask() {
+  const title = document.getElementById('task-title-input').value;
+  if (!title) { showToast('Enter a task', 'error'); return; }
+  state.tasks.push({
+    id: Date.now(),
+    title,
+    priority: document.getElementById('task-priority-input').value,
+    category: document.getElementById('task-category').value,
+    due: document.getElementById('task-due').value || new Date().toISOString().split('T')[0],
+    done: false,
+  });
+  saveState();
+  closeModal('modal-add-task');
+  renderTasks();
+  showToast('Task added!', 'success');
+  document.getElementById('task-title-input').value = '';
+}
+
+function openAddTask() { openModal('modal-add-task'); }
+
+// ── SCHEDULE ──
+function renderSchedule() {
+  const container = document.getElementById('schedule-container');
+  if (!container) return;
+  const now = new Date();
+  const days = [];
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(now); d.setDate(now.getDate() + i);
+    days.push(d);
+  }
+  const dayNames = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  const isGSDDay = (d) => [2, 5, 6].includes(d.getDay()); // Tue, Fri, Sat
+  const isAmazonDay = (d) => [0, 1, 3, 4].includes(d.getDay()); // Sun, Mon, Wed, Thu
+
+  container.innerHTML = days.map(d => {
+    const isToday = d.toDateString() === now.toDateString();
+    const gsd = isGSDDay(d);
+    const amazon = isAmazonDay(d);
+    return `
+    <div class="schedule-day" style="${isToday ? 'border-color:var(--gold)' : ''}">
+      <div class="schedule-day-header">
+        <div class="schedule-day-name">${isToday ? '★ ' : ''}${dayNames[d.getDay()]}${isToday ? ' (Today)' : ''}</div>
+        <div class="schedule-day-date">${d.toLocaleDateString('en-US',{month:'short',day:'numeric'})}</div>
+      </div>
+      ${amazon ? `
+      <div class="schedule-event">
+        <div class="event-time">10am–8pm</div>
+        <div class="event-dot" style="background:var(--blue)"></div>
+        <div class="event-body">
+          <div class="event-title">Amazon DSP Shift</div>
+          <div class="event-sub">Package delivery · Income</div>
+        </div>
+      </div>` : ''}
+      ${gsd ? `
+      <div class="schedule-event">
+        <div class="event-time">All Day</div>
+        <div class="event-dot" style="background:var(--gold)"></div>
+        <div class="event-body">
+          <div class="event-title" style="color:var(--gold)">✦ GSD Business Day</div>
+          <div class="event-sub">Fleet jobs · Outreach · Client calls</div>
+        </div>
+      </div>` : ''}
+      ${amazon ? `
+      <div class="schedule-event">
+        <div class="event-time">8:30–10pm</div>
+        <div class="event-dot" style="background:var(--gold-dim)"></div>
+        <div class="event-body">
+          <div class="event-title">GSD Evening Window</div>
+          <div class="event-sub">Emails · Follow-ups · Planning</div>
+        </div>
+      </div>` : ''}
+    </div>`;
+  }).join('');
+}
+
+// ── FINANCES ──
+function renderFinances() {
+  const months = ['Apr 2026','May 2026','Jun 2026','Jul 2026','Aug 2026','Sep 2026','Oct 2026','Nov 2026','Dec 2026'];
+  const tbody = document.getElementById('pl-tbody');
+  if (!tbody) return;
+  tbody.innerHTML = months.map(m => {
+    const rev = state.income[m] || 0;
+    const net = rev - GSD.expenses;
+    const margin = rev ? ((net/rev)*100).toFixed(0) : 0;
+    const goalPct = rev ? ((rev/GSD.goal)*100).toFixed(0) : 0;
+    return `<tr>
+      <td style="font-family:var(--font-mono);font-size:0.8rem">${m}</td>
+      <td style="font-family:var(--font-mono);color:var(--green)">$${rev.toLocaleString()}</td>
+      <td style="font-family:var(--font-mono);color:var(--red)">-$${GSD.expenses}</td>
+      <td style="font-family:var(--font-mono);color:${net>=0?'var(--green)':'var(--red)'}">$${net.toLocaleString()}</td>
+      <td style="font-family:var(--font-mono)">${rev ? margin+'%' : '—'}</td>
+      <td>
+        <div style="display:flex;align-items:center;gap:8px">
+          <div style="flex:1;height:4px;background:var(--surface3);border-radius:2px;overflow:hidden">
+            <div style="width:${Math.min(100,goalPct)}%;height:100%;background:var(--gold);border-radius:2px"></div>
+          </div>
+          <span style="font-family:var(--font-mono);font-size:0.68rem;color:var(--text-muted)">${goalPct}%</span>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function logIncome() {
+  const month = document.getElementById('income-month').value;
+  const amount = parseFloat(document.getElementById('income-amount').value) || 0;
+  state.income[month] = amount;
+  saveState();
+  closeModal('modal-log-income');
+  renderFinances();
+  updateDashboardMetrics();
+  showToast(`Income logged for ${month}`, 'success');
+}
+
+// ── DASHBOARD METRICS ──
+function updateDashboardMetrics() {
+  const thisMonth = new Date().getMonth();
+  const monthJobs = state.jobs.filter(j => new Date(j.date).getMonth() === thisMonth);
+  const monthRev = monthJobs.reduce((s,j) => s + j.revenue, 0);
+  const pct = Math.min(100, (monthRev / GSD.goal) * 100);
+  if (document.getElementById('current-mrr')) document.getElementById('current-mrr').textContent = '$' + monthRev.toLocaleString();
+  if (document.getElementById('goal-bar')) document.getElementById('goal-bar').style.width = pct + '%';
+  if (document.getElementById('goal-pct')) document.getElementById('goal-pct').textContent = pct.toFixed(0) + '%';
+  const milestones = [1000, 2500, 5000, 7500, 10000, 15000];
+  milestones.forEach((m, i) => {
+    const el = document.getElementById('m' + (i+1));
+    if (el) el.classList.toggle('reached', monthRev >= m);
+  });
+}
+
+// ── AI FUNCTIONS ──
+async function sendAiMessage() {
+  const input = document.getElementById('ai-input');
+  const msg = input.value.trim();
+  if (!msg) return;
+  input.value = '';
+  appendAiMessage('user', msg);
+  state.aiHistory.push({ role: 'user', content: msg });
+
+  const btn = document.getElementById('ai-send');
+  btn.disabled = true; btn.textContent = '...';
+
+  const systemPrompt = `You are the Gold HQ AI assistant for Christ Pierre, owner of Gold Service Detailing (GSD) in Carteret, NJ.
+
+KEY FACTS:
+- Christ is 31, easy-going but focused, artistic, loves tech
+- Mobile auto detailing business, no physical location
+- Phone: (732) 430-6468 | Email: Goldservicedetailing@gmail.com | Website: www.goldservicedetailing.com
+- Instagram/FB/TikTok: @goldservicedetailing
+- Revenue goal: $10,000–$15,000/month by end of 2026
+- Team goal: 2 teams of 2 people in company vans within 6–8 months
+- Amazon DSP schedule: Sun, Mon, Wed, Thu 10am–8pm (home by 8:20–9:15pm)
+- Available for GSD: Tue, Fri, Sat (full days) + evenings after Amazon
+- Current fleet client: Amazon DSP employer, 20 vehicles, interior only, monthly, doing 10/week
+- Fleet pricing: T1 Interior bi-weekly $31–35/vehicle, monthly $36–40/vehicle
+- 59 fleet prospects in pipeline
+- Top leads: Leonard Logistics (25 trucks), Goodwin Trucking (28 trucks), A. Duie Pyle (50+), FFJ Logistics (12)
+- Monthly fixed expenses: $585 (car payment $300, insurance $190, gas $40, supplies $55)
+
+Be direct, practical, and business-focused. Help Christ grow GSD. Write outreach emails, proposals, content, strategies, scripts, or whatever he needs. Keep responses concise unless detail is needed.`;
+
+  try {
+    const response = await fetch(GSD.claudeApiUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        system: systemPrompt,
+        messages: state.aiHistory,
+      })
+    });
+    const data = await response.json();
+    const reply = data.content?.[0]?.text || 'Something went wrong. Try again.';
+    state.aiHistory.push({ role: 'assistant', content: reply });
+    appendAiMessage('assistant', reply);
+  } catch(e) {
+    appendAiMessage('assistant', '⚠️ API not connected yet. To activate the AI, set up a proxy worker and add your Claude API key. See the GitHub setup guide.');
+  }
+  btn.disabled = false; btn.textContent = 'Send';
+  saveState();
+}
+
+function appendAiMessage(role, text) {
+  const container = document.getElementById('ai-messages');
+  const isUser = role === 'user';
+  const div = document.createElement('div');
+  div.className = `ai-msg ${role}`;
+  div.innerHTML = `
+    <div class="ai-msg-avatar">${isUser ? 'CP' : 'AI'}</div>
+    <div class="ai-msg-bubble">${text.replace(/\n/g,'<br>').replace(/✦/g,'<span style="color:var(--gold)">✦</span>')}</div>
+  `;
+  container.appendChild(div);
+  container.scrollTop = container.scrollHeight;
+}
+
+// ── AI LEAD FINDER ──
+async function findLeads() {
+  const type = document.getElementById('lead-search-type').value;
+  const radius = document.getElementById('lead-search-radius').value;
+  const fleet = document.getElementById('lead-search-fleet').value;
+  const resultsDiv = document.getElementById('lead-finder-results');
+  resultsDiv.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-muted);font-family:var(--font-mono)">🤖 Searching for leads...</div>';
+
+  const prompt = `You are a business development researcher for Gold Service Detailing, a mobile fleet detailing service in Carteret, NJ.
+
+Find 5 qualified fleet business leads matching these criteria:
+- Business type: ${type}
+- Location: ${radius}
+- Fleet size: ${fleet}
+
+For each lead, provide realistic business details in this exact JSON format:
+[
+  {
+    "company": "Business Name",
+    "category": "Category",
+    "city": "City, NJ",
+    "fleet": "fleet size estimate",
+    "contact": "typical contact title",
+    "phone": "realistic NJ phone",
+    "email": "realistic email format",
+    "notes": "why they're a good GSD prospect and pitch angle",
+    "priority": true or false
+  }
+]
+
+Return ONLY the JSON array, no other text. Make the businesses realistic and plausible for the NJ area.`;
+
+  try {
+    const response = await fetch(GSD.claudeApiUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
+    const data = await response.json();
+    const text = data.content?.[0]?.text || '[]';
+    const leads = JSON.parse(text.replace(/```json|```/g,'').trim());
+    window._foundLeads = leads;
+    resultsDiv.innerHTML = leads.map((l, i) => `
+      <div class="lead-result">
+        <div class="lead-result-info">
+          <h4>${l.company} ${l.priority ? '🔥' : ''}</h4>
+          <p>${l.city} · ${l.category} · Fleet: ${l.fleet}<br>
+          ${l.contact} · ${l.phone}<br>
+          <span style="color:var(--gold)">${l.email}</span><br>
+          ${l.notes}</p>
+        </div>
+        <button class="btn btn-outline btn-sm" onclick="addSingleLead(${i})">+ Add</button>
+      </div>
+    `).join('');
+    document.getElementById('add-all-btn').style.display = 'flex';
+  } catch(e) {
+    resultsDiv.innerHTML = '<div style="padding:20px;color:var(--red);font-family:var(--font-mono);font-size:0.75rem;">⚠️ AI not connected. Add your Claude API key to activate lead finder.</div>';
+  }
+}
+
+function addSingleLead(idx) {
+  if (!window._foundLeads) return;
+  const l = window._foundLeads[idx];
+  l.id = state.leads.length + 1;
+  l.status = 'To Contact';
+  state.leads.push(l);
+  saveState();
+  showToast(`${l.company} added to CRM!`, 'success');
+}
+
+function addAllLeads() {
+  if (!window._foundLeads) return;
+  window._foundLeads.forEach(l => {
+    l.id = state.leads.length + 1;
+    l.status = 'To Contact';
+    state.leads.push(l);
+  });
+  saveState();
+  showToast(`${window._foundLeads.length} leads added to CRM!`, 'success');
+  window._foundLeads = null;
+  document.getElementById('add-all-btn').style.display = 'none';
+}
+
+// ── CONTENT GENERATOR ──
+async function generateContent() {
+  const output = document.getElementById('content-calendar-output');
+  output.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-muted);font-family:var(--font-mono)">🤖 Generating your week of content...</div>';
+
+  const prompt = `Generate a 5-post social media content calendar for Gold Service Detailing (@goldservicedetailing), a mobile fleet and auto detailing business in Carteret, NJ run by Christ Pierre.
+
+Create posts for Instagram/Facebook/TikTok. Mix of: fleet pitch, before/after tease, promo reminder, educational tip, community post.
+
+Format as JSON:
+[
+  {
+    "day": "Tuesday",
+    "platform": "Instagram/Facebook",
+    "type": "post type",
+    "caption": "full caption with hashtags",
+    "hook": "first line hook",
+    "cta": "call to action"
+  }
+]
+
+Brand voice: professional but approachable, confident, gold/luxury aesthetic. Goal: generate fleet leads and B2B inquiries. Return ONLY JSON.`;
+
+  try {
+    const response = await fetch(GSD.claudeApiUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
+    const data = await response.json();
+    const text = data.content?.[0]?.text || '[]';
+    const posts = JSON.parse(text.replace(/```json|```/g,'').trim());
+    output.innerHTML = posts.map(p => `
+      <div style="border:1px solid var(--border);border-radius:4px;padding:16px;margin-bottom:12px;">
+        <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
+          <span style="font-family:var(--font-display);color:var(--gold);letter-spacing:1px">${p.day}</span>
+          <span class="pill pill-contact">${p.type}</span>
+        </div>
+        <div style="font-size:0.78rem;color:var(--gold-dim);margin-bottom:6px;font-family:var(--font-mono)">HOOK: ${p.hook}</div>
+        <div style="font-size:0.83rem;line-height:1.7;margin-bottom:10px;white-space:pre-wrap">${p.caption}</div>
+        <div style="font-size:0.75rem;color:var(--text-muted)">CTA: ${p.cta}</div>
+        <button class="btn btn-outline btn-sm" style="margin-top:8px" onclick="navigator.clipboard.writeText(\`${p.caption.replace(/`/g,"'")}\`);showToast('Copied!','success')">📋 Copy Caption</button>
+      </div>
+    `).join('');
+  } catch(e) {
+    output.innerHTML = '<div style="padding:20px;color:var(--red);font-family:var(--font-mono);font-size:0.75rem;">⚠️ AI not connected. Add your Claude API key to generate content.</div>';
+  }
+}
+
+// ── MODALS ──
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+document.addEventListener('click', (e) => {
+  if (e.target.classList.contains('modal-overlay')) e.target.classList.remove('open');
+});
+
+// ── TABS ──
+function switchTab(btn, contentId) {
+  btn.closest('.tab-bar').querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  const parent = btn.closest('.page') || document;
+  parent.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.getElementById(contentId)?.classList.add('active');
+}
+
+// ── TOAST ──
+function showToast(msg, type = 'success') {
+  const container = document.getElementById('toast-container');
+  const toast = document.createElement('div');
+  toast.className = `toast ${type}`;
+  toast.innerHTML = `${type === 'success' ? '✓' : '✕'} ${msg}`;
+  container.appendChild(toast);
+  setTimeout(() => toast.remove(), 3000);
+}
+
+// ── SYNC ──
+function syncAll() {
+  showToast('Syncing data...', 'success');
+  renderLeads();
+  renderJobs();
+  renderTasks();
+  renderSchedule();
+  renderFinances();
+  updateDashboardMetrics();
+  setTimeout(() => showToast('Gold HQ synced!', 'success'), 800);
+}
+
+// ── INIT ──
+document.addEventListener('DOMContentLoaded', () => {
+  loadState();
+  updateClock();
+  setInterval(updateClock, 10000);
+  updateDashboardMetrics();
+  // Set today's date on job date input
+  const jobDate = document.getElementById('job-date');
+  if (jobDate) jobDate.value = new Date().toISOString().split('T')[0];
+});
+</script>
+</body>
+</html>
