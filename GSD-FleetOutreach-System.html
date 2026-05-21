@@ -1,0 +1,843 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GSD Fleet Outreach System</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root { --gold: #C9A84C; --black: #0D0D0D; --off-black: #1A1A1A; --gray: #2A2A2A; }
+  body { font-family: 'DM Sans', sans-serif; background: #f0f0f0; color: #1a1a1a; }
+  .page { max-width: 1000px; margin: 0 auto; padding: 40px 24px; }
+  h1 { font-family: 'Playfair Display', serif; font-size: 2rem; color: var(--black); margin-bottom: 4px; }
+  .subtitle { color: #888; font-size: 0.875rem; margin-bottom: 32px; }
+
+  .tabs { display: flex; gap: 8px; margin-bottom: 28px; flex-wrap: wrap; }
+  .tab { padding: 10px 18px; border-radius: 4px; border: 2px solid #ddd; background: white; font-size: 0.82rem; font-weight: 500; cursor: pointer; transition: all 0.2s; color: #555; }
+  .tab.active { background: var(--black); border-color: var(--black); color: var(--gold); }
+  .tab:hover:not(.active) { border-color: var(--gold); color: var(--gold); }
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+
+  .card { background: white; border-radius: 8px; padding: 28px 32px; margin-bottom: 20px; border: 1px solid #e0e0e0; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+  .badge { display: inline-block; font-size: 0.65rem; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; padding: 4px 10px; border-radius: 2px; margin-bottom: 10px; }
+  .badge-gold { background: var(--gold); color: var(--black); }
+  .badge-red { background: #DC2626; color: white; }
+  .badge-blue { background: #2563EB; color: white; }
+  .badge-green { background: #16A34A; color: white; }
+  .badge-purple { background: #7C3AED; color: white; }
+  .badge-orange { background: #EA580C; color: white; }
+
+  .card-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 16px; }
+  .card h3 { font-size: 1rem; font-weight: 600; }
+  .card p.desc { font-size: 0.8rem; color: #888; margin-top: 4px; line-height: 1.5; }
+
+  .copy-btn { flex-shrink: 0; background: var(--black); color: var(--gold); border: none; padding: 8px 16px; border-radius: 4px; font-size: 0.75rem; font-weight: 500; cursor: pointer; transition: background 0.2s; white-space: nowrap; }
+  .copy-btn:hover { background: #333; }
+  .copy-btn.copied { background: #16A34A; color: white; }
+
+  .msg-box { background: #FAFAFA; border: 1px solid #E0E0E0; border-radius: 6px; padding: 20px 22px; font-size: 0.875rem; line-height: 1.8; color: #2a2a2a; white-space: pre-wrap; font-family: 'DM Sans', sans-serif; }
+  .subject-line { background: #FFF8E7; border: 1px solid #E8C97A; border-radius: 4px; padding: 10px 14px; font-size: 0.82rem; font-weight: 600; color: #8B6914; margin-bottom: 10px; }
+  .subject-label { font-size: 0.7rem; letter-spacing: 1px; text-transform: uppercase; color: #aaa; margin-bottom: 4px; }
+
+  .priority-list { display: flex; flex-direction: column; gap: 12px; }
+  .priority-item { display: flex; align-items: flex-start; gap: 14px; padding: 16px; border: 1px solid #e8e8e8; border-radius: 6px; background: #FAFAFA; }
+  .priority-num { width: 32px; height: 32px; flex-shrink: 0; background: var(--gold); color: var(--black); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: 700; }
+  .priority-item h4 { font-size: 0.9rem; font-weight: 600; margin-bottom: 2px; }
+  .priority-item p { font-size: 0.8rem; color: #666; line-height: 1.5; }
+  .priority-item .meta { font-size: 0.72rem; color: var(--gold); font-weight: 500; margin-top: 4px; }
+
+  .tip-box { background: #FFF8E7; border-left: 3px solid var(--gold); padding: 12px 16px; border-radius: 0 6px 6px 0; font-size: 0.82rem; color: #8B6914; line-height: 1.6; margin-top: 16px; }
+  .warning-box { background: #FEF2F2; border-left: 3px solid #DC2626; padding: 12px 16px; border-radius: 0 6px 6px 0; font-size: 0.82rem; color: #991B1B; line-height: 1.6; margin-top: 16px; }
+
+  .step-list { display: flex; flex-direction: column; gap: 16px; }
+  .step-item { display: flex; gap: 14px; align-items: flex-start; }
+  .step-circle { width: 32px; height: 32px; flex-shrink: 0; background: var(--gold); color: var(--black); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: 700; }
+  .step-item h4 { font-size: 0.9rem; font-weight: 600; margin-bottom: 3px; }
+  .step-item p { font-size: 0.82rem; color: #666; line-height: 1.5; }
+  code { background: #f0f0f0; padding: 2px 6px; border-radius: 3px; font-size: 0.78rem; color: #c7254e; }
+
+  .code-block { background: #1e1e2e; color: #cdd6f4; border-radius: 6px; padding: 20px; font-family: monospace; font-size: 0.75rem; line-height: 1.7; overflow-x: auto; margin-top: 12px; white-space: pre; }
+
+  .stat-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 24px; }
+  .stat-box { background: var(--black); border-radius: 6px; padding: 16px; text-align: center; }
+  .stat-box .num { font-family: 'Playfair Display', serif; font-size: 1.8rem; color: var(--gold); }
+  .stat-box .lbl { font-size: 0.7rem; color: #888; letter-spacing: 1px; text-transform: uppercase; margin-top: 2px; }
+
+  .divider { height: 1px; background: #eee; margin: 20px 0; }
+  .email-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media(max-width:700px) { .email-grid { grid-template-columns: 1fr; } .stat-row { grid-template-columns: repeat(2,1fr); } }
+</style>
+</head>
+<body>
+<div class="page">
+
+<h1>✦ GSD Fleet Outreach System</h1>
+<p class="subtitle">59 leads · Personalized email templates by category · Apps Script automation · Follow-up sequences</p>
+
+<div class="stat-row">
+  <div class="stat-box"><div class="num">59</div><div class="lbl">Total Leads</div></div>
+  <div class="stat-box"><div class="num">38</div><div class="lbl">Emails Found</div></div>
+  <div class="stat-box"><div class="num">4</div><div class="lbl">High Priority</div></div>
+  <div class="stat-box"><div class="num">$0</div><div class="lbl">Cost to Run</div></div>
+</div>
+
+<div class="tabs">
+  <div class="tab active" onclick="showTab('priority')">🔥 Hit First (Top 6)</div>
+  <div class="tab" onclick="showTab('emails')">✉️ Email Templates</div>
+  <div class="tab" onclick="showTab('followup')">🔁 Follow-Up Sequence</div>
+  <div class="tab" onclick="showTab('script')">⚙️ Apps Script</div>
+  <div class="tab" onclick="showTab('setup')">📋 Setup Guide</div>
+</div>
+
+<!-- PRIORITY TAB -->
+<div id="priority" class="tab-content active">
+  <div class="card">
+    <div class="badge badge-red">🔥 Hit These First — Highest Value</div>
+    <h3 style="margin-bottom:6px;">Your Top 6 Priority Targets</h3>
+    <p class="desc" style="margin-bottom:20px;">These have verified fleet sizes, direct contact info, and the highest contract value. Start here before mass outreach.</p>
+    <div class="priority-list">
+      <div class="priority-item" style="border-color:#C9A84C;background:#FFFDF5;">
+        <div class="priority-num">1</div>
+        <div>
+          <h4>Leonard Logistics LLC — Carteret, NJ</h4>
+          <p>25 trucks (FMCSA verified). 130,000 sqft warehouse. Direct contacts: Josh Landau / Phil Fleischer. Est. 1981.</p>
+          <p class="meta">📧 operations@leonard-logistics.com · 📞 (732) 248-5300 · Use: Trucking Template</p>
+        </div>
+      </div>
+      <div class="priority-item" style="border-color:#C9A84C;background:#FFFDF5;">
+        <div class="priority-num">2</div>
+        <div>
+          <h4>Goodwin Trucking Group Inc — Linden, NJ</h4>
+          <p>28 trucks (FMCSA verified). Direct contact: Courtney (ext. 195) / Joe Goodwin (owner). Active contract potential.</p>
+          <p class="meta">📧 courtney@goodwintrucking.com · 📞 (908) 367-7200 · Use: Trucking Template</p>
+        </div>
+      </div>
+      <div class="priority-item" style="border-color:#DC2626;background:#FFF5F5;">
+        <div class="priority-num">3</div>
+        <div>
+          <h4>A. Duie Pyle — Carteret, NJ</h4>
+          <p>50+ truck terminal. High truck turnover. Pitch a terminal wash contract. Corporate compliance buyer — use formal tone.</p>
+          <p class="meta">📧 customer.service@aduiepyle.com · 📞 (732) 541-5900 · Use: Large Corporate Template</p>
+        </div>
+      </div>
+      <div class="priority-item" style="border-color:#DC2626;background:#FFF5F5;">
+        <div class="priority-num">4</div>
+        <div>
+          <h4>Preferred Freezer / Lineage Logistics — Perth Amboy</h4>
+          <p>25+ reefer trucks. Now owned by Lineage Logistics (national scale). Contact: John Galiher. Food compliance angle = premium pricing.</p>
+          <p class="meta">📞 (732) 324-2000 · Call first, ask for fleet/facilities manager · Use: Cold Storage Template</p>
+        </div>
+      </div>
+      <div class="priority-item">
+        <div class="priority-num">5</div>
+        <div>
+          <h4>FFJ Logistics LLC — Perth Amboy, NJ</h4>
+          <p>12 trucks (FMCSA verified). Active. Email + phone both available. High priority outreach.</p>
+          <p class="meta">📧 ffjlogistics@gmail.com · 📞 (732) 925-8492 · Use: Trucking Template</p>
+        </div>
+      </div>
+      <div class="priority-item">
+        <div class="priority-num">6</div>
+        <div>
+          <h4>Transways Motor Express — Carteret, NJ</h4>
+          <p>11 trucks (verified). Est. 1984. Serves 125-mile radius. Dispatch email is best entry point. Contact: Jerry Dooley (President).</p>
+          <p class="meta">📧 dispatch@twme-gerard.com · 📞 (732) 442-4630 · Use: Trucking Template</p>
+        </div>
+      </div>
+    </div>
+    <div class="tip-box">💡 <strong>Strategy:</strong> Email the top 6 today with the personalized templates. Call within 48 hours of sending. If you close even 2 of these at a monthly contract, that's $500–$1,500/month in recurring revenue.</div>
+  </div>
+</div>
+
+<!-- EMAIL TEMPLATES TAB -->
+<div id="emails" class="tab-content">
+
+  <!-- TRUCKING -->
+  <div class="card">
+    <div class="badge badge-gold">Trucking / Freight Carriers</div>
+    <div class="card-header">
+      <div>
+        <h3>Template 1 — General Trucking & Freight</h3>
+        <p class="desc">Use for: Transways, Leonard, FFJ, Goodwin, Apex, AJY, A&H, Prime Truckers, Carteret Transport, 3A Express, DRT, etc.</p>
+      </div>
+      <button class="copy-btn" onclick="copySection('t1subject','t1body')">Copy Email</button>
+    </div>
+    <div class="subject-label">Subject Line</div>
+    <div class="subject-line" id="t1subject">Fleet Detailing for [Company Name] — Local Mobile Service, No Downtime</div>
+    <div class="msg-box" id="t1body">Hi [Contact Name / Team],
+
+My name is [Your Name] and I run Gold Service Detailing, a professional mobile fleet cleaning service based right here in Carteret, NJ.
+
+I noticed [Company Name] operates a fleet of trucks out of [City] and wanted to reach out directly — we specialize in keeping commercial fleets clean without disrupting your operations.
+
+Here's what we offer fleet operators like yourself:
+
+✦ Mobile service — we come to your yard, no downtime
+✦ Exterior wash, cab interior cleaning, and engine bay service
+✦ Flexible scheduling — nights, weekends, between dispatch windows
+✦ Monthly and weekly contract pricing (cheaper per truck the more you book)
+✦ Before & after photos logged for every vehicle
+
+A clean fleet isn't just about appearance — it signals professionalism to clients, helps drivers take pride in their vehicles, and can reduce wear from road grime and salt buildup.
+
+We're already servicing fleets in the Carteret/Linden/Perth Amboy area and have availability to take on new accounts this month.
+
+Would you be open to a quick 10-minute call this week? I'd love to put together a custom quote based on your fleet size and schedule.
+
+Best,
+[Your Name]
+Gold Service Detailing
+📞 (732) 430-6468
+🌐 www.goldservicedetailing.com
+📧 Goldservicedetailing@gmail.com</div>
+  </div>
+
+  <!-- COLD STORAGE -->
+  <div class="card">
+    <div class="badge badge-blue">Cold Storage / Reefer Fleets</div>
+    <div class="card-header">
+      <div>
+        <h3>Template 2 — Cold Storage & Refrigerated Fleets</h3>
+        <p class="desc">Use for: Preferred Freezer/Lineage, Cold Storage Trucking, Newmans Refrigerated, Lineage Logistics (Avenel)</p>
+      </div>
+      <button class="copy-btn" onclick="copySection('t2subject','t2body')">Copy Email</button>
+    </div>
+    <div class="subject-label">Subject Line</div>
+    <div class="subject-line" id="t2subject">Refrigerated Fleet Cleaning — Compliance-Ready Service for [Company Name]</div>
+    <div class="msg-box" id="t2body">Hi [Contact Name / Fleet Manager],
+
+I'm reaching out from Gold Service Detailing, a mobile commercial cleaning service based in Carteret, NJ.
+
+I work with refrigerated and cold storage fleet operators in the area and understand that maintaining clean vehicles isn't just about appearance — it's a compliance and food safety requirement.
+
+We offer specialized cleaning for reefer fleets including:
+
+✦ Exterior wash and decontamination (road salt, grime, chemical residue)
+✦ Cab interior cleaning and sanitizing
+✦ Trailer exterior washes between loads
+✦ Documented service logs with before & after photos for compliance records
+✦ Flexible scheduling around your dispatch and delivery windows
+
+Clean, well-maintained refrigerated vehicles project professionalism to your clients and keep your fleet inspection-ready at all times.
+
+We're local, mobile, and currently taking on new fleet accounts in the [City] area. Pricing is based on fleet size — the more vehicles, the better the rate.
+
+I'd love to schedule a quick 10-minute call or even stop by the yard to introduce myself and put together a custom quote.
+
+Would this week work for a quick conversation?
+
+Best,
+[Your Name]
+Gold Service Detailing
+📞 (732) 430-6468
+🌐 www.goldservicedetailing.com</div>
+  </div>
+
+  <!-- MOVING COMPANIES -->
+  <div class="card">
+    <div class="badge badge-green">Moving Companies</div>
+    <div class="card-header">
+      <div>
+        <h3>Template 3 — Moving Companies</h3>
+        <p class="desc">Use for: Royalty Moving, Earth Relocation, Green Line Moving, Nice Move Inc.</p>
+      </div>
+      <button class="copy-btn" onclick="copySection('t3subject','t3body')">Copy Email</button>
+    </div>
+    <div class="subject-label">Subject Line</div>
+    <div class="subject-line" id="t3subject">Clean Trucks = Better Reviews — Fleet Detailing for [Company Name]</div>
+    <div class="msg-box" id="t3body">Hi [Contact Name / Team],
+
+I'm [Your Name] from Gold Service Detailing, a mobile fleet cleaning service based in Carteret, NJ.
+
+I work with several moving companies in the area and wanted to reach out because I know firsthand how much the appearance of your trucks affects customer perception — especially when you're pulling up to someone's home on one of the most stressful days of their life.
+
+A clean, professional truck builds instant trust. A dirty one raises doubts before you've even introduced yourself.
+
+We offer moving fleet operators:
+
+✦ Full exterior wash and polish — trucks look showroom fresh
+✦ Cab interior deep clean between jobs
+✦ Flexible scheduling — after hours, weekends, or between moves
+✦ Mobile service — we come to your yard or storage facility
+✦ Monthly contract pricing for regular fleets
+
+Imagine your trucks consistently showing up spotless to every job. That alone can improve your reviews and referrals.
+
+We're local, quick to deploy, and have openings for new fleet accounts this month. I'd love to put together a package based on your fleet size.
+
+Can we set up a quick 10-minute call this week?
+
+Best,
+[Your Name]
+Gold Service Detailing
+📞 (732) 430-6468
+🌐 www.goldservicedetailing.com</div>
+  </div>
+
+  <!-- LAST MILE / DELIVERY -->
+  <div class="card">
+    <div class="badge badge-purple">Last-Mile Delivery & Sprinter Fleets</div>
+    <div class="card-header">
+      <div>
+        <h3>Template 4 — Delivery & Courier Fleets</h3>
+        <p class="desc">Use for: NIWO Partners, Atlantic Pacific Hotshot, Rosse Delivery, Elite Delivery Systems, Metropolitan Warehouse Delivery, AAP Logistics</p>
+      </div>
+      <button class="copy-btn" onclick="copySection('t4subject','t4body')">Copy Email</button>
+    </div>
+    <div class="subject-label">Subject Line</div>
+    <div class="subject-line" id="t4subject">Weekly Fleet Cleaning for [Company Name] — Mobile, Fast, Local</div>
+    <div class="msg-box" id="t4body">Hi [Contact Name / Team],
+
+I run Gold Service Detailing, a mobile fleet cleaning service based in Carteret, NJ — and I specialize in high-frequency cleaning for delivery and courier fleets.
+
+Delivery vehicles take a beating. Daily routes mean constant exposure to road grime, food spills, and interior wear. We make it easy to keep your fleet clean without pulling vehicles off the road.
+
+What we offer delivery fleets:
+
+✦ Weekly or bi-weekly mobile wash routes — we come to you
+✦ Interior wipe-down and sanitizing between driver shifts
+✦ Exterior wash, wheel clean, and tire dressing
+✦ Per-vehicle pricing — scales with your fleet
+✦ Fast turnaround — most vans done in under an hour
+
+We're already running weekly routes in the Carteret/Perth Amboy/Linden area and have room to add new stops.
+
+This is a set-it-and-forget-it service — you book once, we show up every week. Your drivers start each week in a clean vehicle.
+
+Would you be open to a quick call to see if we're a fit?
+
+Best,
+[Your Name]
+Gold Service Detailing
+📞 (732) 430-6468
+🌐 www.goldservicedetailing.com</div>
+  </div>
+
+  <!-- LARGE CORPORATE -->
+  <div class="card">
+    <div class="badge badge-red">Large Corporate / Terminal Accounts</div>
+    <div class="card-header">
+      <div>
+        <h3>Template 5 — Large Corporate & Terminal Accounts</h3>
+        <p class="desc">Use for: A. Duie Pyle (50+ trucks), Gebruder Weiss, BTX Global, Romark Logistics, Seafair USA, Preferred Freezer/Lineage</p>
+      </div>
+      <button class="copy-btn" onclick="copySection('t5subject','t5body')">Copy Email</button>
+    </div>
+    <div class="subject-label">Subject Line</div>
+    <div class="subject-line" id="t5subject">Fleet Appearance Program — Commercial Detailing Proposal for [Company Name]</div>
+    <div class="msg-box" id="t5body">Dear [Contact Name / Fleet Manager],
+
+I am reaching out on behalf of Gold Service Detailing, a professional mobile commercial cleaning service operating in the Carteret, NJ area.
+
+We provide fleet appearance programs for logistics and transportation companies and are currently expanding our commercial accounts in [City/Region].
+
+Our services for terminal and large fleet operations include:
+
+✦ Scheduled exterior washing programs (weekly, bi-weekly, or monthly)
+✦ Interior cab cleaning and sanitizing
+✦ Engine bay degreasing and detailing
+✦ Full documentation — before & after photos, service logs per vehicle
+✦ Compliance-ready records for fleet inspections
+✦ Volume pricing — competitive rates for fleets of 20+ vehicles
+
+We understand that large operations require reliable, consistent vendors who can work around dispatch schedules without disrupting productivity. We are fully equipped for on-site service at your terminal or yard.
+
+I would welcome the opportunity to schedule a brief call or site visit to discuss your fleet's specific needs and put together a formal proposal.
+
+Please feel free to reach me directly at (732) 430-6468 or by email at Goldservicedetailing@gmail.com.
+
+Thank you for your time and consideration.
+
+Respectfully,
+[Your Name]
+Gold Service Detailing
+📞 (732) 430-6468
+🌐 www.goldservicedetailing.com</div>
+  </div>
+
+  <!-- AUTO TRANSPORT -->
+  <div class="card">
+    <div class="badge badge-orange">Auto Transport / Car Carriers</div>
+    <div class="card-header">
+      <div>
+        <h3>Template 6 — Auto Transport & Car Carriers</h3>
+        <p class="desc">Use for: 422 Global Auto Transport, Earth Relocation (vehicle shipping side)</p>
+      </div>
+      <button class="copy-btn" onclick="copySection('t6subject','t6body')">Copy Email</button>
+    </div>
+    <div class="subject-label">Subject Line</div>
+    <div class="subject-line" id="t6subject">Carrier & Vehicle Detailing for [Company Name] — Local Mobile Service</div>
+    <div class="msg-box" id="t6body">Hi [Contact Name / Team],
+
+I'm [Your Name] from Gold Service Detailing, a mobile auto and commercial detailing service based in Carteret, NJ.
+
+I noticed [Company Name] operates car carriers in the area and wanted to reach out with something a little unique — we offer detailing for both the carrier trucks AND the vehicles being transported.
+
+For auto transport companies, we provide:
+
+✦ Car carrier exterior wash — remove road grime, salt, and transport residue
+✦ Cab interior cleaning and detailing
+✦ Vehicle detailing for cars pre/post-transport (great upsell for your customers)
+✦ Mobile service — we come to your yard or delivery point
+✦ Flexible scheduling around your transport windows
+
+Carriers get filthy fast. We make it easy to keep your equipment clean and your transported vehicles arriving in the best possible condition.
+
+We're local, fast, and currently taking on new accounts. I'd love to put together a custom quote for your operation.
+
+Can we jump on a quick 10-minute call this week?
+
+Best,
+[Your Name]
+Gold Service Detailing
+📞 (732) 430-6468
+🌐 www.goldservicedetailing.com</div>
+  </div>
+
+</div>
+
+<!-- FOLLOW UP TAB -->
+<div id="followup" class="tab-content">
+  <div class="card">
+    <div class="badge badge-gold">Follow-Up Sequence</div>
+    <h3 style="margin-bottom:6px;">The 3-Touch Follow-Up System</h3>
+    <p class="desc" style="margin-bottom:20px;">Most deals close on the 2nd or 3rd contact. This sequence runs automatically via Apps Script — no manual work needed.</p>
+
+    <div class="card-header" style="margin-top:16px;">
+      <div><div class="badge badge-blue">Day 3 Follow-Up</div><h3>If No Reply After 3 Days</h3></div>
+      <button class="copy-btn" onclick="copyText('fu1')">Copy</button>
+    </div>
+    <div class="subject-label">Subject Line</div>
+    <div class="subject-line">Re: Fleet Detailing for [Company Name] — Quick Follow-Up</div>
+    <div class="msg-box" id="fu1">Hi [Contact Name],
+
+Just wanted to follow up on my email from a few days ago about fleet cleaning for [Company Name].
+
+I know things get busy — I'll keep this short:
+
+We're a local mobile detailing service in Carteret, NJ. We come to your yard, work around your schedule, and keep your fleet looking professional without any downtime on your end.
+
+If you have 10 minutes this week for a quick call, I'd love to put together a no-obligation quote based on your fleet size.
+
+📞 (732) 430-6468
+🌐 www.goldservicedetailing.com
+
+Thanks for your time,
+[Your Name]
+Gold Service Detailing</div>
+
+    <div class="divider"></div>
+
+    <div class="card-header">
+      <div><div class="badge badge-purple">Day 7 Follow-Up</div><h3>If Still No Reply After 7 Days</h3></div>
+      <button class="copy-btn" onclick="copyText('fu2')">Copy</button>
+    </div>
+    <div class="subject-label">Subject Line</div>
+    <div class="subject-line">Last note — Fleet Detailing for [Company Name]</div>
+    <div class="msg-box" id="fu2">Hi [Contact Name],
+
+I'll make this my last follow-up so I'm not cluttering your inbox.
+
+If keeping your fleet clean is something you're looking to solve — whether now or down the road — I'd love to be your go-to local option.
+
+We're mobile, we're local (Carteret, NJ), and we work with fleets of all sizes on flexible monthly contracts.
+
+Feel free to reach out anytime:
+📞 (732) 430-6468
+📧 Goldservicedetailing@gmail.com
+🌐 www.goldservicedetailing.com
+
+Wishing you and the [Company Name] team a great rest of the week.
+
+[Your Name]
+Gold Service Detailing</div>
+
+    <div class="tip-box">💡 <strong>Pro tip:</strong> The "last note" email often gets the highest reply rate. People respect that you're not going to spam them, and it creates a sense of finality that prompts action.</div>
+  </div>
+</div>
+
+<!-- APPS SCRIPT TAB -->
+<div id="script" class="tab-content">
+  <div class="card">
+    <div class="badge badge-gold">Google Apps Script — Auto Email Sender</div>
+    <div class="card-header">
+      <div>
+        <h3>Paste This Into Your Google Sheet's Apps Script</h3>
+        <p class="desc">This reads your fleet tracker, sends personalized emails, logs sent date, and auto-follows up after 3 and 7 days.</p>
+      </div>
+      <button class="copy-btn" onclick="copyText('appsscript')">Copy Script</button>
+    </div>
+    <div class="msg-box" id="appsscript" style="font-family:monospace;font-size:0.75rem;">// ============================================================
+// GSD FLEET OUTREACH — AUTO EMAIL SYSTEM
+// Extensions → Apps Script → paste → Save → set triggers
+// ============================================================
+
+const GSD = {
+  yourName:    "Your Name",
+  phone:       "(732) 430-6468",
+  email:       "Goldservicedetailing@gmail.com",
+  website:     "www.goldservicedetailing.com",
+  sheetName:   "Sheet1",  // change to your sheet tab name
+  // Column indexes (0-based) — adjust if your sheet differs
+  cols: {
+    company:     1,  // B
+    category:    2,  // C
+    city:        3,  // D
+    contactName: 8,  // I
+    status:      9,  // J
+    contactEmail:6,  // G
+    notes:       11, // L
+    sentDate:    12, // M — add this column to your sheet
+    followup1:   13, // N — add this column
+    followup2:   14, // O — add this column
+  }
+};
+
+// ── MAIN: sends initial outreach to all "To Contact" rows with emails ──
+function sendInitialOutreach() {
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(GSD.sheetName);
+  var rows  = sheet.getDataRange().getValues();
+  var sent  = 0;
+
+  for (var i = 1; i < rows.length; i++) {
+    var row     = rows[i];
+    var status  = row[GSD.cols.status];
+    var email   = row[GSD.cols.contactEmail];
+    var company = row[GSD.cols.company];
+    var already = row[GSD.cols.sentDate];
+
+    if (status !== "To Contact" || !email || already) continue;
+    if (!isValidEmail(email)) continue;
+
+    var category = row[GSD.cols.category] || "";
+    var contact  = row[GSD.cols.contactName] || "Team";
+    var city     = row[GSD.cols.city] || "";
+    var notes    = row[GSD.cols.notes] || "";
+
+    var template = pickTemplate(category, notes);
+    var subject  = template.subject.replace("[Company Name]", company);
+    var body     = template.body
+      .replace(/\[Company Name\]/g, company)
+      .replace(/\[Contact Name.*?\]/g, contact.split("/")[0].trim())
+      .replace(/\[City.*?\]/g, city)
+      .replace(/\[Your Name\]/g, GSD.yourName);
+
+    GmailApp.sendEmail(email, subject, body, {
+      name:    "Gold Service Detailing",
+      replyTo: GSD.email
+    });
+
+    // Log sent date + update status
+    sheet.getRange(i + 1, GSD.cols.sentDate + 1).setValue(new Date());
+    sheet.getRange(i + 1, GSD.cols.status + 1).setValue("Contacted");
+    sent++;
+
+    Utilities.sleep(2000); // 2 sec delay between sends
+    if (sent >= 20) break; // cap at 20/day to stay safe
+  }
+  Logger.log("Sent " + sent + " initial outreach emails.");
+}
+
+// ── FOLLOW-UPS: runs daily, checks days since sent ──
+function sendFollowUps() {
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(GSD.sheetName);
+  var rows  = sheet.getDataRange().getValues();
+  var now   = new Date();
+
+  for (var i = 1; i < rows.length; i++) {
+    var row      = rows[i];
+    var status   = row[GSD.cols.status];
+    var email    = row[GSD.cols.contactEmail];
+    var sentDate = row[GSD.cols.sentDate];
+    var fu1sent  = row[GSD.cols.followup1];
+    var fu2sent  = row[GSD.cols.followup2];
+
+    if (!email || !sentDate || !isValidEmail(email)) continue;
+    if (status === "Meeting Set" || status === "Closed Won" || status === "Closed Lost") continue;
+
+    var daysSinceSent = Math.floor((now - new Date(sentDate)) / 86400000);
+    var company  = row[GSD.cols.company];
+    var contact  = row[GSD.cols.contactName] || "Team";
+
+    // Follow-up 1: day 3
+    if (daysSinceSent >= 3 && !fu1sent) {
+      var subj = "Re: Fleet Detailing for " + company + " — Quick Follow-Up";
+      var body = followUp1Body(company, contact);
+      GmailApp.sendEmail(email, subj, body, { name: "Gold Service Detailing", replyTo: GSD.email });
+      sheet.getRange(i + 1, GSD.cols.followup1 + 1).setValue(new Date());
+      Utilities.sleep(2000);
+    }
+
+    // Follow-up 2: day 7
+    if (daysSinceSent >= 7 && fu1sent && !fu2sent) {
+      var subj2 = "Last note — Fleet Detailing for " + company;
+      var body2 = followUp2Body(company, contact);
+      GmailApp.sendEmail(email, subj2, body2, { name: "Gold Service Detailing", replyTo: GSD.email });
+      sheet.getRange(i + 1, GSD.cols.followup2 + 1).setValue(new Date());
+      Utilities.sleep(2000);
+    }
+  }
+}
+
+// ── TEMPLATE PICKER based on category ──
+function pickTemplate(category, notes) {
+  var cat = category.toLowerCase();
+  var n   = notes.toLowerCase();
+
+  if (cat.includes("cold") || cat.includes("reefer") || cat.includes("refrigerat") || n.includes("reefer"))
+    return coldStorageTemplate();
+  if (cat.includes("moving") || n.includes("moving"))
+    return movingTemplate();
+  if (cat.includes("delivery") || cat.includes("courier") || cat.includes("last-mile") || cat.includes("hotshot"))
+    return deliveryTemplate();
+  if (cat.includes("auto transport") || n.includes("car carrier") || n.includes("car hauler"))
+    return autoTransportTemplate();
+  if (n.includes("50+") || n.includes("terminal") || n.includes("corporate") || n.includes("national"))
+    return corporateTemplate();
+  return truckingTemplate(); // default
+}
+
+function isValidEmail(email) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+
+// ── EMAIL TEMPLATES ──
+function truckingTemplate() {
+  return {
+    subject: "Fleet Detailing for [Company Name] — Local Mobile Service, No Downtime",
+    body: `Hi [Contact Name],
+
+My name is ${GSD.yourName} and I run Gold Service Detailing, a professional mobile fleet cleaning service based right here in Carteret, NJ.
+
+I noticed [Company Name] operates a fleet of trucks out of [City] and wanted to reach out directly — we specialize in keeping commercial fleets clean without disrupting your operations.
+
+Here's what we offer fleet operators like yourself:
+
+✦ Mobile service — we come to your yard, no downtime
+✦ Exterior wash, cab interior cleaning, and engine bay service
+✦ Flexible scheduling — nights, weekends, between dispatch windows
+✦ Monthly and weekly contract pricing
+✦ Before & after photos logged for every vehicle
+
+A clean fleet signals professionalism to clients and reduces long-term wear from road grime and salt buildup.
+
+Would you be open to a quick 10-minute call this week? I'd love to put together a custom quote based on your fleet size.
+
+Best,
+${GSD.yourName}
+Gold Service Detailing
+📞 ${GSD.phone}
+🌐 ${GSD.website}`
+  };
+}
+
+function coldStorageTemplate() {
+  return {
+    subject: "Refrigerated Fleet Cleaning — Compliance-Ready Service for [Company Name]",
+    body: `Hi [Contact Name],
+
+I'm reaching out from Gold Service Detailing, a mobile commercial cleaning service based in Carteret, NJ.
+
+We work with refrigerated and cold storage fleet operators and understand that maintaining clean vehicles isn't just about appearance — it's a compliance and food safety requirement.
+
+We offer:
+✦ Exterior wash and decontamination
+✦ Cab interior cleaning and sanitizing
+✦ Documented service logs with before & after photos for compliance records
+✦ Flexible scheduling around your dispatch windows
+✦ Volume pricing for refrigerated fleets
+
+Would you be open to a quick 10-minute call to discuss your fleet's needs?
+
+Best,
+${GSD.yourName}
+Gold Service Detailing
+📞 ${GSD.phone}
+🌐 ${GSD.website}`
+  };
+}
+
+function movingTemplate() {
+  return {
+    subject: "Clean Trucks = Better Reviews — Fleet Detailing for [Company Name]",
+    body: `Hi [Contact Name],
+
+I'm ${GSD.yourName} from Gold Service Detailing, a mobile fleet cleaning service in Carteret, NJ.
+
+A clean, professional truck builds instant trust when you pull up to a customer's home. We help moving companies maintain that first impression consistently.
+
+✦ Full exterior wash — trucks look showroom fresh
+✦ Cab interior deep clean between jobs
+✦ Mobile service — we come to your yard
+✦ Monthly contract pricing for regular fleets
+
+Would you be open to a quick call this week to see if we're a fit?
+
+Best,
+${GSD.yourName}
+Gold Service Detailing
+📞 ${GSD.phone}
+🌐 ${GSD.website}`
+  };
+}
+
+function deliveryTemplate() {
+  return {
+    subject: "Weekly Fleet Cleaning for [Company Name] — Mobile, Fast, Local",
+    body: `Hi [Contact Name],
+
+I run Gold Service Detailing, a mobile fleet cleaning service in Carteret, NJ — and I specialize in high-frequency cleaning for delivery and courier fleets.
+
+We make it easy to keep your fleet clean without pulling vehicles off the road:
+✦ Weekly or bi-weekly mobile wash routes — we come to you
+✦ Interior wipe-down and sanitizing between driver shifts
+✦ Fast turnaround — most vans done in under an hour
+✦ Set-it-and-forget-it monthly contracts
+
+Would you be open to a quick 10-minute call to discuss your fleet?
+
+Best,
+${GSD.yourName}
+Gold Service Detailing
+📞 ${GSD.phone}
+🌐 ${GSD.website}`
+  };
+}
+
+function autoTransportTemplate() {
+  return {
+    subject: "Carrier & Vehicle Detailing for [Company Name] — Local Mobile Service",
+    body: `Hi [Contact Name],
+
+I'm ${GSD.yourName} from Gold Service Detailing, a mobile detailing service in Carteret, NJ.
+
+We offer something unique for auto transport companies — detailing for both your carrier trucks AND the vehicles being transported.
+
+✦ Car carrier exterior wash
+✦ Cab interior cleaning and detailing
+✦ Vehicle detailing pre/post-transport
+✦ Mobile service — we come to your yard or delivery point
+
+Would you be open to a quick call this week?
+
+Best,
+${GSD.yourName}
+Gold Service Detailing
+📞 ${GSD.phone}
+🌐 ${GSD.website}`
+  };
+}
+
+function corporateTemplate() {
+  return {
+    subject: "Fleet Appearance Program — Commercial Detailing Proposal for [Company Name]",
+    body: `Dear [Contact Name],
+
+I am reaching out on behalf of Gold Service Detailing, a professional mobile commercial cleaning service operating in the Carteret, NJ area.
+
+We provide fleet appearance programs for large logistics and transportation companies including:
+✦ Scheduled exterior washing programs (weekly, bi-weekly, or monthly)
+✦ Full documentation — before & after photos, service logs per vehicle
+✦ Compliance-ready records for fleet inspections
+✦ Volume pricing for fleets of 20+ vehicles
+✦ On-site service at your terminal or yard
+
+I would welcome the opportunity to schedule a brief call or site visit to discuss your fleet's needs and prepare a formal proposal.
+
+Respectfully,
+${GSD.yourName}
+Gold Service Detailing
+📞 ${GSD.phone}
+🌐 ${GSD.website}`
+  };
+}
+
+function followUp1Body(company, contact) {
+  return `Hi ${contact.split("/")[0].trim()},
+
+Just following up on my email about fleet cleaning for ${company}.
+
+We're a local mobile detailing service in Carteret, NJ — we come to your yard, work around your schedule, and keep your fleet looking professional with zero downtime on your end.
+
+If you have 10 minutes this week, I'd love to put together a no-obligation quote.
+
+📞 ${GSD.phone}
+🌐 ${GSD.website}
+
+Thanks,
+${GSD.yourName}
+Gold Service Detailing`;
+}
+
+function followUp2Body(company, contact) {
+  return `Hi ${contact.split("/")[0].trim()},
+
+I'll make this my last follow-up so I'm not cluttering your inbox.
+
+If keeping your fleet clean is something you're looking to solve — now or down the road — I'd love to be your local go-to option in Carteret, NJ.
+
+📞 ${GSD.phone}
+📧 ${GSD.email}
+🌐 ${GSD.website}
+
+Wishing you and the ${company} team a great week.
+
+${GSD.yourName}
+Gold Service Detailing`;
+}</div>
+    <div class="warning-box">⚠️ <strong>Before running:</strong> Add 3 columns to your sheet — "Sent Date" (col M), "Follow-Up 1" (col N), "Follow-Up 2" (col O). The script reads these to track progress and avoid double-sending.</div>
+  </div>
+</div>
+
+<!-- SETUP TAB -->
+<div id="setup" class="tab-content">
+  <div class="card">
+    <div class="badge badge-gold">Setup Guide — Do This Once</div>
+    <h3 style="margin-bottom:20px;">Get the System Running in 20 Minutes</h3>
+    <div class="step-list">
+      <div class="step-item"><div class="step-circle">1</div><div><h4>Add 3 Tracking Columns to Your Sheet</h4><p>In your fleet tracker spreadsheet, add these column headers after column L (Notes):<br><strong>M: Sent Date &nbsp;|&nbsp; N: Follow-Up 1 &nbsp;|&nbsp; O: Follow-Up 2</strong></p></div></div>
+      <div class="step-item"><div class="step-circle">2</div><div><h4>Open Apps Script</h4><p>In your Google Sheet, go to <strong>Extensions → Apps Script</strong>. Delete any existing code and paste the full script from the Apps Script tab.</p></div></div>
+      <div class="step-item"><div class="step-circle">3</div><div><h4>Update Your Info</h4><p>At the top of the script, update the <code>GSD</code> config with your name. Everything else (phone, email, website) is already filled in.</p></div></div>
+      <div class="step-item"><div class="step-circle">4</div><div><h4>Run It Once Manually to Test</h4><p>Click <strong>Run → sendInitialOutreach</strong>. It will ask for Gmail permissions — click Allow. It will send to the first batch of "To Contact" leads with emails.</p></div></div>
+      <div class="step-item"><div class="step-circle">5</div><div><h4>Set Up Daily Triggers</h4><p>Go to <strong>Triggers (clock icon)</strong> → Add Trigger:<br>• <code>sendInitialOutreach</code> → Time-driven → Daily → 9am<br>• <code>sendFollowUps</code> → Time-driven → Daily → 10am</p></div></div>
+      <div class="step-item"><div class="step-circle">6</div><div><h4>Watch Your Sheet Update Automatically</h4><p>Every day the script runs, it will send up to 20 emails, mark them "Contacted," log the date, and follow up on days 3 and 7 — all while you're out detailing cars.</p></div></div>
+    </div>
+    <div class="tip-box">💡 <strong>Gmail daily limit:</strong> Google allows ~500 emails/day on free Gmail. We cap at 20/day to stay well under the limit and avoid any spam flags. Your 59 leads will be fully contacted within 3 days.</div>
+  </div>
+</div>
+
+</div>
+
+<script>
+function showTab(id) {
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  event.target.classList.add('active');
+}
+function copyText(id) {
+  const el = document.getElementById(id);
+  navigator.clipboard.writeText(el.innerText || el.textContent).then(() => {
+    const btn = event.target;
+    const orig = btn.textContent;
+    btn.textContent = '✓ Copied!';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = orig; btn.classList.remove('copied'); }, 2000);
+  });
+}
+function copySection(subjectId, bodyId) {
+  const subj = document.getElementById(subjectId).innerText;
+  const body = document.getElementById(bodyId).innerText;
+  const full = "SUBJECT: " + subj + "\n\n" + body;
+  navigator.clipboard.writeText(full).then(() => {
+    const btn = event.target;
+    btn.textContent = '✓ Copied!';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = 'Copy Email'; btn.classList.remove('copied'); }, 2000);
+  });
+}
+</script>
+</body>
+</html>
