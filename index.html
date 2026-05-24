@@ -144,6 +144,21 @@ body::before {
   border-radius: 10px;
   font-family: var(--font-mono);
 }
+.nav-group { border-bottom: 1px solid rgba(201,168,76,0.08); }
+.nav-group-header {
+  display: flex; align-items: center; gap: 10px;
+  padding: 11px 20px; cursor: pointer;
+  font-size: 0.75rem; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.8px; color: rgba(255,255,255,0.5);
+  transition: all 0.2s; user-select: none;
+}
+.nav-group-header:hover { color: var(--gold); background: var(--gold-glow); }
+.nav-group-header .icon { font-size: 0.9rem; width: 20px; text-align: center; }
+.nav-arrow { margin-left: auto; font-size: 0.7rem; transition: transform 0.25s; color: var(--text-dim); }
+.nav-group-header.collapsed .nav-arrow { transform: rotate(-90deg); }
+.nav-group-body { overflow: hidden; max-height: 400px; transition: max-height 0.3s ease; }
+.nav-group-body:not(.open) { max-height: 0; }
+.nav-item.nav-sub { padding-left: 36px; font-size: 0.78rem; }
 .sidebar-footer {
   padding: 16px 20px;
   border-top: 1px solid var(--border);
@@ -637,55 +652,95 @@ body::before {
     <span id="live-clock">Loading...</span>
   </div>
   <nav class="nav">
-    <div class="nav-section-label">Main</div>
+
+    <!-- DASHBOARD — always visible -->
     <div class="nav-item active" onclick="showPage('dashboard')">
       <span class="icon">⚡</span> Dashboard
     </div>
-    <div class="nav-item" onclick="showPage('leads')">
-      <span class="icon">🎯</span> CRM / Leads
-      <span class="badge" id="leads-badge">59</span>
+
+    <!-- MAIN GROUP -->
+    <div class="nav-group">
+      <div class="nav-group-header" onclick="toggleGroup(this)">
+        <span class="icon">📊</span> Main
+        <span class="nav-arrow">▾</span>
+      </div>
+      <div class="nav-group-body open">
+        <div class="nav-item nav-sub" onclick="showPage('leads')">
+          <span class="icon">🎯</span> CRM / Leads
+          <span class="badge" id="leads-badge">59</span>
+        </div>
+        <div class="nav-item nav-sub" onclick="showPage('jobs')">
+          <span class="icon">🔧</span> Jobs
+        </div>
+        <div class="nav-item nav-sub" onclick="showPage('schedule')">
+          <span class="icon">📅</span> Schedule
+        </div>
+        <div class="nav-item nav-sub" onclick="showPage('clients')">
+          <span class="icon">🏢</span> Client List
+        </div>
+        <div class="nav-item nav-sub" onclick="showPage('tasks')">
+          <span class="icon">✅</span> Tasks
+        </div>
+        <div class="nav-item nav-sub" onclick="showPage('history')">
+          <span class="icon">📋</span> History
+        </div>
+      </div>
     </div>
-    <div class="nav-item" onclick="showPage('jobs')">
-      <span class="icon">🔧</span> Jobs
+
+    <!-- GROWTH GROUP -->
+    <div class="nav-group">
+      <div class="nav-group-header" onclick="toggleGroup(this)">
+        <span class="icon">🚀</span> Growth
+        <span class="nav-arrow">▾</span>
+      </div>
+      <div class="nav-group-body open">
+        <div class="nav-item nav-sub" onclick="showPage('automations')">
+          <span class="icon">⚙️</span> Automations
+        </div>
+        <div class="nav-item nav-sub" onclick="showPage('ads')">
+          <span class="icon">📣</span> Ad System
+        </div>
+        <div class="nav-item nav-sub" onclick="showPage('content')">
+          <span class="icon">🎬</span> Content
+        </div>
+      </div>
     </div>
-    <div class="nav-item" onclick="showPage('schedule')">
-      <span class="icon">📅</span> Schedule
+
+    <!-- STRATEGY GROUP -->
+    <div class="nav-group">
+      <div class="nav-group-header" onclick="toggleGroup(this)">
+        <span class="icon">🧠</span> Strategy
+        <span class="nav-arrow">▾</span>
+      </div>
+      <div class="nav-group-body">
+        <div class="nav-item nav-sub" onclick="showPage('goals')">
+          <span class="icon">🏆</span> Goals & Roadmap
+        </div>
+        <div class="nav-item nav-sub" onclick="showPage('icp')">
+          <span class="icon">🎖️</span> Ideal Customer
+        </div>
+        <div class="nav-item nav-sub" onclick="showPage('finances')">
+          <span class="icon">💰</span> Finances
+        </div>
+      </div>
     </div>
-    <div class="nav-section-label">Growth</div>
-    <div class="nav-item" onclick="showPage('ai-leads')">
-      <span class="icon">🤖</span> AI Lead Finder
+
+    <!-- AI GROUP -->
+    <div class="nav-group">
+      <div class="nav-group-header" onclick="toggleGroup(this)">
+        <span class="icon">✨</span> AI Tools
+        <span class="nav-arrow">▾</span>
+      </div>
+      <div class="nav-group-body">
+        <div class="nav-item nav-sub" onclick="showPage('ai-leads')">
+          <span class="icon">🤖</span> AI Lead Finder
+        </div>
+        <div class="nav-item nav-sub" onclick="showPage('ai-chat')">
+          <span class="icon">💬</span> AI Assistant
+        </div>
+      </div>
     </div>
-    <div class="nav-item" onclick="showPage('automations')">
-      <span class="icon">⚙️</span> Automations
-    </div>
-    <div class="nav-item" onclick="showPage('content')">
-      <span class="icon">📣</span> Content
-    </div>
-    <div class="nav-item" onclick="showPage('ads')">
-      <span class="icon">🎯</span> Ad System
-    </div>
-    <div class="nav-section-label">Finance</div>
-    <div class="nav-item" onclick="showPage('finances')">
-      <span class="icon">💰</span> Finances
-    </div>
-    <div class="nav-section-label">Clients</div>
-    <div class="nav-item" onclick="showPage('clients')">
-      <span class="icon">🏢</span> Client List
-    </div>
-    <div class="nav-section-label">Strategy</div>
-    <div class="nav-item" onclick="showPage('goals')">
-      <span class="icon">🏆</span> Goals & Roadmap
-    </div>
-    <div class="nav-item" onclick="showPage('icp')">
-      <span class="icon">🎖️</span> Ideal Customer
-    </div>
-    <div class="nav-section-label">Tools</div>
-    <div class="nav-item" onclick="showPage('tasks')">
-      <span class="icon">✅</span> Tasks
-    </div>
-    <div class="nav-item" onclick="showPage('ai-chat')">
-      <span class="icon">💬</span> AI Assistant
-    </div>
+
   </nav>
   <div class="sidebar-footer">
     <button class="ai-chat-btn" onclick="showPage('ai-chat')">
@@ -1623,24 +1678,133 @@ faqs.forEach(([q,a]) =&gt; {
        PAGE: TASKS
   ══════════════════════════════════════ -->
   <div class="page" id="page-tasks">
-    <div class="section-header mb-20">
-      <div><div class="section-title">TASKS</div><div class="section-sub">Daily focus & to-do list</div></div>
-      <button class="btn btn-gold" onclick="openAddTask()">+ Add Task</button>
+
+    <!-- MONTH GOAL BANNER -->
+    <div class="card card-highlight mb-20" id="month-goal-banner">
+      <div class="flex-between mb-12">
+        <div>
+          <div class="card-label">Monthly Mission</div>
+          <div style="font-family:var(--font-display);font-size:1.6rem;color:var(--gold);letter-spacing:1px" id="month-goal-title">Loading...</div>
+          <div style="font-size:0.8rem;color:var(--text-muted);margin-top:4px" id="month-goal-sub">AI generating your monthly focus...</div>
+        </div>
+        <div style="text-align:right">
+          <div class="card-label">Goal Progress</div>
+          <div style="font-family:var(--font-display);font-size:2rem;color:var(--green)" id="tasks-done-pct">0%</div>
+          <div style="font-size:0.72rem;color:var(--text-muted);font-family:var(--font-mono)" id="tasks-done-count">0 of 0 done</div>
+        </div>
+      </div>
+
+      <!-- PROGRESS BAR -->
+      <div class="goal-bar-track mb-16">
+        <div class="goal-bar-fill" id="tasks-progress-bar" style="width:0%"></div>
+      </div>
+
+      <!-- MILESTONE INDICATORS -->
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px" id="task-milestones">
+        <div class="milestone" id="tm-1">25% — Foundation</div>
+        <div class="milestone" id="tm-2">50% — Momentum</div>
+        <div class="milestone" id="tm-3">75% — Almost There</div>
+        <div class="milestone" id="tm-4">100% — Month Complete 🏆</div>
+      </div>
+
+      <!-- ROLLOVER NOTICE -->
+      <div id="rollover-notice" style="display:none;background:rgba(231,126,34,0.1);border:1px solid rgba(231,126,34,0.3);border-radius:4px;padding:10px 14px;font-size:0.8rem;color:var(--orange)">
+        ⚠️ <strong id="rollover-count">0</strong> incomplete tasks rolled over from previous period
+      </div>
     </div>
-    <div class="tab-bar">
-      <button class="tab-btn active" onclick="switchTab(this,'tab-today')">Today</button>
-      <button class="tab-btn" onclick="switchTab(this,'tab-week')">This Week</button>
-      <button class="tab-btn" onclick="switchTab(this,'tab-all')">All Tasks</button>
+
+    <!-- TABS -->
+    <div class="flex-between mb-16">
+      <div class="tab-bar" style="margin-bottom:0">
+        <button class="tab-btn active" onclick="switchTab(this,'tab-today')">📅 Today</button>
+        <button class="tab-btn" onclick="switchTab(this,'tab-week')">🗓 This Week</button>
+        <button class="tab-btn" onclick="switchTab(this,'tab-month')">📆 This Month</button>
+        <button class="tab-btn" onclick="switchTab(this,'tab-all')">📋 All Tasks</button>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-outline btn-sm" onclick="generateDailyTasks()" id="gen-tasks-btn">🤖 AI Update</button>
+        <button class="btn btn-gold btn-sm" onclick="openAddTask()">+ Add Task</button>
+      </div>
     </div>
+
     <div class="tab-content active" id="tab-today">
-      <div class="card" id="tasks-today-list"><!-- JS --></div>
+      <div class="card" id="tasks-today-list"></div>
     </div>
     <div class="tab-content" id="tab-week">
-      <div class="card"><div style="color:var(--text-muted);font-family:var(--font-mono);font-size:0.75rem;padding:20px 0;text-align:center;">Add tasks with due dates to see weekly view</div></div>
+      <div class="card" id="tasks-week-list"></div>
+    </div>
+    <div class="tab-content" id="tab-month">
+      <div class="card" id="tasks-month-list"></div>
     </div>
     <div class="tab-content" id="tab-all">
-      <div class="card" id="tasks-all-list"><!-- JS --></div>
+      <div class="card" id="tasks-all-list"></div>
     </div>
+  </div>
+
+  <!-- ══════════════════════════════════════
+       PAGE: HISTORY
+  ══════════════════════════════════════ -->
+  <div class="page" id="page-history">
+    <div class="section-header mb-20">
+      <div>
+        <div class="section-title">HISTORY</div>
+        <div class="section-sub">Completed tasks, jobs, and activity — broken down by category</div>
+      </div>
+      <button class="btn btn-outline btn-sm" onclick="exportHistory()">📥 Export</button>
+    </div>
+
+    <!-- STATS ROW -->
+    <div class="grid-4 mb-20" id="history-stats">
+      <div class="card">
+        <div class="card-label">Tasks Completed</div>
+        <div class="card-value" id="hist-tasks-done">0</div>
+        <div class="card-sub">All time</div>
+      </div>
+      <div class="card">
+        <div class="card-label">On-Time Rate</div>
+        <div class="card-value" id="hist-ontime">—</div>
+        <div class="card-sub">Completed by due date</div>
+      </div>
+      <div class="card">
+        <div class="card-label">Rolled Over</div>
+        <div class="card-value" id="hist-rolled">0</div>
+        <div class="card-sub">Incomplete → next period</div>
+      </div>
+      <div class="card">
+        <div class="card-label">High Priority Done</div>
+        <div class="card-value" id="hist-high-done">0</div>
+        <div class="card-sub">Critical tasks completed</div>
+      </div>
+    </div>
+
+    <!-- CATEGORY TABS -->
+    <div class="tab-bar mb-16">
+      <button class="tab-btn active" onclick="switchTab(this,'hist-all')">All</button>
+      <button class="tab-btn" onclick="switchTab(this,'hist-outreach')">📧 Outreach</button>
+      <button class="tab-btn" onclick="switchTab(this,'hist-jobs')">🔧 Fleet Jobs</button>
+      <button class="tab-btn" onclick="switchTab(this,'hist-content')">📣 Content</button>
+      <button class="tab-btn" onclick="switchTab(this,'hist-admin')">⚙️ Admin</button>
+      <button class="tab-btn" onclick="switchTab(this,'hist-finance')">💰 Finance</button>
+    </div>
+
+    <div class="tab-content active" id="hist-all">
+      <div class="card" style="padding:0;overflow:hidden">
+        <table class="data-table" id="hist-all-table">
+          <thead><tr>
+            <th>Completed</th><th>Task</th><th>Category</th><th>Priority</th>
+            <th>Due Date</th><th>On Time?</th><th>Est. Time</th><th>Actual Time</th><th>Goal Link</th>
+          </tr></thead>
+          <tbody id="hist-all-body">
+            <tr><td colspan="9" style="text-align:center;color:var(--text-muted);padding:32px;font-family:var(--font-mono);font-size:0.75rem">COMPLETE TASKS TO SEE HISTORY</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="tab-content" id="hist-outreach"><div class="card" style="padding:0;overflow:hidden"><table class="data-table"><thead><tr><th>Completed</th><th>Task</th><th>Priority</th><th>On Time?</th><th>Result</th></tr></thead><tbody id="hist-outreach-body"><tr><td colspan="5" style="text-align:center;color:var(--text-muted);padding:24px;font-size:0.75rem">No outreach tasks completed yet</td></tr></tbody></table></div></div>
+    <div class="tab-content" id="hist-jobs"><div class="card" style="padding:0;overflow:hidden"><table class="data-table"><thead><tr><th>Completed</th><th>Task</th><th>Priority</th><th>On Time?</th><th>Revenue Impact</th></tr></thead><tbody id="hist-jobs-body"><tr><td colspan="5" style="text-align:center;color:var(--text-muted);padding:24px;font-size:0.75rem">No fleet job tasks completed yet</td></tr></tbody></table></div></div>
+    <div class="tab-content" id="hist-content"><div class="card" style="padding:0;overflow:hidden"><table class="data-table"><thead><tr><th>Completed</th><th>Task</th><th>Priority</th><th>On Time?</th><th>Platform</th></tr></thead><tbody id="hist-content-body"><tr><td colspan="5" style="text-align:center;color:var(--text-muted);padding:24px;font-size:0.75rem">No content tasks completed yet</td></tr></tbody></table></div></div>
+    <div class="tab-content" id="hist-admin"><div class="card" style="padding:0;overflow:hidden"><table class="data-table"><thead><tr><th>Completed</th><th>Task</th><th>Priority</th><th>On Time?</th></tr></thead><tbody id="hist-admin-body"><tr><td colspan="4" style="text-align:center;color:var(--text-muted);padding:24px;font-size:0.75rem">No admin tasks completed yet</td></tr></tbody></table></div></div>
+    <div class="tab-content" id="hist-finance"><div class="card" style="padding:0;overflow:hidden"><table class="data-table"><thead><tr><th>Completed</th><th>Task</th><th>Priority</th><th>On Time?</th></tr></thead><tbody id="hist-finance-body"><tr><td colspan="4" style="text-align:center;color:var(--text-muted);padding:24px;font-size:0.75rem">No finance tasks completed yet</td></tr></tbody></table></div></div>
   </div>
 
   <!-- ══════════════════════════════════════
@@ -1688,6 +1852,7 @@ faqs.forEach(([q,a]) =&gt; {
       <button class="tab-btn" onclick="switchTab(this,'ads-feed')">🖼 Feed Ads</button>
       <button class="tab-btn" onclick="switchTab(this,'ads-video')">🎬 Video Scripts</button>
       <button class="tab-btn" onclick="switchTab(this,'ads-canva')">🎨 Canva Guide</button>
+      <button class="tab-btn" onclick="switchTab(this,'ads-prompts')">✨ Canva Prompts</button>
       <button class="tab-btn" onclick="switchTab(this,'ads-targeting')">🎯 Targeting</button>
     </div>
 
@@ -1814,6 +1979,54 @@ faqs.forEach(([q,a]) =&gt; {
       <div class="card">
         <div class="card-label mb-16">Before & After Template — Steps</div>
         <div style="background:var(--surface3);border-radius:4px;padding:16px;font-size:0.83rem;line-height:1.85">1. Create 1080×1080 canvas with black background<br>2. Add two frames side by side — equal size<br>3. Upload before photo to left frame, after to right<br>4. Add a vertical gold line (#C9A84C) dividing them — 3–4px wide<br>5. Add "BEFORE" text top-left in red, "AFTER" top-right in green — Montserrat Bold<br>6. Add gold headline at bottom: e.g. "GOLD STANDARD RESULTS"<br>7. Add GSD logo mark + website in bottom corners<br>8. Done — takes 10 minutes once you have the template saved</div>
+      </div>
+    </div>
+
+    <!-- CANVA PROMPTS TAB -->
+    <div class="tab-content" id="ads-prompts">
+      <div class="card mb-16">
+        <div class="flex-between mb-16">
+          <div>
+            <div class="section-title" style="font-size:1.2rem">CANVA AI PROMPTS</div>
+            <div class="section-sub">70% retail · 30% fleet · Auto-generate fresh prompts anytime</div>
+          </div>
+          <button class="btn btn-gold" onclick="generateCanvaPrompts()" id="gen-prompts-btn">🤖 Generate New Prompts</button>
+        </div>
+        <div class="tip-box mb-16">💡 <strong>How to use:</strong> Copy any prompt → open <strong>Canva → Text to Image or Magic Design</strong> → paste the prompt → generate → download and use as your ad image. These are optimized for GSD's brand aesthetic.</div>
+        <div id="canva-prompts-output">
+          <!-- Static pre-built prompts -->
+          ${[
+            {type:'Retail',label:'Before/After — Sedan',split:'70% Retail',prompt:'Professional auto detailing transformation, luxury sedan, split before/after composition, left side dirty grimy car covered in road salt and grime, right side same car gleaming spotless showroom shine, dramatic gold dividing line center, dark moody background, professional photography style, cinematic lighting, high contrast, photorealistic'},
+            {type:'Retail',label:'Interior Deep Clean',split:'70% Retail',prompt:'Luxury car interior detailing transformation, premium black leather seats freshly conditioned and spotless, dashboard gleaming, crystal clear windows, vacuum lines in carpet, golden hour sunlight streaming in, aspirational lifestyle photography, dark rich background, photorealistic, high-end automotive photography'},
+            {type:'Retail',label:'Promo — $20 Off',split:'70% Retail',prompt:'Mobile auto detailing advertisement, sleek black sports car being detailed by professional on residential driveway, golden morning light, man in uniform with professional equipment, luxury brand aesthetic, text overlay space at bottom, dark dramatic background with gold accent, photorealistic, editorial style photography'},
+            {type:'Retail',label:'Ceramic Coating Shine',split:'70% Retail',prompt:'Car paint with ceramic coating, extreme close-up of paint surface with water beading in perfect spheres, deep black paint reflecting sunlight, macro photography, luxury automotive detail, bokeh background, gold and black color palette, ultra high definition, photorealistic'},
+            {type:'Retail',label:'Mobile Service — We Come to You',split:'70% Retail',prompt:'Mobile auto detailing van parked in upscale suburban neighborhood, professional detailer working on luxury SUV in driveway, morning golden hour lighting, clean branded white van with gold logo, suburban homes in background, lifestyle photography, aspirational, warm tones, photorealistic'},
+            {type:'Retail',label:'Headlight Restoration',split:'70% Retail',prompt:'Car headlight restoration before and after, left side yellowed foggy oxidized headlight, right side crystal clear bright restored headlight, dark background, dramatic lighting, split composition with gold dividing line, close-up automotive photography, photorealistic'},
+            {type:'Retail',label:'Wheels & Tires',split:'70% Retail',prompt:'Luxury car wheel and tire detailing, gleaming chrome rim with tire dressing, extreme close-up, studio lighting, reflections in polished metal, dark dramatic background, automotive photography, high contrast black and gold aesthetic, photorealistic, editorial quality'},
+            {type:'Fleet',label:'Fleet — Commercial Vehicles',split:'30% Fleet',prompt:'Row of clean commercial delivery trucks parked in industrial yard, fleet of matching white vans gleaming in morning sunlight, professional fleet management aesthetic, wide angle photography, industrial background, gold sunrise light, photorealistic, corporate photography style'},
+            {type:'Fleet',label:'Fleet — Trucking Company',split:'30% Fleet',prompt:'Semi truck freshly detailed and spotless on highway, professional commercial vehicle, dramatic sunset sky, dramatic lighting, pride of ownership aesthetic, American trucking, chrome gleaming, photorealistic, wide shot, cinematic'},
+            {type:'Fleet',label:'Fleet — Business Branding',split:'30% Fleet',prompt:'Branded company van being professionally detailed, mobile cleaning service, professional detailer in uniform, corporate vehicle fleet, industrial setting, morning light, business branding visible on vehicle, photorealistic, professional corporate photography'},
+          ].map((p,i) => `
+            <div class="card" style="margin-bottom:12px;border-color:${p.type==='Fleet'?'rgba(52,152,219,0.3)':'rgba(201,168,76,0.2)'}">
+              <div class="flex-between mb-12">
+                <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+                  <span class="pill ${p.type==='Fleet'?'pill-contact':'pill-contacted'}">${p.split}</span>
+                  <span style="font-size:0.85rem;font-weight:700">${p.label}</span>
+                </div>
+                <button class="btn btn-outline btn-sm" onclick="copyPrompt(this,'prompt-${i}')">📋 Copy Prompt</button>
+              </div>
+              <div id="prompt-${i}" style="background:var(--surface3);border-radius:4px;padding:12px 14px;font-size:0.82rem;line-height:1.75;color:var(--text)">${p.prompt}</div>
+            </div>`).join('')}
+        </div>
+      </div>
+
+      <!-- AI GENERATED PROMPTS OUTPUT -->
+      <div class="card" id="ai-prompts-card" style="display:none">
+        <div class="flex-between mb-16">
+          <div class="section-title" style="font-size:1rem">🤖 AI-GENERATED PROMPTS</div>
+          <button class="btn btn-outline btn-sm" onclick="copyAllPrompts()">📋 Copy All</button>
+        </div>
+        <div id="ai-prompts-output"></div>
       </div>
     </div>
 
@@ -2375,13 +2588,14 @@ function showPage(id) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
   document.getElementById('page-' + id).classList.add('active');
-  const titles = { dashboard:'Dashboard', leads:'CRM / Leads', jobs:'Jobs', schedule:'Schedule', 'ai-leads':'AI Lead Finder', automations:'Automations', finances:'Finances', tasks:'Tasks', content:'Content', ads:'Ad System', 'ai-chat':'AI Assistant', clients:'Client List', goals:'Goals & Roadmap', icp:'Ideal Customer Profile' };
+  const titles = { dashboard:'Dashboard', leads:'CRM / Leads', jobs:'Jobs', schedule:'Schedule', 'ai-leads':'AI Lead Finder', automations:'Automations', finances:'Finances', tasks:'Tasks', content:'Content', ads:'Ad System', 'ai-chat':'AI Assistant', clients:'Client List', goals:'Goals & Roadmap', icp:'Ideal Customer Profile', history:'History' };
   document.getElementById('page-title').textContent = titles[id] || id.toUpperCase();
   const navItems = document.querySelectorAll('.nav-item');
   navItems.forEach(item => { if (item.textContent.toLowerCase().includes(id.replace('-',' '))) item.classList.add('active'); });
   if (id === 'leads') renderLeads();
   if (id === 'schedule') renderSchedule();
-  if (id === 'tasks') renderTasks();
+  if (id === 'tasks') { renderTasks(); checkRollover(); }
+  if (id === 'history') renderHistory();
   if (id === 'finances') renderFinances();
   if (id === 'jobs') renderJobs();
   if (id === 'clients') { renderClients(); renderActivityLog(); }
@@ -2582,42 +2796,184 @@ function getDefaultTasks() {
 
 function renderTasks() {
   const today = new Date().toISOString().split('T')[0];
-  const todayTasks = state.tasks.filter(t => t.due === today || !t.due);
-  const allTasks = state.tasks;
-
-  ['tasks-today-list','today-tasks-list'].forEach(id => {
-    const el = document.getElementById(id);
+  const now = new Date();
+  const weekEnd = new Date(now); weekEnd.setDate(now.getDate() + 7);
+  const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0];
+  const todayTasks  = state.tasks.filter(t => !t.done && (t.due === today || !t.due));
+  const weekTasks   = state.tasks.filter(t => !t.done && t.due && t.due > today && new Date(t.due) <= weekEnd);
+  const monthTasks  = state.tasks.filter(t => !t.done && t.due && t.due <= monthEnd);
+  const allTasks    = state.tasks;
+  const pri = {high:0,med:1,low:2};
+  const sortPri = arr => arr.sort((a,b) => (pri[a.priority]||1)-(pri[b.priority]||1));
+  const render = (el, tasks, emptyMsg) => {
     if (!el) return;
-    el.innerHTML = todayTasks.length ? todayTasks.map(t => taskHTML(t)).join('') : '<div style="color:var(--text-muted);font-family:var(--font-mono);font-size:0.75rem;padding:16px 0;text-align:center">No tasks for today. Add one!</div>';
+    el.innerHTML = tasks.length ? sortPri(tasks).map(t => taskHTML(t)).join('') : `<div style="color:var(--text-muted);font-family:var(--font-mono);font-size:0.75rem;padding:20px 0;text-align:center">${emptyMsg}</div>`;
+  };
+  render(document.getElementById('tasks-today-list'), todayTasks, 'No tasks for today — add one or hit AI Update!');
+  render(document.getElementById('today-tasks-list'), todayTasks, 'No tasks for today');
+  render(document.getElementById('tasks-week-list'), weekTasks, 'No tasks due this week');
+  render(document.getElementById('tasks-month-list'), monthTasks, 'No tasks this month');
+  render(document.getElementById('tasks-all-list'), allTasks, 'No tasks yet');
+  const total = state.tasks.length;
+  const done  = state.tasks.filter(t => t.done).length;
+  const pct   = total ? Math.round((done/total)*100) : 0;
+  if (document.getElementById('tasks-progress-bar')) document.getElementById('tasks-progress-bar').style.width = pct + '%';
+  if (document.getElementById('tasks-done-pct')) document.getElementById('tasks-done-pct').textContent = pct + '%';
+  if (document.getElementById('tasks-done-count')) document.getElementById('tasks-done-count').textContent = done + ' of ' + total + ' done';
+  [[25,'tm-1'],[50,'tm-2'],[75,'tm-3'],[100,'tm-4']].forEach(([t,id]) => {
+    const el = document.getElementById(id); if (el) el.classList.toggle('reached', pct >= t);
   });
-  const allEl = document.getElementById('tasks-all-list');
-  if (allEl) allEl.innerHTML = allTasks.map(t => taskHTML(t)).join('');
+  const monthGoals = {4:'Close 1st fleet contract',5:'Close 2 more fleet accounts',6:'Build 3-person team',7:'3-person team — $6K month',8:'Expand radius — $7.5K month',9:'Systematize — $9K month',10:'Hit $10K — 12+ contracts'};
+  const m = new Date().getMonth();
+  const mn = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][m];
+  if (document.getElementById('month-goal-title')) document.getElementById('month-goal-title').textContent = mn + ' Goal';
+  if (document.getElementById('month-goal-sub')) document.getElementById('month-goal-sub').textContent = monthGoals[m] || 'Keep pushing toward $10K/month';
 }
 
 function taskHTML(t) {
-  return `<div class="task-item">
-    <div class="task-check ${t.done ? 'done' : ''}" onclick="toggleTaskById(${t.id})"></div>
-    <div class="task-body">
-      <div class="task-title ${t.done ? 'done' : ''}">${t.title}</div>
-      <div class="task-meta">${t.category}${t.due ? ' · Due ' + t.due : ''}</div>
-    </div>
-    <div class="task-priority priority-${t.priority}">${t.priority.toUpperCase()}</div>
-    <div style="display:flex;gap:4px;margin-left:8px;">
-      <button class="btn btn-ghost btn-sm" onclick="editTask(${t.id})" style="font-size:0.6rem;padding:3px 7px">✏️</button>
-      <button class="btn btn-danger btn-sm" onclick="deleteTask(${t.id})" style="font-size:0.6rem;padding:3px 7px">✕</button>
-    </div>
-  </div>`;
+  const isOverdue = t.due && !t.done && t.due < new Date().toISOString().split('T')[0];
+  return '<div class="task-item" style="' + (isOverdue ? 'border-left:3px solid var(--red);padding-left:12px;' : '') + '">' +
+    '<div class="task-check ' + (t.done ? 'done' : '') + '" onclick="toggleTaskById(' + t.id + ')"></div>' +
+    '<div class="task-body">' +
+      '<div class="task-title ' + (t.done ? 'done' : '') + '">' + (isOverdue ? '⚠️ ' : '') + t.title + '</div>' +
+      '<div class="task-meta">' + (t.category||'') + (t.due ? ' · Due ' + t.due : '') +
+        (t.goalLink ? ' · <span style="color:var(--gold);font-size:0.68rem">' + t.goalLink + '</span>' : '') +
+        (isOverdue ? '<span style="color:var(--red);font-size:0.68rem;margin-left:4px">OVERDUE</span>' : '') +
+        (t.rolledOver ? '<span style="color:var(--orange);font-size:0.68rem;margin-left:4px">↩ Rolled over</span>' : '') +
+      '</div>' +
+    '</div>' +
+    '<div style="display:flex;align-items:center;gap:6px;flex-shrink:0">' +
+      '<div class="task-priority priority-' + t.priority + '">' + (t.priority||'med').toUpperCase() + '</div>' +
+      '<button class="btn btn-ghost btn-sm" onclick="editTask(' + t.id + ')" style="font-size:0.6rem;padding:3px 7px">✏️</button>' +
+      '<button class="btn btn-danger btn-sm" onclick="deleteTask(' + t.id + ')" style="font-size:0.6rem;padding:3px 7px">✕</button>' +
+    '</div>' +
+  '</div>';
 }
 
 function toggleTask(el) {
   el.classList.toggle('done');
-  const title = el.nextElementSibling?.querySelector('.task-title');
+  const title = el.nextElementSibling && el.nextElementSibling.querySelector('.task-title');
   if (title) title.classList.toggle('done');
 }
 function toggleTaskById(id) {
   const idx = state.tasks.findIndex(t => t.id === id);
-  if (idx >= 0) { state.tasks[idx].done = !state.tasks[idx].done; saveState(); renderTasks(); }
+  if (idx < 0) return;
+  const task = state.tasks[idx];
+  const wasDone = task.done;
+  task.done = !wasDone;
+  if (task.done) {
+    task.completedDate = new Date().toISOString().split('T')[0];
+    const due = task.due || task.completedDate;
+    task.onTime = task.completedDate <= due;
+    if (!state.history) state.history = [];
+    state.history.push({
+      id: Date.now() + Math.random(), taskId: task.id, title: task.title,
+      category: task.category || 'Other', priority: task.priority || 'med',
+      due: task.due || 'No due date', completedDate: task.completedDate, onTime: task.onTime,
+      rolledOver: task.rolledOver || false, goalLink: task.goalLink || '',
+      estTime: task.estTime || 'Not set', actualTime: 'Not tracked',
+    });
+  } else {
+    task.completedDate = null; task.onTime = null;
+    if (state.history) state.history = state.history.filter(h => h.taskId !== task.id);
+  }
+  saveState(); renderTasks();
+  if (!wasDone) showToast('Task complete! Logged to History.', 'success');
 }
+
+function checkRollover() {
+  const today = new Date().toISOString().split('T')[0];
+  let count = 0;
+  state.tasks.forEach(t => {
+    if (!t.done && t.due && t.due < today && !t.rolledOver) {
+      t.rolledOver = true; t.due = today; count++;
+    }
+  });
+  if (count > 0) {
+    saveState();
+    const n = document.getElementById('rollover-notice');
+    const c = document.getElementById('rollover-count');
+    if (n) n.style.display = 'block';
+    if (c) c.textContent = count;
+  }
+}
+
+function renderHistory() {
+  if (!state.history) state.history = [];
+  const h = state.history.slice().sort((a,b) => new Date(b.completedDate) - new Date(a.completedDate));
+  const total = h.length;
+  const onTime = h.filter(x => x.onTime).length;
+  if (document.getElementById('hist-tasks-done')) document.getElementById('hist-tasks-done').textContent = total;
+  if (document.getElementById('hist-ontime')) document.getElementById('hist-ontime').textContent = total ? Math.round((onTime/total)*100)+'%' : '--';
+  if (document.getElementById('hist-rolled')) document.getElementById('hist-rolled').textContent = h.filter(x => x.rolledOver).length;
+  if (document.getElementById('hist-high-done')) document.getElementById('hist-high-done').textContent = h.filter(x => x.priority === 'high').length;
+  const fullRow = x => '<tr>' +
+    '<td style="font-family:var(--font-mono);font-size:0.72rem">' + x.completedDate + '</td>' +
+    '<td style="font-size:0.82rem"><strong>' + x.title + '</strong>' + (x.rolledOver ? '<span style="color:var(--orange);font-size:0.65rem;margin-left:6px">↩ rolled</span>' : '') + '</td>' +
+    '<td><span class="pill pill-contact" style="font-size:0.6rem">' + x.category + '</span></td>' +
+    '<td style="font-size:0.72rem;color:' + (x.priority==='high'?'var(--red)':x.priority==='med'?'var(--orange)':'var(--blue)') + '">' + (x.priority||'med').toUpperCase() + '</td>' +
+    '<td style="font-family:var(--font-mono);font-size:0.72rem">' + x.due + '</td>' +
+    '<td style="color:' + (x.onTime?'var(--green)':'var(--red)') + ';font-size:0.8rem">' + (x.onTime ? '✓ On Time' : '✗ Late') + '</td>' +
+    '<td style="font-family:var(--font-mono);font-size:0.72rem;color:var(--text-muted)">' + x.estTime + '</td>' +
+    '<td style="font-family:var(--font-mono);font-size:0.72rem;color:var(--text-muted)">' + x.actualTime + '</td>' +
+    '<td style="font-size:0.72rem;color:var(--gold)">' + (x.goalLink||'--') + '</td>' +
+  '</tr>';
+  const catRow = x => '<tr>' +
+    '<td style="font-family:var(--font-mono);font-size:0.72rem">' + x.completedDate + '</td>' +
+    '<td style="font-size:0.82rem">' + x.title + '</td>' +
+    '<td style="font-size:0.72rem;color:' + (x.priority==='high'?'var(--red)':x.priority==='med'?'var(--orange)':'var(--blue)') + '">' + (x.priority||'med').toUpperCase() + '</td>' +
+    '<td style="color:' + (x.onTime?'var(--green)':'var(--red)') + ';font-size:0.8rem">' + (x.onTime ? '✓ On Time' : '✗ Late') + '</td>' +
+    '<td style="font-size:0.72rem;color:var(--gold)">' + (x.goalLink||'--') + '</td>' +
+  '</tr>';
+  const empty = cols => '<tr><td colspan="' + cols + '" style="text-align:center;color:var(--text-muted);padding:24px;font-size:0.75rem">No tasks yet</td></tr>';
+  const allBody = document.getElementById('hist-all-body');
+  if (allBody) allBody.innerHTML = h.length ? h.map(fullRow).join('') : empty(9);
+  [['Outreach','hist-outreach-body'],['Fleet Job','hist-jobs-body'],['Content','hist-content-body'],['Admin','hist-admin-body'],['Finance','hist-finance-body']].forEach(([cat,id]) => {
+    const el = document.getElementById(id);
+    const items = h.filter(x => x.category === cat);
+    if (el) el.innerHTML = items.length ? items.map(catRow).join('') : empty(5);
+  });
+}
+
+function exportHistory() {
+  if (!state.history || !state.history.length) { showToast('No history to export yet', 'error'); return; }
+  const hdr = 'Completed,Task,Category,Priority,Due,On Time,Rolled Over,Goal Link\n';
+  const rows = state.history.map(h => [h.completedDate,'"'+h.title+'"',h.category,h.priority,h.due,h.onTime?'Yes':'No',h.rolledOver?'Yes':'No','"'+(h.goalLink||'')+ '"'].join(',')).join('\n');
+  const a = document.createElement('a');
+  a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(hdr+rows);
+  a.download = 'GSD-Task-History.csv'; a.click();
+  showToast('Exported!', 'success');
+}
+
+async function generateDailyTasks() {
+  const btn = document.getElementById('gen-tasks-btn');
+  btn.textContent = '⏳ Updating...'; btn.disabled = true;
+  const today = new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
+  const m = new Date().getMonth();
+  const monthGoals = {4:'Close 1st new fleet contract',5:'Close 2 more fleet accounts, hire 1st detailer',6:'Close A. Duie Pyle, build 3-person team',7:'3-person team operational, $6K month',8:'Expand radius, 2nd van, $7.5K month',9:'Systematize everything, $9K month',10:'Hit $10K, 12+ active fleet contracts'};
+  const currentGoal = monthGoals[m] || 'Grow GSD toward $10K/month';
+  const existing = state.tasks.filter(t => !t.done).map(t => t.title).join(', ') || 'none';
+  const prompt = 'You are Gold HQ AI for Gold Service Detailing in Carteret NJ run by Christ Pierre.\nToday: ' + today + '. Monthly goal: "' + currentGoal + '". Annual goal: $10-15K/month by Dec 2026.\nIncomplete tasks already in system: ' + existing + '\n\nGenerate 5 specific, actionable tasks for TODAY that directly move closer to the monthly and annual goal. Do NOT duplicate existing tasks. Each should be achievable today.\n\nReturn ONLY in this format:\n\nTASK 1\nTITLE: [action]\nCATEGORY: Outreach\nPRIORITY: high\nESTTIME: 30 min\nGOALLINK: [how this helps $10K goal]\n\nTASK 2\n...all 5.';
+  try {
+    const res = await fetch(GSD.claudeApiUrl, {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-5',max_tokens:2000,messages:[{role:'user',content:prompt}]})});
+    const data = await res.json();
+    const text = data.content?.[0]?.text || '';
+    if (!text) throw new Error('Empty');
+    const blocks = text.split(/TASK \d+/).filter(b => b.trim());
+    const get = (b,f) => { const m = b.match(new RegExp(f+':\\s*(.+)')); return m ? m[1].trim() : ''; };
+    let added = 0;
+    blocks.forEach(b => {
+      const title = get(b,'TITLE');
+      if (!title || state.tasks.some(t => !t.done && t.title === title)) return;
+      state.tasks.push({id:Date.now()+Math.random(),title,category:get(b,'CATEGORY')||'Other',priority:get(b,'PRIORITY')||'med',due:new Date().toISOString().split('T')[0],done:false,estTime:get(b,'ESTTIME')||'--',goalLink:get(b,'GOALLINK')||'',aiGenerated:true});
+      added++;
+    });
+    saveState(); renderTasks();
+    showToast(added + ' AI tasks added for today!', 'success');
+  } catch(e) { showToast('AI update failed: ' + e.message, 'error'); }
+  btn.textContent = '🤖 AI Update'; btn.disabled = false;
+}
+
 
 function addTask() {
   const title = document.getElementById('task-title-input').value;
@@ -3460,6 +3816,105 @@ function deleteActivity(id) {
   if (!confirm('Delete this activity?')) return;
   const idx = state.activities.findIndex(a => a.id === id);
   if (idx >= 0) { state.activities.splice(idx, 1); saveState(); renderActivityLog(); showToast('Activity deleted', 'success'); }
+}
+
+// ── CANVA PROMPT GENERATOR ──
+async function generateCanvaPrompts() {
+  const btn = document.getElementById('gen-prompts-btn');
+  const card = document.getElementById('ai-prompts-card');
+  const output = document.getElementById('ai-prompts-output');
+  btn.textContent = '⏳ Generating...';
+  btn.disabled = true;
+  card.style.display = 'block';
+  output.innerHTML = '<div style="color:var(--text-muted);font-family:var(--font-mono);font-size:0.75rem;padding:20px 0">AI is writing your Canva prompts — 70% retail, 30% fleet...</div>';
+
+  const prompt = `Generate 10 Canva AI image prompts for Gold Service Detailing ads. 
+Rules:
+- 7 prompts must be for RETAIL customers (everyday car owners)
+- 3 prompts must be for FLEET/B2B clients (commercial vehicles, trucking companies)
+- Brand aesthetic: dark/black backgrounds, gold accents, luxury feel, professional
+- Location context: Carteret NJ, mobile detailing service
+- Each prompt must be detailed enough for Canva AI to generate a great image
+
+Return in this exact format, no JSON, no markdown:
+
+PROMPT 1
+TYPE: Retail
+LABEL: [short descriptive label]
+PROMPT: [detailed image generation prompt]
+
+PROMPT 2
+...and so on for all 10.`;
+
+  try {
+    const response = await fetch(GSD.claudeApiUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-5',
+        max_tokens: 4000,
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
+    const data = await response.json();
+    const text = data.content?.[0]?.text || '';
+    if (!text) throw new Error('Empty response');
+
+    const blocks = text.split(/PROMPT \d+/).filter(b => b.trim());
+    const get = (block, field) => {
+      const m = block.match(new RegExp(field + ':(.+?)(?=\\n[A-Z]+:|$)', 's'));
+      return m ? m[1].trim() : '';
+    };
+
+    output.innerHTML = blocks.map((block, i) => {
+      const type = get(block, 'TYPE');
+      const label = get(block, 'LABEL');
+      const pr = get(block, 'PROMPT');
+      const isFleet = type.toLowerCase().includes('fleet');
+      return `
+        <div class="card" style="margin-bottom:12px;border-color:${isFleet?'rgba(52,152,219,0.3)':'rgba(201,168,76,0.2)'}">
+          <div class="flex-between mb-12">
+            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+              <span class="pill ${isFleet?'pill-contact':'pill-contacted'}">${isFleet?'30% Fleet':'70% Retail'}</span>
+              <span style="font-size:0.85rem;font-weight:700">${label}</span>
+            </div>
+            <button class="btn btn-outline btn-sm" onclick="copyPrompt(this,'ai-p-${i}')">📋 Copy</button>
+          </div>
+          <div id="ai-p-${i}" style="background:var(--surface3);border-radius:4px;padding:12px 14px;font-size:0.82rem;line-height:1.75;color:var(--text)">${pr}</div>
+        </div>`;
+    }).join('');
+
+  } catch(e) {
+    output.innerHTML = `<div style="color:var(--red);font-family:var(--font-mono);font-size:0.75rem;padding:12px">⚠️ Error: ${e.message}</div>`;
+  }
+  btn.textContent = '🤖 Generate New Prompts';
+  btn.disabled = false;
+}
+
+function copyPrompt(btn, id) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  navigator.clipboard.writeText(el.innerText || el.textContent).then(() => {
+    const orig = btn.textContent;
+    btn.textContent = '✓ Copied!';
+    btn.style.background = 'var(--green)';
+    btn.style.color = '#000';
+    setTimeout(() => { btn.textContent = orig; btn.style.background = ''; btn.style.color = ''; }, 2000);
+  });
+}
+
+function copyAllPrompts() {
+  const output = document.getElementById('ai-prompts-output');
+  if (!output) return;
+  navigator.clipboard.writeText(output.innerText).then(() => showToast('All prompts copied!', 'success'));
+}
+
+// ── NAV GROUP TOGGLE ──
+function toggleGroup(header) {
+  const body = header.nextElementSibling;
+  const isOpen = body.classList.contains('open');
+  body.classList.toggle('open', !isOpen);
+  header.classList.toggle('collapsed', isOpen);
 }
 
 // ── AD SYSTEM ──
