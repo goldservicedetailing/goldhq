@@ -599,7 +599,32 @@ body::before {
   .mobile-only { display: block; }
 }
 
-/* ── QUICK LOG (MOBILE FOCUSED) ── */
+/* ── CALENDAR ── */
+.cal-day {
+  min-height: 72px; border-radius: 3px; padding: 4px 6px;
+  background: var(--surface3); border: 1px solid var(--border);
+  cursor: pointer; transition: all 0.15s; position: relative;
+}
+.cal-day:hover { border-color: var(--border-bright); background: var(--surface2); }
+.cal-day.today { border-color: var(--gold); background: var(--gold-glow); }
+.cal-day.selected { border-color: var(--gold-bright); box-shadow: 0 0 0 1px var(--gold-bright); }
+.cal-day.other-month { opacity: 0.3; }
+.cal-day.amazon { background: rgba(52,152,219,0.08); border-color: rgba(52,152,219,0.2); }
+.cal-day.gsd-day { background: rgba(201,168,76,0.08); border-color: rgba(201,168,76,0.2); }
+.cal-day-num { font-family: var(--font-mono); font-size: 0.68rem; color: var(--text-muted); margin-bottom: 3px; }
+.cal-day.today .cal-day-num { color: var(--gold); font-weight: 700; }
+.cal-day-badge { font-size: 0.5rem; letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 2px; }
+.cal-task-dot { width: 5px; height: 5px; border-radius: 50%; display: inline-block; margin-right: 2px; }
+.cal-tasks-preview { display: flex; flex-wrap: wrap; gap: 2px; margin-top: 3px; }
+.cal-task-chip {
+  font-size: 0.55rem; padding: 1px 4px; border-radius: 2px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  max-width: 100%; display: block;
+  background: rgba(201,168,76,0.2); color: var(--gold);
+}
+.cal-task-chip.high { background: rgba(231,76,60,0.2); color: var(--red); }
+.cal-task-chip.done { background: rgba(46,204,113,0.15); color: var(--green); text-decoration: line-through; }
+@media(max-width:680px) { .cal-day { min-height: 52px; } .cal-task-chip { display:none; } }
 .quick-log-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
 .quick-log-card {
   background: var(--surface2);
@@ -673,13 +698,10 @@ body::before {
           <span class="icon">🔧</span> Jobs
         </div>
         <div class="nav-item nav-sub" onclick="showPage('schedule')">
-          <span class="icon">📅</span> Schedule
+          <span class="icon">📅</span> Schedule & Tasks
         </div>
         <div class="nav-item nav-sub" onclick="showPage('clients')">
           <span class="icon">🏢</span> Client List
-        </div>
-        <div class="nav-item nav-sub" onclick="showPage('tasks')">
-          <span class="icon">✅</span> Tasks
         </div>
         <div class="nav-item nav-sub" onclick="showPage('history')">
           <span class="icon">📋</span> History
@@ -768,156 +790,104 @@ body::before {
   <div class="page active" id="page-dashboard">
 
     <!-- GOAL PROGRESS -->
-    <div class="card mb-20">
-      <div class="flex-between mb-16">
+    <div class="card mb-16">
+      <div class="flex-between mb-12">
         <div>
           <div class="card-label">2026 Revenue Goal</div>
-          <div style="font-family:var(--font-display);font-size:1.8rem;color:var(--gold);letter-spacing:1px;">$10,000 – $15,000 / Month</div>
+          <div style="font-family:var(--font-display);font-size:1.6rem;color:var(--gold);letter-spacing:1px">$10,000 – $15,000 / Month</div>
         </div>
-        <div style="text-align:right;">
-          <div class="card-label">Current MRR</div>
-          <div style="font-family:var(--font-display);font-size:2rem;color:var(--green);" id="current-mrr">$0</div>
-        </div>
-      </div>
-      <div class="goal-bar-wrap">
-        <div class="goal-bar-header">
-          <span style="color:var(--text-muted);font-family:var(--font-mono);font-size:0.7rem;">Progress to $10k</span>
-          <span style="color:var(--gold);font-family:var(--font-mono);font-size:0.7rem;" id="goal-pct">0%</span>
-        </div>
-        <div class="goal-bar-track">
-          <div class="goal-bar-fill" id="goal-bar" style="width:0%"></div>
+        <div style="text-align:right">
+          <div class="card-label">This Month</div>
+          <div style="font-family:var(--font-display);font-size:2rem;color:var(--green)" id="current-mrr">$0</div>
         </div>
       </div>
-      <div class="milestones">
-        <div class="milestone" id="m1">$1K</div>
-        <div class="milestone" id="m2">$2.5K</div>
-        <div class="milestone" id="m3">$5K</div>
-        <div class="milestone" id="m4">$7.5K</div>
-        <div class="milestone" id="m5">$10K ✦</div>
-        <div class="milestone" id="m6">$15K 🏆</div>
+      <div class="goal-bar-track" style="margin-bottom:8px">
+        <div class="goal-bar-fill" id="goal-bar" style="width:0%"></div>
+      </div>
+      <div class="flex-between">
+        <div class="milestones" style="margin:0">
+          <div class="milestone" id="m1">$1K</div>
+          <div class="milestone" id="m2">$2.5K</div>
+          <div class="milestone" id="m3">$5K</div>
+          <div class="milestone" id="m4">$7.5K</div>
+          <div class="milestone" id="m5">$10K ✦</div>
+          <div class="milestone" id="m6">$15K 🏆</div>
+        </div>
+        <span style="color:var(--gold);font-family:var(--font-mono);font-size:0.75rem" id="goal-pct">0%</span>
       </div>
     </div>
 
-    <!-- KPI CARDS -->
-    <div class="grid-4 mb-20">
+    <!-- KPI GRID — all live from state -->
+    <div class="grid-4 mb-16">
       <div class="card">
         <div class="card-label">Fleet Clients</div>
-        <div class="card-value" id="kpi-clients">1</div>
-        <div class="card-sub">Active contracts</div>
-        <div class="card-trend up">↑ Goal: 5 by Q3</div>
+        <div class="card-value" id="kpi-clients">0</div>
+        <div class="card-sub" id="kpi-clients-sub">Active contracts</div>
       </div>
       <div class="card">
-        <div class="card-label">Vehicles / Month</div>
-        <div class="card-value" id="kpi-vehicles">80</div>
-        <div class="card-sub">Amazon DSP fleet (10/wk)</div>
-        <div class="card-trend up">↑ Capacity for more</div>
+        <div class="card-label">Jobs This Month</div>
+        <div class="card-value" id="kpi-jobs">0</div>
+        <div class="card-sub" id="kpi-jobs-sub">Logged jobs</div>
       </div>
       <div class="card">
-        <div class="card-label">Leads in Pipeline</div>
-        <div class="card-value" id="kpi-leads">59</div>
-        <div class="card-sub">Across all statuses</div>
-        <div class="card-trend up">↑ 4 high priority</div>
+        <div class="card-label">Active Leads</div>
+        <div class="card-value" id="kpi-leads">0</div>
+        <div class="card-sub" id="kpi-leads-sub">In pipeline</div>
       </div>
       <div class="card">
-        <div class="card-label">Available Days</div>
-        <div class="card-value">3</div>
-        <div class="card-sub">Tue · Fri · Sat</div>
-        <div class="card-trend up">+ Evenings 8–10pm</div>
+        <div class="card-label">Tasks Today</div>
+        <div class="card-value" id="kpi-tasks">0</div>
+        <div class="card-sub" id="kpi-tasks-sub">Pending</div>
       </div>
     </div>
 
-    <!-- TWO COLUMN -->
-    <div class="grid-2 mb-20">
+    <!-- BOTTOM GRID -->
+    <div class="grid-2 mb-16">
 
-      <!-- TOP PRIORITY LEADS -->
+      <!-- HOT LEADS — live from state -->
       <div class="card">
-        <div class="section-header">
+        <div class="section-header mb-12">
           <div>
-            <div class="section-title">HOT LEADS</div>
-            <div class="section-sub">Highest value — contact today</div>
+            <div class="section-title" style="font-size:1.2rem">HOT LEADS</div>
+            <div class="section-sub" style="margin:0">Priority contacts</div>
           </div>
           <button class="btn btn-outline btn-sm" onclick="showPage('leads')">View All</button>
         </div>
-        <table class="data-table">
-          <thead><tr>
-            <th>Company</th>
-            <th>Fleet</th>
-            <th>Status</th>
-          </tr></thead>
-          <tbody>
-            <tr><td><strong>Leonard Logistics</strong><br><span style="font-size:0.7rem;color:var(--text-muted)">Carteret, NJ</span></td><td><span style="font-family:var(--font-mono);color:var(--gold)">25</span></td><td><span class="pill pill-contact">To Contact</span></td></tr>
-            <tr><td><strong>Goodwin Trucking</strong><br><span style="font-size:0.7rem;color:var(--text-muted)">Linden, NJ</span></td><td><span style="font-family:var(--font-mono);color:var(--gold)">28</span></td><td><span class="pill pill-contact">To Contact</span></td></tr>
-            <tr><td><strong>A. Duie Pyle</strong><br><span style="font-size:0.7rem;color:var(--text-muted)">Carteret, NJ</span></td><td><span style="font-family:var(--font-mono);color:var(--gold)">50+</span></td><td><span class="pill pill-contact">To Contact</span></td></tr>
-            <tr><td><strong>FFJ Logistics</strong><br><span style="font-size:0.7rem;color:var(--text-muted)">Perth Amboy, NJ</span></td><td><span style="font-family:var(--font-mono);color:var(--gold)">12</span></td><td><span class="pill pill-contact">To Contact</span></td></tr>
-          </tbody>
-        </table>
+        <div id="dash-hot-leads">
+          <div style="color:var(--text-muted);font-family:var(--font-mono);font-size:0.72rem;padding:12px 0;text-align:center">Loading leads...</div>
+        </div>
       </div>
 
-      <!-- TODAY'S TASKS -->
+      <!-- TODAY'S TASKS — live from state -->
       <div class="card">
-        <div class="section-header">
+        <div class="section-header mb-12">
           <div>
-            <div class="section-title">TODAY'S FOCUS</div>
-            <div class="section-sub" id="tasks-date-sub">Loading...</div>
+            <div class="section-title" style="font-size:1.2rem">TODAY'S FOCUS</div>
+            <div class="section-sub" id="tasks-date-sub" style="margin:0">Loading...</div>
           </div>
           <button class="btn btn-outline btn-sm" onclick="openAddTask()">+ Task</button>
         </div>
         <div id="today-tasks-list">
-          <div class="task-item">
-            <div class="task-check" onclick="toggleTask(this)"></div>
-            <div class="task-body">
-              <div class="task-title">Call Leonard Logistics — (732) 248-5300</div>
-              <div class="task-meta">Fleet outreach · High priority</div>
-            </div>
-            <div class="task-priority priority-high">HIGH</div>
-          </div>
-          <div class="task-item">
-            <div class="task-check" onclick="toggleTask(this)"></div>
-            <div class="task-body">
-              <div class="task-title">Email Goodwin Trucking — courtney@goodwintrucking.com</div>
-              <div class="task-meta">Use Trucking Template · Follow up in 3 days</div>
-            </div>
-            <div class="task-priority priority-high">HIGH</div>
-          </div>
-          <div class="task-item">
-            <div class="task-check" onclick="toggleTask(this)"></div>
-            <div class="task-body">
-              <div class="task-title">Log employer fleet vehicles (10 this week)</div>
-              <div class="task-meta">Amazon DSP · Interior only · $31–35/vehicle</div>
-            </div>
-            <div class="task-priority priority-med">MED</div>
-          </div>
-          <div class="task-item">
-            <div class="task-check" onclick="toggleTask(this)"></div>
-            <div class="task-body">
-              <div class="task-title">Post before/after on Instagram</div>
-              <div class="task-meta">Content · @goldservicedetailing</div>
-            </div>
-            <div class="task-priority priority-low">LOW</div>
-          </div>
+          <div style="color:var(--text-muted);font-family:var(--font-mono);font-size:0.72rem;padding:12px 0;text-align:center">No tasks yet — add one or hit AI Update in Tasks</div>
         </div>
       </div>
     </div>
 
-    <!-- QUICK LOG MOBILE BUTTONS -->
+    <!-- QUICK LOG -->
     <div class="card">
-      <div class="section-title mb-16">QUICK LOG</div>
+      <div class="section-title mb-12" style="font-size:1rem">QUICK LOG</div>
       <div class="quick-log-grid">
         <div class="quick-log-card" onclick="openModal('modal-log-job')">
-          <div class="ql-icon">🔧</div>
-          <div class="ql-label">Log a Job</div>
+          <div class="ql-icon">🔧</div><div class="ql-label">Log a Job</div>
         </div>
         <div class="quick-log-card" onclick="openModal('modal-add-lead')">
-          <div class="ql-icon">🎯</div>
-          <div class="ql-label">Add a Lead</div>
+          <div class="ql-icon">🎯</div><div class="ql-label">Add a Lead</div>
         </div>
         <div class="quick-log-card" onclick="openAddTask()">
-          <div class="ql-icon">✅</div>
-          <div class="ql-label">Add Task</div>
+          <div class="ql-icon">✅</div><div class="ql-label">Add Task</div>
         </div>
         <div class="quick-log-card" onclick="showPage('ai-leads')">
-          <div class="ql-icon">🤖</div>
-          <div class="ql-label">Find Leads</div>
+          <div class="ql-icon">🤖</div><div class="ql-label">Find Leads</div>
         </div>
       </div>
     </div>
@@ -1015,17 +985,93 @@ body::before {
   </div>
 
   <!-- ══════════════════════════════════════
-       PAGE: SCHEDULE
+       PAGE: SCHEDULE & TASKS (combined)
   ══════════════════════════════════════ -->
   <div class="page" id="page-schedule">
-    <div class="section-header mb-20">
-      <div>
-        <div class="section-title">SCHEDULE</div>
-        <div class="section-sub">Your week · Available: Tue · Fri · Sat + Evenings</div>
+
+    <!-- MONTH HEADER -->
+    <div class="card card-highlight mb-16">
+      <div class="flex-between mb-8">
+        <div>
+          <div class="card-label">Monthly Goal</div>
+          <div style="font-family:var(--font-display);font-size:1.5rem;color:var(--gold);letter-spacing:1px" id="cal-month-goal">Loading...</div>
+        </div>
+        <div style="text-align:right">
+          <div class="card-label">Task Progress</div>
+          <div style="font-family:var(--font-display);font-size:1.8rem;color:var(--green)" id="tasks-done-pct">0%</div>
+          <div style="font-size:0.7rem;color:var(--text-muted);font-family:var(--font-mono)" id="tasks-done-count">0 of 0</div>
+        </div>
+      </div>
+      <div class="goal-bar-track" style="margin-bottom:8px">
+        <div class="goal-bar-fill" id="tasks-progress-bar" style="width:0%"></div>
+      </div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        <div class="milestone" id="tm-1">25%</div>
+        <div class="milestone" id="tm-2">50%</div>
+        <div class="milestone" id="tm-3">75%</div>
+        <div class="milestone" id="tm-4">100% 🏆</div>
+      </div>
+      <div id="rollover-notice" style="display:none;background:rgba(231,126,34,0.1);border:1px solid rgba(231,126,34,0.3);border-radius:4px;padding:8px 12px;font-size:0.78rem;color:var(--orange);margin-top:10px">
+        ⚠️ <strong id="rollover-count">0</strong> incomplete tasks rolled over to today
       </div>
     </div>
-    <div id="schedule-container"><!-- Built by JS --></div>
+
+    <!-- CONTROLS -->
+    <div class="flex-between mb-16">
+      <div style="display:flex;align-items:center;gap:12px">
+        <button class="btn btn-ghost btn-sm" onclick="calNav(-1)">◀</button>
+        <div style="font-family:var(--font-display);font-size:1.2rem;color:var(--gold);letter-spacing:2px" id="cal-title">Loading...</div>
+        <button class="btn btn-ghost btn-sm" onclick="calNav(1)">▶</button>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-outline btn-sm" onclick="generateDailyTasks()" id="gen-tasks-btn">🤖 AI Update</button>
+        <button class="btn btn-gold btn-sm" onclick="openAddTask()">+ Add Task</button>
+      </div>
+    </div>
+
+    <!-- CALENDAR GRID -->
+    <div class="card mb-16" style="padding:16px">
+      <!-- Day headers -->
+      <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px;margin-bottom:6px">
+        ${['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map(d =>
+          `<div style="text-align:center;font-family:var(--font-mono);font-size:0.62rem;color:var(--text-muted);letter-spacing:1px;padding:4px 0">${d}</div>`
+        ).join('')}
+      </div>
+      <div id="cal-grid" style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px"></div>
+    </div>
+
+    <!-- SELECTED DAY TASKS -->
+    <div class="card" id="cal-day-panel">
+      <div class="flex-between mb-12">
+        <div>
+          <div class="section-title" style="font-size:1.1rem" id="cal-day-title">Select a day</div>
+          <div style="font-size:0.75rem;color:var(--text-muted)" id="cal-day-sub">Click any date to see tasks</div>
+        </div>
+        <button class="btn btn-gold btn-sm" onclick="openAddTaskForDate()" id="cal-add-btn">+ Add Task</button>
+      </div>
+      <div id="cal-day-tasks">
+        <div style="color:var(--text-muted);font-family:var(--font-mono);font-size:0.72rem;padding:16px 0;text-align:center">Click a day on the calendar to see or add tasks</div>
+      </div>
+    </div>
+
+    <!-- ALL TASKS LIST (below calendar) -->
+    <div class="flex-between mt-16 mb-12">
+      <div class="section-title" style="font-size:1rem">ALL TASKS</div>
+      <div class="tab-bar" style="margin-bottom:0">
+        <button class="tab-btn active" onclick="switchTab(this,'tab-today')">Today</button>
+        <button class="tab-btn" onclick="switchTab(this,'tab-week')">This Week</button>
+        <button class="tab-btn" onclick="switchTab(this,'tab-month')">This Month</button>
+        <button class="tab-btn" onclick="switchTab(this,'tab-all')">All</button>
+      </div>
+    </div>
+    <div class="tab-content active" id="tab-today"><div class="card" id="tasks-today-list"></div></div>
+    <div class="tab-content" id="tab-week"><div class="card" id="tasks-week-list"></div></div>
+    <div class="tab-content" id="tab-month"><div class="card" id="tasks-month-list"></div></div>
+    <div class="tab-content" id="tab-all"><div class="card" id="tasks-all-list"></div></div>
   </div>
+
+  <!-- page-tasks alias so existing code still works -->
+  <div class="page" id="page-tasks" style="display:none!important"></div>
 
   <!-- ══════════════════════════════════════
        PAGE: AI LEAD FINDER
@@ -1400,7 +1446,7 @@ Gold Service Detailing</div>
 
 ✦ Gold Wash & Shine — from $49
 ✦ Interior Detail — from $99
-✦ Full Detail Package — from $179
+✦ Gold+ Package — from $165
 ✦ Paint Correction — from $250
 ✦ Ceramic Coating — from $500
 
@@ -1419,7 +1465,7 @@ Questions? Just reply!</div>
 
 ✦ Gold Wash & Shine — $49–$79
 ✦ Interior Detail — $99–$149
-✦ Full Detail (In + Out) — $179–$249
+✦ Gold+ Package — $165–$180
 ✦ Paint Correction — $250–$500+
 ✦ Ceramic Coating — $500–$1,500+
 ✦ Headlight Restoration — $60–$90
@@ -1608,7 +1654,7 @@ Thank you! — Christ @ Gold Service Detailing</div>
 &lt;/section&gt;
 &lt;script&gt;
 const faqs = [
-  ["How much does a detail cost?","Services start at $49 for a Gold Wash and go up to $1,500+ for ceramic coating. Full Detail packages start at $179 for sedans. First-time customers get $20 off!"],
+  ["How much does a detail cost?","Services start at $85 for Interior Only and go up to $1,500+ for ceramic coating. Packages: Interior Only $85–$100, Gold $125–$140, Gold+ $165–$180. First-time customers get $20 off!"],
   ["Do you come to my location?","Yes — 100% mobile! We come to your home, office, or anywhere convenient. We bring all our own water, power, and equipment."],
   ["How long does a detail take?","A basic wash takes 1–1.5 hours. A full detail takes 3–5 hours depending on vehicle size and condition."],
   ["What areas do you service?","Based in Carteret, NJ. We service Woodbridge, Perth Amboy, Rahway, Linden, Edison, and surrounding areas."],
@@ -1646,18 +1692,19 @@ faqs.forEach(([q,a]) =&gt; {
       </div>
       <div class="card">
         <div class="card-label">Path to $10K — Contract Mix</div>
-        <div style="font-size:0.8rem;color:var(--text-muted);margin-bottom:12px;font-family:var(--font-mono);">Based on your fleet pricing model</div>
-        <div class="expense-row"><span class="expense-name">Amazon DSP (20 vehicles, T1 monthly)</span><span class="income-amount">+$740</span></div>
-        <div class="expense-row"><span class="expense-name">2× 15-vehicle contracts (T1 monthly)</span><span class="income-amount">+$1,140</span></div>
-        <div class="expense-row"><span class="expense-name">3× 10-vehicle contracts (T1 monthly)</span><span class="income-amount">+$1,170</span></div>
-        <div class="expense-row"><span class="expense-name">5× 5-vehicle contracts (T1 monthly)</span><span class="income-amount">+$1,000</span></div>
-        <div class="expense-row"><span class="expense-name">Retail / individual jobs</span><span class="income-amount">+$500</span></div>
+        <div style="font-size:0.8rem;color:var(--text-muted);margin-bottom:12px;font-family:var(--font-mono);">Based on new simplified pricing</div>
+        <div class="expense-row"><span class="expense-name">Amazon DSP (20 vehicles × $35 interior)</span><span class="income-amount">+$700</span></div>
+        <div class="expense-row"><span class="expense-name">2× fleet clients — Interior Only (20 vehicles × $35)</span><span class="income-amount">+$1,400</span></div>
+        <div class="expense-row"><span class="expense-name">2× fleet clients — Full Detail (20 vehicles × $50)</span><span class="income-amount">+$2,000</span></div>
+        <div class="expense-row"><span class="expense-name">Retail Gold+ packages (est. 15 jobs/month)</span><span class="income-amount">+$2,475</span></div>
+        <div class="expense-row"><span class="expense-name">Maintenance plan subscribers (est. 20 clients bi-weekly)</span><span class="income-amount">+$915</span></div>
+        <div class="expense-row"><span class="expense-name">Deposit income from new full-detail fleet contracts</span><span class="income-amount">+$500</span></div>
         <div class="divider"></div>
         <div class="expense-row">
           <span style="font-weight:700;">Projected Total</span>
-          <span style="font-family:var(--font-mono);color:var(--green);font-weight:700;">$4,550/mo</span>
+          <span style="font-family:var(--font-mono);color:var(--green);font-weight:700;">$7,990/mo</span>
         </div>
-        <div style="font-family:var(--font-mono);font-size:0.68rem;color:var(--text-muted);margin-top:8px;">↑ Add more contracts to hit $10K. You need ~12 active fleet accounts total.</div>
+        <div style="font-family:var(--font-mono);font-size:0.68rem;color:var(--text-muted);margin-top:8px;">↑ Add 1 more full-detail fleet + 10 maintenance plan clients = $10K+</div>
       </div>
     </div>
     <div class="card">
@@ -1674,72 +1721,6 @@ faqs.forEach(([q,a]) =&gt; {
     </div>
   </div>
 
-  <!-- ══════════════════════════════════════
-       PAGE: TASKS
-  ══════════════════════════════════════ -->
-  <div class="page" id="page-tasks">
-
-    <!-- MONTH GOAL BANNER -->
-    <div class="card card-highlight mb-20" id="month-goal-banner">
-      <div class="flex-between mb-12">
-        <div>
-          <div class="card-label">Monthly Mission</div>
-          <div style="font-family:var(--font-display);font-size:1.6rem;color:var(--gold);letter-spacing:1px" id="month-goal-title">Loading...</div>
-          <div style="font-size:0.8rem;color:var(--text-muted);margin-top:4px" id="month-goal-sub">AI generating your monthly focus...</div>
-        </div>
-        <div style="text-align:right">
-          <div class="card-label">Goal Progress</div>
-          <div style="font-family:var(--font-display);font-size:2rem;color:var(--green)" id="tasks-done-pct">0%</div>
-          <div style="font-size:0.72rem;color:var(--text-muted);font-family:var(--font-mono)" id="tasks-done-count">0 of 0 done</div>
-        </div>
-      </div>
-
-      <!-- PROGRESS BAR -->
-      <div class="goal-bar-track mb-16">
-        <div class="goal-bar-fill" id="tasks-progress-bar" style="width:0%"></div>
-      </div>
-
-      <!-- MILESTONE INDICATORS -->
-      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px" id="task-milestones">
-        <div class="milestone" id="tm-1">25% — Foundation</div>
-        <div class="milestone" id="tm-2">50% — Momentum</div>
-        <div class="milestone" id="tm-3">75% — Almost There</div>
-        <div class="milestone" id="tm-4">100% — Month Complete 🏆</div>
-      </div>
-
-      <!-- ROLLOVER NOTICE -->
-      <div id="rollover-notice" style="display:none;background:rgba(231,126,34,0.1);border:1px solid rgba(231,126,34,0.3);border-radius:4px;padding:10px 14px;font-size:0.8rem;color:var(--orange)">
-        ⚠️ <strong id="rollover-count">0</strong> incomplete tasks rolled over from previous period
-      </div>
-    </div>
-
-    <!-- TABS -->
-    <div class="flex-between mb-16">
-      <div class="tab-bar" style="margin-bottom:0">
-        <button class="tab-btn active" onclick="switchTab(this,'tab-today')">📅 Today</button>
-        <button class="tab-btn" onclick="switchTab(this,'tab-week')">🗓 This Week</button>
-        <button class="tab-btn" onclick="switchTab(this,'tab-month')">📆 This Month</button>
-        <button class="tab-btn" onclick="switchTab(this,'tab-all')">📋 All Tasks</button>
-      </div>
-      <div style="display:flex;gap:8px">
-        <button class="btn btn-outline btn-sm" onclick="generateDailyTasks()" id="gen-tasks-btn">🤖 AI Update</button>
-        <button class="btn btn-gold btn-sm" onclick="openAddTask()">+ Add Task</button>
-      </div>
-    </div>
-
-    <div class="tab-content active" id="tab-today">
-      <div class="card" id="tasks-today-list"></div>
-    </div>
-    <div class="tab-content" id="tab-week">
-      <div class="card" id="tasks-week-list"></div>
-    </div>
-    <div class="tab-content" id="tab-month">
-      <div class="card" id="tasks-month-list"></div>
-    </div>
-    <div class="tab-content" id="tab-all">
-      <div class="card" id="tasks-all-list"></div>
-    </div>
-  </div>
 
   <!-- ══════════════════════════════════════
        PAGE: HISTORY
@@ -1747,64 +1728,102 @@ faqs.forEach(([q,a]) =&gt; {
   <div class="page" id="page-history">
     <div class="section-header mb-20">
       <div>
-        <div class="section-title">HISTORY</div>
-        <div class="section-sub">Completed tasks, jobs, and activity — broken down by category</div>
+        <div class="section-title">HISTORY & ACTIVITY LOG</div>
+        <div class="section-sub">All activity in one place — tasks, jobs, calls, goals, client interactions</div>
       </div>
-      <button class="btn btn-outline btn-sm" onclick="exportHistory()">📥 Export</button>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-gold btn-sm" onclick="openModal('modal-log-activity')">+ Log Activity</button>
+        <button class="btn btn-outline btn-sm" onclick="exportHistory()">📥 Export CSV</button>
+      </div>
     </div>
 
-    <!-- STATS ROW -->
-    <div class="grid-4 mb-20" id="history-stats">
+    <!-- STATS -->
+    <div class="grid-4 mb-20">
       <div class="card">
-        <div class="card-label">Tasks Completed</div>
+        <div class="card-label">Total Entries</div>
         <div class="card-value" id="hist-tasks-done">0</div>
-        <div class="card-sub">All time</div>
+        <div class="card-sub">All logged activity</div>
       </div>
       <div class="card">
-        <div class="card-label">On-Time Rate</div>
+        <div class="card-label">Tasks On-Time</div>
         <div class="card-value" id="hist-ontime">—</div>
         <div class="card-sub">Completed by due date</div>
       </div>
       <div class="card">
-        <div class="card-label">Rolled Over</div>
-        <div class="card-value" id="hist-rolled">0</div>
-        <div class="card-sub">Incomplete → next period</div>
+        <div class="card-label">Goals Hit</div>
+        <div class="card-value" id="hist-goals-hit">0</div>
+        <div class="card-sub">Milestones completed</div>
       </div>
       <div class="card">
-        <div class="card-label">High Priority Done</div>
-        <div class="card-value" id="hist-high-done">0</div>
-        <div class="card-sub">Critical tasks completed</div>
+        <div class="card-label">Revenue Logged</div>
+        <div class="card-value" id="hist-revenue">$0</div>
+        <div class="card-sub">From logged activities</div>
       </div>
     </div>
 
-    <!-- CATEGORY TABS -->
+    <!-- TABS -->
     <div class="tab-bar mb-16">
-      <button class="tab-btn active" onclick="switchTab(this,'hist-all')">All</button>
+      <button class="tab-btn active" onclick="switchTab(this,'hist-all')">📋 All Activity</button>
       <button class="tab-btn" onclick="switchTab(this,'hist-outreach')">📧 Outreach</button>
-      <button class="tab-btn" onclick="switchTab(this,'hist-jobs')">🔧 Fleet Jobs</button>
+      <button class="tab-btn" onclick="switchTab(this,'hist-jobs-tab')">🔧 Jobs</button>
+      <button class="tab-btn" onclick="switchTab(this,'hist-goals-tab')">🏆 Goals</button>
+      <button class="tab-btn" onclick="switchTab(this,'hist-tasks-tab')">✅ Tasks</button>
       <button class="tab-btn" onclick="switchTab(this,'hist-content')">📣 Content</button>
-      <button class="tab-btn" onclick="switchTab(this,'hist-admin')">⚙️ Admin</button>
-      <button class="tab-btn" onclick="switchTab(this,'hist-finance')">💰 Finance</button>
     </div>
 
     <div class="tab-content active" id="hist-all">
-      <div class="card" style="padding:0;overflow:hidden">
-        <table class="data-table" id="hist-all-table">
+      <div class="card" style="padding:0;overflow:hidden;overflow-x:auto">
+        <table class="data-table">
           <thead><tr>
-            <th>Completed</th><th>Task</th><th>Category</th><th>Priority</th>
-            <th>Due Date</th><th>On Time?</th><th>Est. Time</th><th>Actual Time</th><th>Goal Link</th>
+            <th>Date</th><th>Client / Context</th><th>Type</th><th>Details</th>
+            <th>Priority</th><th>On Time?</th><th>Revenue</th><th>Actions</th>
           </tr></thead>
           <tbody id="hist-all-body">
-            <tr><td colspan="9" style="text-align:center;color:var(--text-muted);padding:32px;font-family:var(--font-mono);font-size:0.75rem">COMPLETE TASKS TO SEE HISTORY</td></tr>
+            <tr><td colspan="8" style="text-align:center;color:var(--text-muted);padding:32px;font-family:var(--font-mono);font-size:0.75rem">COMPLETE TASKS OR LOG ACTIVITY TO SEE HISTORY</td></tr>
           </tbody>
         </table>
       </div>
     </div>
-    <div class="tab-content" id="hist-outreach"><div class="card" style="padding:0;overflow:hidden"><table class="data-table"><thead><tr><th>Completed</th><th>Task</th><th>Priority</th><th>On Time?</th><th>Result</th></tr></thead><tbody id="hist-outreach-body"><tr><td colspan="5" style="text-align:center;color:var(--text-muted);padding:24px;font-size:0.75rem">No outreach tasks completed yet</td></tr></tbody></table></div></div>
-    <div class="tab-content" id="hist-jobs"><div class="card" style="padding:0;overflow:hidden"><table class="data-table"><thead><tr><th>Completed</th><th>Task</th><th>Priority</th><th>On Time?</th><th>Revenue Impact</th></tr></thead><tbody id="hist-jobs-body"><tr><td colspan="5" style="text-align:center;color:var(--text-muted);padding:24px;font-size:0.75rem">No fleet job tasks completed yet</td></tr></tbody></table></div></div>
-    <div class="tab-content" id="hist-content"><div class="card" style="padding:0;overflow:hidden"><table class="data-table"><thead><tr><th>Completed</th><th>Task</th><th>Priority</th><th>On Time?</th><th>Platform</th></tr></thead><tbody id="hist-content-body"><tr><td colspan="5" style="text-align:center;color:var(--text-muted);padding:24px;font-size:0.75rem">No content tasks completed yet</td></tr></tbody></table></div></div>
-    <div class="tab-content" id="hist-admin"><div class="card" style="padding:0;overflow:hidden"><table class="data-table"><thead><tr><th>Completed</th><th>Task</th><th>Priority</th><th>On Time?</th></tr></thead><tbody id="hist-admin-body"><tr><td colspan="4" style="text-align:center;color:var(--text-muted);padding:24px;font-size:0.75rem">No admin tasks completed yet</td></tr></tbody></table></div></div>
-    <div class="tab-content" id="hist-finance"><div class="card" style="padding:0;overflow:hidden"><table class="data-table"><thead><tr><th>Completed</th><th>Task</th><th>Priority</th><th>On Time?</th></tr></thead><tbody id="hist-finance-body"><tr><td colspan="4" style="text-align:center;color:var(--text-muted);padding:24px;font-size:0.75rem">No finance tasks completed yet</td></tr></tbody></table></div></div>
+
+    <div class="tab-content" id="hist-outreach">
+      <div class="card" style="padding:0;overflow:hidden;overflow-x:auto">
+        <table class="data-table"><thead><tr><th>Date</th><th>Company</th><th>Type</th><th>Details</th><th>On Time?</th></tr></thead>
+        <tbody id="hist-outreach-body"><tr><td colspan="5" style="text-align:center;color:var(--text-muted);padding:24px;font-size:0.75rem">No outreach logged yet</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="tab-content" id="hist-jobs-tab">
+      <div class="card" style="padding:0;overflow:hidden;overflow-x:auto">
+        <table class="data-table"><thead><tr><th>Date</th><th>Client</th><th>Type</th><th>Details</th><th>Revenue</th></tr></thead>
+        <tbody id="hist-jobs-body"><tr><td colspan="5" style="text-align:center;color:var(--text-muted);padding:24px;font-size:0.75rem">No job activity logged yet</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="tab-content" id="hist-goals-tab">
+      <div class="card" style="padding:0;overflow:hidden;overflow-x:auto">
+        <table class="data-table"><thead><tr><th>Date</th><th>Milestone</th><th>Type</th><th>Details</th></tr></thead>
+        <tbody id="hist-goals-body"><tr><td colspan="4" style="text-align:center;color:var(--text-muted);padding:24px;font-size:0.75rem">No goals completed yet — check them off in Goals & Roadmap!</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="tab-content" id="hist-tasks-tab">
+      <div class="card" style="padding:0;overflow:hidden;overflow-x:auto">
+        <table class="data-table"><thead><tr><th>Completed</th><th>Task</th><th>Priority</th><th>Due Date</th><th>On Time?</th><th>Goal Link</th></tr></thead>
+        <tbody id="hist-tasks-tab-body"><tr><td colspan="6" style="text-align:center;color:var(--text-muted);padding:24px;font-size:0.75rem">No tasks completed yet</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="tab-content" id="hist-content">
+      <div class="card" style="padding:0;overflow:hidden;overflow-x:auto">
+        <table class="data-table"><thead><tr><th>Date</th><th>Type</th><th>Details</th><th>On Time?</th></tr></thead>
+        <tbody id="hist-content-body"><tr><td colspan="4" style="text-align:center;color:var(--text-muted);padding:24px;font-size:0.75rem">No content activity yet</td></tr></tbody>
+        </table>
+      </div>
+    </div>
   </div>
 
   <!-- ══════════════════════════════════════
@@ -1878,10 +1897,10 @@ faqs.forEach(([q,a]) =&gt; {
         {week:1,theme:'Introduction',type:'Fleet',pill:'pill-contact',headline:'Your Fleet Deserves Better Than a Gas Station Wash.',text:'Gold Service Detailing is a professional mobile fleet cleaning service based in Carteret, NJ — and we come to YOU.\n\nNo more sending drivers across town. No more inconsistent results. We show up to your yard on a schedule, clean every vehicle to a professional standard, and document everything with before & after photos.\n\nWhether you run 5 trucks or 50, we have a contract plan that fits your operation and your budget.\n\n📍 Serving Carteret, Woodbridge, Perth Amboy, Linden & surrounding NJ areas\n📞 (732) 430-6468\n🌐 www.goldservicedetailing.com\n\nDM us or click below for a free fleet quote — no commitment required.',cta:'Get Quote'},
         {week:2,theme:'Social Proof',type:'Before/After',pill:'pill-contacted',headline:'This Is What a Real Detail Looks Like.',text:'Swipe to see the difference ➡️\n\nThis vehicle came to us neglected — built-up grime, salt deposits, and a completely overlooked interior. Two hours later — gold standard results.\n\nAt Gold Service Detailing we don\'t just clean your car. We restore it.\n\n✦ Full exterior detail\n✦ Interior deep clean\n✦ Before & after photos of every job\n✦ Mobile — we come to you\n\n🎉 First-time customers get $20 OFF. Use code GOLD20 when booking.\n\n📞 (732) 430-6468 · www.goldservicedetailing.com',cta:'Book Now'},
         {week:3,theme:'Fleet Push',type:'Fleet Contract',pill:'pill-contact',headline:'Fleet Cleaning From $35/Vehicle. We Come to Your Yard.',text:'If your company runs a fleet of trucks, vans, or commercial vehicles — this is for you.\n\nGold Service Detailing offers recurring mobile fleet cleaning contracts for businesses in the Carteret, NJ area.\n\n✦ From $35/vehicle on monthly plans\n✦ Interior, exterior, or full detail options\n✦ We come to your facility — zero downtime\n✦ Service logs + photos for every vehicle\n✦ Month-to-month — no long-term commitment\n\nCall or DM us to get a custom quote.\n📞 (732) 430-6468',cta:'Get Quote'},
-        {week:4,theme:'Urgency',type:'Promo',pill:'pill-won',headline:'Only 3 New Client Spots Left This Month.',text:'We keep our client roster intentionally small so every vehicle gets the attention it deserves. Right now we only have 3 spots left for new clients.\n\nIf you\'ve been thinking about getting your car — or your fleet — professionally detailed, this is the time.\n\n✦ Full Detail packages from $179\n✦ Fleet contracts from $35/vehicle/month\n✦ $20 OFF your first service — code GOLD20\n✦ Mobile — we come to you\n\nOnce these spots fill, next availability is the following month.\n\n📞 (732) 430-6468 · www.goldservicedetailing.com',cta:'Book Now'},
+        {week:4,theme:'Urgency',type:'Promo',pill:'pill-won',headline:'Only 3 New Client Spots Left This Month.',text:'We keep our client roster intentionally small so every vehicle gets the attention it deserves. Right now we only have 3 spots left for new clients.\n\nIf you\'ve been thinking about getting your car — or your fleet — professionally detailed, this is the time.\n\n✦ Gold+ Package from $165\n✦ Fleet contracts from $35/vehicle\n✦ $20 OFF your first service — code GOLD20\n✦ Mobile — we come to you\n\nOnce these spots fill, next availability is the following month.\n\n📞 (732) 430-6468 · www.goldservicedetailing.com',cta:'Book Now'},
         {week:5,theme:'Trust Build',type:'Interior B/A',pill:'pill-contacted',headline:'You Spend Hours in Your Car. It Should Feel Like This.',text:'Most people underestimate how much a clean interior affects how they feel every day.\n\nThis interior detail included: full vacuum, steam clean, leather conditioning, window clean, odor elimination, and dashboard restoration.\n\nThe owner said it felt like a brand new car.\n\nAt Gold Service Detailing we come to your home or office — you don\'t move a muscle. Interior details start at $99.\n\n🎉 First-time customers: $20 off with code GOLD20\n📞 (732) 430-6468\n🌐 www.goldservicedetailing.com',cta:'Book Now'},
-        {week:6,theme:'Fleet Close',type:'Pricing Reveal',pill:'pill-contact',headline:'Here\'s Exactly What Fleet Cleaning Costs With Us.',text:'Transparency is everything. Here\'s our fleet contract pricing:\n\n5 vehicles → $40/vehicle/month = $200/mo\n10 vehicles → $39/vehicle/month = $390/mo\n15 vehicles → $38/vehicle/month = $570/mo\n20 vehicles → $37/vehicle/month = $740/mo\n25+ vehicles → $36/vehicle/month\n\nThat covers a full exterior wash and cab interior clean every month.\n\nWe come to your yard. We document everything. No contracts to start.\n\n📞 (732) 430-6468\n🌐 www.goldservicedetailing.com',cta:'Get Quote'},
-        {week:7,theme:'Results',type:'Best Work',pill:'pill-contacted',headline:'This One Took [X] Hours. Worth Every Minute.',text:'This is our best work yet — and we\'re proud to show it.\n\n[Describe the job: vehicle, condition it came in, what was done, end result]\n\nThis is what happens when you don\'t cut corners. Professional-grade products, attention to every detail, a team that genuinely takes pride in the work.\n\nGold Service Detailing · Carteret, NJ\nMobile service — we come to you.\n\nFull details from $179. Fleet contracts from $35/vehicle.\n🎉 New clients: $20 off with code GOLD20\n\n📞 (732) 430-6468 · www.goldservicedetailing.com',cta:'Book Now'},
+        {week:6,theme:'Fleet Close',type:'Pricing Reveal',pill:'pill-contact',headline:'Here\'s Exactly What Fleet Cleaning Costs With Us.',text:'Transparency is everything. Here\'s our fleet contract pricing:\n\n20 vehicles (Interior Only) → $35/vehicle = $700/mo\n20 vehicles (Full Detail) → $50/vehicle + $500 deposit\n\nSimple, transparent fleet pricing. No complicated tiers.\n\nWe come to your yard. We document everything. No contracts to start.\n\n📞 (732) 430-6468\n🌐 www.goldservicedetailing.com',cta:'Get Quote'},
+        {week:7,theme:'Results',type:'Best Work',pill:'pill-contacted',headline:'This One Took [X] Hours. Worth Every Minute.',text:'This is our best work yet — and we\'re proud to show it.\n\n[Describe the job: vehicle, condition it came in, what was done, end result]\n\nThis is what happens when you don\'t cut corners. Professional-grade products, attention to every detail, a team that genuinely takes pride in the work.\n\nGold Service Detailing · Carteret, NJ\nMobile service — we come to you.\n\nGold+ from $165. Fleet contracts from $35/vehicle.\n🎉 New clients: $20 off with code GOLD20\n\n📞 (732) 430-6468 · www.goldservicedetailing.com',cta:'Book Now'},
         {week:8,theme:'Scale',type:'Summer Special',pill:'pill-won',headline:'Summer Fleet Special — First Month at 20% Off.',text:'Summer is the hardest season on commercial vehicles — heat, humidity, road tar, and salt.\n\nThis month only, new fleet clients get 20% off their first month of service.\n\n✦ Mobile — we come to your yard\n✦ 5 to 50+ vehicles welcome\n✦ Interior, exterior, or full detail\n✦ 20% off first month — mention this ad\n✦ No long-term contract required\n\n📞 (732) 430-6468 to claim your spot.\n🌐 www.goldservicedetailing.com',cta:'Claim Offer'}
       ].map(ad => `
         <div class="card" style="margin-bottom:14px">
@@ -1915,10 +1934,10 @@ faqs.forEach(([q,a]) =&gt; {
         {week:2,theme:'$20 Off Promo',hook:'If you live in Carteret area and your car needs a detail — listen up.',script:'HOOK (0-3s): TO CAMERA: "If you live in the Carteret area and your car needs a detail — listen up."\n\nOFFER (3-15s): TO CAMERA: "I\'m Christ, I run Gold Service Detailing right here in Carteret NJ. We\'re a fully mobile detailing service — meaning we come to YOUR house, your job, wherever your car is parked. You don\'t do anything."\n\nPROOF (15-22s): B-ROLL of your work. Voiceover: "Full details, interior cleans, ceramic coating — professional grade every time."\n\nCTA (22-30s): TO CAMERA: "Right now new customers get $20 off their first detail. Use code GOLD20 when you book online. Link is in my bio."',caption:'$20 off your first detail 👀 Mobile auto detailing in Carteret NJ — we come to YOU. Use code GOLD20 at booking. Link in bio. #GoldServiceDetailing #MobileDetailing #CarteretNJ #AutoDetailingNJ'},
         {week:3,theme:'Fleet — Does Your Fleet Embarrass You',hook:'If you run a business with company vehicles — this video is for you.',script:'HOOK (0-3s): TO CAMERA: "If you run a business with company vehicles — this video is for you."\n\nPROBLEM (3-12s): TO CAMERA: "Your fleet shows up to every job before you do. Dirty trucks, dusty vans, grimy logos — that\'s the first impression your clients get. And it\'s costing you."\n\nSOLUTION (12-22s): TO CAMERA: "Gold Service Detailing offers recurring mobile fleet cleaning contracts. We come to your yard, clean every vehicle on a schedule, starting at $35 a vehicle."\n\nCTA (22-30s): TO CAMERA: "DM me the word FLEET and I\'ll put together a custom quote. No commitment."',caption:'Your fleet is your brand on wheels 🚛 Gold Service Detailing — mobile fleet cleaning in Carteret, NJ. DM us "FLEET" for a free quote. #FleetDetailing #GoldServiceDetailing #CarteretNJ #CommercialCleaning'},
         {week:4,theme:'Timelapse Detail',hook:'Watched a whole detail in 30 seconds 👀',script:'HOOK (0-3s): Text on screen: "Watched a whole detail in 30 seconds 👀" Visual: Start of timelapse — dirty car.\n\nPROCESS (3-22s): Timelapse of the entire detail — washing, drying, interior, finishing. Fast cuts. High energy. Use CapCut trending audio.\n\nCTA (22-30s): Text on screen: "Book your detail — goldservicedetailing.com" Voiceover: "Gold Service Detailing. Carteret, NJ. We come to you."',caption:'POV: Your car getting the gold treatment ✨ Mobile auto detailing in Carteret NJ. Book at link in bio — first detail $20 off with code GOLD20. #DetailingLife #AutoDetailing #GoldServiceDetailing #CarTok'},
-        {week:5,theme:'What We Do — Process Video',hook:'People always ask what\'s actually included in a full detail.',script:'HOOK (0-3s): TO CAMERA: "People always ask what\'s actually included in a full detail. Let me show you."\n\nWALKTHROUGH (3-20s): TO CAMERA + B-ROLL: "We start with a full foam wash. Then we hit the wheels and tires. Inside — vacuum every corner, steam clean the vents, wipe down every surface, condition the leather, clean every window."\n\nRESULT (20-26s): B-ROLL of finished car. Voiceover: "Takes about 3 to 4 hours. We do it at your location. You don\'t do anything except come out and see the result."\n\nCTA (26-30s): TO CAMERA: "Full details start at $179. First one is $20 off. Book at the link in my bio."',caption:'Here\'s everything included in a full detail 🔍 Gold Service Detailing — Carteret, NJ. Book at link in bio. $20 off first detail — code GOLD20. #AutoDetailing #FullDetail #GoldServiceDetailing'},
-        {week:6,theme:'We Come to Your Yard',hook:'Attention business owners with company vehicles in the Carteret area.',script:'HOOK (0-3s): TO CAMERA: "Attention business owners with company vehicles in the Carteret area."\n\nOFFER (3-18s): TO CAMERA: "I pull up to your yard with everything I need — pressure washer, chemicals, equipment. Your drivers don\'t go anywhere. Your operation doesn\'t stop. I clean every vehicle while it\'s parked and send you photos when I\'m done."\n\nPROOF (18-24s): B-ROLL of you arriving, unloading, working on a commercial vehicle. Voiceover: "Monthly contracts starting at $35 per vehicle. 5 vehicles minimum."\n\nCTA (24-30s): TO CAMERA: "DM me the word FLEET or call (732) 430-6468. Free assessment."',caption:'We bring everything to your yard 🚐 Mobile fleet cleaning in Carteret NJ. Monthly contracts from $35/vehicle. DM us "FLEET" for a free quote. #FleetDetailing #GoldServiceDetailing'},
+        {week:5,theme:'What We Do — Process Video',hook:'People always ask what\'s actually included in a full detail.',script:'HOOK (0-3s): TO CAMERA: "People always ask what\'s actually included in a full detail. Let me show you."\n\nWALKTHROUGH (3-20s): TO CAMERA + B-ROLL: "We start with a full foam wash. Then we hit the wheels and tires. Inside — vacuum every corner, steam clean the vents, wipe down every surface, condition the leather, clean every window."\n\nRESULT (20-26s): B-ROLL of finished car. Voiceover: "Takes about 3 to 4 hours. We do it at your location. You don\'t do anything except come out and see the result."\n\nCTA (26-30s): TO CAMERA: "Gold+ details start at $165. First one is $20 off. Book at the link in my bio."',caption:'Here\'s everything included in a full detail 🔍 Gold Service Detailing — Carteret, NJ. Book at link in bio. $20 off first detail — code GOLD20. #AutoDetailing #FullDetail #GoldServiceDetailing'},
+        {week:6,theme:'We Come to Your Yard',hook:'Attention business owners with company vehicles in the Carteret area.',script:'HOOK (0-3s): TO CAMERA: "Attention business owners with company vehicles in the Carteret area."\n\nOFFER (3-18s): TO CAMERA: "I pull up to your yard with everything I need — pressure washer, chemicals, equipment. Your drivers don\'t go anywhere. Your operation doesn\'t stop. I clean every vehicle while it\'s parked and send you photos when I\'m done."\n\nPROOF (18-24s): B-ROLL of you arriving, unloading, working on a commercial vehicle. Voiceover: "Interior only fleet contracts at $35/vehicle for 20 vehicles. Full detail at $50/vehicle with a $500 deposit."\n\nCTA (24-30s): TO CAMERA: "DM me the word FLEET or call (732) 430-6468. Free assessment."',caption:'We bring everything to your yard 🚐 Mobile fleet cleaning in Carteret NJ. Fleet contracts from $35/vehicle. DM us "FLEET" for a free quote. #FleetDetailing #GoldServiceDetailing'},
         {week:7,theme:'Customer Reaction Video',hook:'Film the customer walking out to see their car for the first time.',script:'SETUP: Ask the customer\'s permission before filming. Most people are happy to be featured.\n\nHOOK (0-5s): Film the customer walking out. Don\'t say anything — let the anticipation build.\n\nMOMENT (5-25s): Customer reaction — walking around the car, looking inside, smiling. Let it breathe. Don\'t cut too fast. Authenticity is everything here.\n\nCTA (25-30s): Text on screen: "This is why we do it 🏆" "Gold Service Detailing · Carteret, NJ · goldservicedetailing.com"',caption:'Their reaction says it all 🏆 Gold Service Detailing — mobile auto detailing in Carteret, NJ. We come to you. Book at link in bio — first detail $20 off with code GOLD20. #CustomerReaction #GoldServiceDetailing'},
-        {week:8,theme:'Join Our Fleet Clients',hook:'We\'re now servicing fleets across Carteret, Linden, Perth Amboy, and Woodbridge.',script:'HOOK (0-3s): TO CAMERA: "We\'re now servicing fleets across Carteret, Linden, Perth Amboy, and Woodbridge. Here\'s how it works."\n\nHOW IT WORKS (3-18s): TO CAMERA: "Step one — you call or DM me with your fleet size. Step two — I come out for a free assessment. Step three — we set up a monthly schedule. You pay per vehicle, we show up on time, every time."\n\nNUMBERS (18-25s): TO CAMERA: "Pricing starts at $35 per vehicle per month on exterior only. Add interior for $75 combined."\n\nCTA (25-30s): TO CAMERA: "If your company runs 5 or more vehicles — let\'s talk. Call (732) 430-6468 or DM me FLEET right now."',caption:'Grow your fleet program with us 🚛✦ Gold Service Detailing — mobile fleet cleaning in NJ. Monthly contracts from $35/vehicle. DM "FLEET" or call (732) 430-6468. #FleetDetailing #GoldServiceDetailing #CarteretNJ'}
+        {week:8,theme:'Join Our Fleet Clients',hook:'We\'re now servicing fleets across Carteret, Linden, Perth Amboy, and Woodbridge.',script:'HOOK (0-3s): TO CAMERA: "We\'re now servicing fleets across Carteret, Linden, Perth Amboy, and Woodbridge. Here\'s how it works."\n\nHOW IT WORKS (3-18s): TO CAMERA: "Step one — you call or DM me with your fleet size. Step two — I come out for a free assessment. Step three — we set up a monthly schedule. You pay per vehicle, we show up on time, every time."\n\nNUMBERS (18-25s): TO CAMERA: "Interior only fleet contracts: $35/vehicle for 20 vehicles. Full detail: $50/vehicle with $500 deposit."\n\nCTA (25-30s): TO CAMERA: "If your company runs 5 or more vehicles — let\'s talk. Call (732) 430-6468 or DM me FLEET right now."',caption:'Grow your fleet program with us 🚛✦ Gold Service Detailing — mobile fleet cleaning in NJ. Fleet contracts from $35/vehicle. DM "FLEET" or call (732) 430-6468. #FleetDetailing #GoldServiceDetailing #CarteretNJ'}
       ].map(v => `
         <div class="card" style="margin-bottom:14px">
           <div class="flex-between mb-16">
@@ -2135,32 +2154,32 @@ faqs.forEach(([q,a]) =&gt; {
       <div class="card">
         <div class="section-title mb-16">TEAM GOALS</div>
         <div class="task-item">
-          <div class="task-check" id="team-g1" onclick="toggleGoal('team-g1','team-g1-txt')"></div>
+          <div class="task-check" id="team-g1" onclick="toggleGoal('team-g1','Hire 1st part-time detailer')"></div>
           <div class="task-body"><div class="task-title" id="team-g1-txt">Hire 1st part-time detailer (July)</div><div class="task-meta">GSD available days · Tue/Fri/Sat</div></div>
           <div class="task-priority priority-high">HIGH</div>
         </div>
         <div class="task-item">
-          <div class="task-check" id="team-g2" onclick="toggleGoal('team-g2','team-g2-txt')"></div>
+          <div class="task-check" id="team-g2" onclick="toggleGoal('team-g2','Hire 2nd part-time detailer')"></div>
           <div class="task-body"><div class="task-title" id="team-g2-txt">Hire 2nd part-time detailer (August)</div><div class="task-meta">Scale to 2 fleet routes simultaneously</div></div>
           <div class="task-priority priority-high">HIGH</div>
         </div>
         <div class="task-item">
-          <div class="task-check" id="team-g3" onclick="toggleGoal('team-g3','team-g3-txt')"></div>
+          <div class="task-check" id="team-g3" onclick="toggleGoal('team-g3','Christ manages ops full-time')"></div>
           <div class="task-body"><div class="task-title" id="team-g3-txt">3-person team fully operational (September)</div><div class="task-meta">You manage + handle premium jobs</div></div>
           <div class="task-priority priority-med">MED</div>
         </div>
         <div class="task-item">
-          <div class="task-check" id="team-g4" onclick="toggleGoal('team-g4','team-g4-txt')"></div>
+          <div class="task-check" id="team-g4" onclick="toggleGoal('team-g4','Team running fleet routes independently')"></div>
           <div class="task-body"><div class="task-title" id="team-g4-txt">Purchase / lease company van or trailer</div><div class="task-meta">Once 2nd team member hired</div></div>
           <div class="task-priority priority-med">MED</div>
         </div>
         <div class="task-item">
-          <div class="task-check" id="team-g5" onclick="toggleGoal('team-g5','team-g5-txt')"></div>
+          <div class="task-check" id="team-g5" onclick="toggleGoal('team-g5','Company vans acquired')"></div>
           <div class="task-body"><div class="task-title" id="team-g5-txt">Evaluate leaving Amazon DSP (November)</div><div class="task-meta">When GSD revenue consistently &gt; $7K/mo</div></div>
           <div class="task-priority priority-low">LOW</div>
         </div>
         <div class="task-item">
-          <div class="task-check" id="team-g6" onclick="toggleGoal('team-g6','team-g6-txt')"></div>
+          <div class="task-check" id="team-g6" onclick="toggleGoal('team-g6','Left Amazon DSP / GSD full-time')"></div>
           <div class="task-body"><div class="task-title" id="team-g6-txt">Open shop location for premium retail (2027)</div><div class="task-meta">Long-term vision · ceramic coating studio</div></div>
           <div class="task-priority priority-low">LOW</div>
         </div>
@@ -2367,9 +2386,8 @@ faqs.forEach(([q,a]) =&gt; {
     <div class="form-row">
       <div class="form-group"><label>Service Type</label>
         <select id="job-service">
-          <option>Fleet Interior (T1)</option>
-          <option>Fleet Exterior (T1)</option>
-          <option>Fleet Full Detail (T2)</option>
+          <option>Fleet Interior Only ($35/vehicle)</option>
+          <option>Fleet Full Detail ($50/vehicle)</option>
           <option>Full Detail (Retail)</option>
           <option>Exterior Only (Retail)</option>
           <option>Interior Only (Retail)</option>
@@ -2588,19 +2606,20 @@ function showPage(id) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
   document.getElementById('page-' + id).classList.add('active');
-  const titles = { dashboard:'Dashboard', leads:'CRM / Leads', jobs:'Jobs', schedule:'Schedule', 'ai-leads':'AI Lead Finder', automations:'Automations', finances:'Finances', tasks:'Tasks', content:'Content', ads:'Ad System', 'ai-chat':'AI Assistant', clients:'Client List', goals:'Goals & Roadmap', icp:'Ideal Customer Profile', history:'History' };
+  if (id === 'tasks') { id = 'schedule'; } // tasks merged into schedule
+  const titles = { dashboard:'Dashboard', leads:'CRM / Leads', jobs:'Jobs', schedule:'Schedule & Tasks', 'ai-leads':'AI Lead Finder', automations:'Automations', finances:'Finances', tasks:'Schedule & Tasks', content:'Content', ads:'Ad System', 'ai-chat':'AI Assistant', clients:'Client List', goals:'Goals & Roadmap', icp:'Ideal Customer Profile', history:'History & Activity Log' };
   document.getElementById('page-title').textContent = titles[id] || id.toUpperCase();
   const navItems = document.querySelectorAll('.nav-item');
   navItems.forEach(item => { if (item.textContent.toLowerCase().includes(id.replace('-',' '))) item.classList.add('active'); });
   if (id === 'leads') renderLeads();
   if (id === 'schedule') renderSchedule();
-  if (id === 'tasks') { renderTasks(); checkRollover(); }
+
   if (id === 'history') renderHistory();
   if (id === 'finances') renderFinances();
   if (id === 'jobs') renderJobs();
-  if (id === 'clients') { renderClients(); renderActivityLog(); }
+  if (id === 'clients') { renderClients(); }
   if (id === 'goals') renderGoalsPage();
-  if (id === 'activity-log') renderActivityLog();
+  
   if (window.innerWidth <= 768) closeSidebar();
 }
 
@@ -2826,8 +2845,8 @@ function renderTasks() {
   const monthGoals = {4:'Close 1st fleet contract',5:'Close 2 more fleet accounts',6:'Build 3-person team',7:'3-person team — $6K month',8:'Expand radius — $7.5K month',9:'Systematize — $9K month',10:'Hit $10K — 12+ contracts'};
   const m = new Date().getMonth();
   const mn = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][m];
-  if (document.getElementById('month-goal-title')) document.getElementById('month-goal-title').textContent = mn + ' Goal';
-  if (document.getElementById('month-goal-sub')) document.getElementById('month-goal-sub').textContent = monthGoals[m] || 'Keep pushing toward $10K/month';
+  if (document.getElementById('cal-month-goal')) document.getElementById('cal-month-goal').textContent = mn + ' Goal';
+  if (document.getElementById('cal-month-goal')) document.getElementById('cal-month-goal').textContent = monthGoals[m] || 'Keep pushing toward $10K/month';
 }
 
 function taskHTML(t) {
@@ -2899,42 +2918,110 @@ function checkRollover() {
 }
 
 function renderHistory() {
+  if (!state.activities) state.activities = [];
   if (!state.history) state.history = [];
-  const h = state.history.slice().sort((a,b) => new Date(b.completedDate) - new Date(a.completedDate));
-  const total = h.length;
-  const onTime = h.filter(x => x.onTime).length;
-  if (document.getElementById('hist-tasks-done')) document.getElementById('hist-tasks-done').textContent = total;
-  if (document.getElementById('hist-ontime')) document.getElementById('hist-ontime').textContent = total ? Math.round((onTime/total)*100)+'%' : '--';
-  if (document.getElementById('hist-rolled')) document.getElementById('hist-rolled').textContent = h.filter(x => x.rolledOver).length;
-  if (document.getElementById('hist-high-done')) document.getElementById('hist-high-done').textContent = h.filter(x => x.priority === 'high').length;
-  const fullRow = x => '<tr>' +
-    '<td style="font-family:var(--font-mono);font-size:0.72rem">' + x.completedDate + '</td>' +
-    '<td style="font-size:0.82rem"><strong>' + x.title + '</strong>' + (x.rolledOver ? '<span style="color:var(--orange);font-size:0.65rem;margin-left:6px">↩ rolled</span>' : '') + '</td>' +
-    '<td><span class="pill pill-contact" style="font-size:0.6rem">' + x.category + '</span></td>' +
-    '<td style="font-size:0.72rem;color:' + (x.priority==='high'?'var(--red)':x.priority==='med'?'var(--orange)':'var(--blue)') + '">' + (x.priority||'med').toUpperCase() + '</td>' +
-    '<td style="font-family:var(--font-mono);font-size:0.72rem">' + x.due + '</td>' +
-    '<td style="color:' + (x.onTime?'var(--green)':'var(--red)') + ';font-size:0.8rem">' + (x.onTime ? '✓ On Time' : '✗ Late') + '</td>' +
-    '<td style="font-family:var(--font-mono);font-size:0.72rem;color:var(--text-muted)">' + x.estTime + '</td>' +
-    '<td style="font-family:var(--font-mono);font-size:0.72rem;color:var(--text-muted)">' + x.actualTime + '</td>' +
-    '<td style="font-size:0.72rem;color:var(--gold)">' + (x.goalLink||'--') + '</td>' +
-  '</tr>';
-  const catRow = x => '<tr>' +
-    '<td style="font-family:var(--font-mono);font-size:0.72rem">' + x.completedDate + '</td>' +
-    '<td style="font-size:0.82rem">' + x.title + '</td>' +
-    '<td style="font-size:0.72rem;color:' + (x.priority==='high'?'var(--red)':x.priority==='med'?'var(--orange)':'var(--blue)') + '">' + (x.priority||'med').toUpperCase() + '</td>' +
-    '<td style="color:' + (x.onTime?'var(--green)':'var(--red)') + ';font-size:0.8rem">' + (x.onTime ? '✓ On Time' : '✗ Late') + '</td>' +
-    '<td style="font-size:0.72rem;color:var(--gold)">' + (x.goalLink||'--') + '</td>' +
-  '</tr>';
-  const empty = cols => '<tr><td colspan="' + cols + '" style="text-align:center;color:var(--text-muted);padding:24px;font-size:0.75rem">No tasks yet</td></tr>';
-  const allBody = document.getElementById('hist-all-body');
-  if (allBody) allBody.innerHTML = h.length ? h.map(fullRow).join('') : empty(9);
-  [['Outreach','hist-outreach-body'],['Fleet Job','hist-jobs-body'],['Content','hist-content-body'],['Admin','hist-admin-body'],['Finance','hist-finance-body']].forEach(([cat,id]) => {
-    const el = document.getElementById(id);
-    const items = h.filter(x => x.category === cat);
-    if (el) el.innerHTML = items.length ? items.map(catRow).join('') : empty(5);
-  });
-}
 
+  // Unified feed: merge activities + completed task history
+  const taskEntries = state.history.map(h => ({
+    id: h.id, date: h.completedDate, client: h.goalLink || 'GSD Tasks',
+    type: 'Task Completed', details: h.title,
+    priority: h.priority, onTime: h.onTime, revenue: 0,
+    source: 'task', due: h.due, rolledOver: h.rolledOver, goalLink: h.goalLink,
+  }));
+  const all = [...state.activities, ...taskEntries]
+    .sort((a,b) => new Date(b.date) - new Date(a.date));
+
+  // Stats
+  const total    = all.length;
+  const tasks    = all.filter(x => x.source === 'task');
+  const onTime   = tasks.filter(x => x.onTime).length;
+  const goals    = all.filter(x => x.type === 'Goal Completed').length;
+  const revenue  = all.reduce((s,x) => s + (x.revenue||0), 0);
+  if (document.getElementById('hist-tasks-done')) document.getElementById('hist-tasks-done').textContent = total;
+  if (document.getElementById('hist-ontime')) document.getElementById('hist-ontime').textContent = tasks.length ? Math.round((onTime/tasks.length)*100)+'%' : '--';
+  if (document.getElementById('hist-goals-hit')) document.getElementById('hist-goals-hit').textContent = goals;
+  if (document.getElementById('hist-revenue')) document.getElementById('hist-revenue').textContent = '$'+revenue.toLocaleString();
+
+  const typeColors = {
+    'Task Completed':'pill-won','Goal Completed':'pill-priority','Job Completed':'pill-won',
+    'Contract Signed':'pill-won','Phone Call':'pill-meeting','Email Sent':'pill-contacted',
+    'Email Received':'pill-contact','Meeting':'pill-meeting','Quote Sent':'pill-contacted',
+    'Payment Received':'pill-won','Follow-Up':'pill-contact','Note':'pill-contact',
+  };
+
+  const fullRow = x => `<tr>
+    <td style="font-family:var(--font-mono);font-size:0.72rem;white-space:nowrap">${x.date}</td>
+    <td style="font-size:0.82rem"><strong>${x.client||'—'}</strong></td>
+    <td><span class="pill ${typeColors[x.type]||'pill-contact'}" style="font-size:0.6rem">${x.type}</span></td>
+    <td style="font-size:0.8rem;max-width:260px">${x.details||'—'}${x.rolledOver?'<span style="color:var(--orange);font-size:0.65rem;margin-left:6px">↩ rolled</span>':''}</td>
+    <td style="font-size:0.72rem;color:${x.priority==='high'?'var(--red)':x.priority==='med'?'var(--orange)':'var(--blue)'}">${x.priority?x.priority.toUpperCase():'—'}</td>
+    <td style="color:${x.onTime===true?'var(--green)':x.onTime===false?'var(--red)':'var(--text-muted)'};font-size:0.8rem">${x.onTime===true?'✓ Yes':x.onTime===false?'✗ Late':'—'}</td>
+    <td style="font-family:var(--font-mono);font-size:0.72rem;color:${x.revenue>0?'var(--green)':'var(--text-muted)'}">${x.revenue>0?'$'+x.revenue.toFixed(2):'—'}</td>
+    <td><div style="display:flex;gap:4px">
+      ${x.source!=='task'?`<button class="btn btn-ghost btn-sm" onclick="editActivity(${x.id})" style="font-size:0.6rem;padding:3px 7px">✏️</button><button class="btn btn-danger btn-sm" onclick="deleteActivity(${x.id})" style="font-size:0.6rem;padding:3px 7px">✕</button>`:'<span style="font-size:0.65rem;color:var(--text-muted)">auto</span>'}
+    </div></td>
+  </tr>`;
+
+  const empty = (n,msg) => `<tr><td colspan="${n}" style="text-align:center;color:var(--text-muted);padding:24px;font-size:0.75rem">${msg}</td></tr>`;
+
+  // All tab
+  const allBody = document.getElementById('hist-all-body');
+  if (allBody) allBody.innerHTML = all.length ? all.map(fullRow).join('') : empty(8,'No activity yet — complete tasks or log activity to start tracking');
+
+  // Outreach tab
+  const outEl = document.getElementById('hist-outreach-body');
+  const outItems = all.filter(x => ['Email Sent','Phone Call','Follow-Up','Quote Sent','Meeting'].includes(x.type) || (x.source==='task' && x.client && x.client!=='GSD Tasks'));
+  if (outEl) outEl.innerHTML = outItems.length ? outItems.map(x => `<tr>
+    <td style="font-family:var(--font-mono);font-size:0.72rem">${x.date}</td>
+    <td><strong>${x.client||'—'}</strong></td>
+    <td><span class="pill ${typeColors[x.type]||'pill-contact'}" style="font-size:0.6rem">${x.type}</span></td>
+    <td style="font-size:0.8rem">${x.details||'—'}</td>
+    <td style="color:${x.onTime===true?'var(--green)':x.onTime===false?'var(--red)':'var(--text-muted)'}">${x.onTime===true?'✓ Yes':x.onTime===false?'✗ Late':'—'}</td>
+  </tr>`).join('') : empty(5,'No outreach logged yet');
+
+  // Jobs tab
+  const jobsEl = document.getElementById('hist-jobs-body');
+  const jobItems = all.filter(x => ['Job Completed','Payment Received','Contract Signed'].includes(x.type));
+  if (jobsEl) jobsEl.innerHTML = jobItems.length ? jobItems.map(x => `<tr>
+    <td style="font-family:var(--font-mono);font-size:0.72rem">${x.date}</td>
+    <td><strong>${x.client||'—'}</strong></td>
+    <td><span class="pill ${typeColors[x.type]||'pill-contact'}" style="font-size:0.6rem">${x.type}</span></td>
+    <td style="font-size:0.8rem">${x.details||'—'}</td>
+    <td style="font-family:var(--font-mono);color:var(--green)">${x.revenue>0?'$'+x.revenue.toFixed(2):'—'}</td>
+  </tr>`).join('') : empty(5,'No job activity logged yet');
+
+  // Goals tab
+  const goalsEl = document.getElementById('hist-goals-body');
+  const goalItems = all.filter(x => x.type === 'Goal Completed');
+  if (goalsEl) goalsEl.innerHTML = goalItems.length ? goalItems.map(x => `<tr>
+    <td style="font-family:var(--font-mono);font-size:0.72rem">${x.date}</td>
+    <td><strong>${x.details||'—'}</strong></td>
+    <td><span class="pill pill-priority" style="font-size:0.6rem">Goal</span></td>
+    <td style="font-size:0.8rem;color:var(--green)">✦ Completed</td>
+  </tr>`).join('') : empty(4,'No goals completed yet — check them off in Goals & Roadmap!');
+
+  // Tasks tab
+  const tasksEl = document.getElementById('hist-tasks-tab-body');
+  const taskItems = all.filter(x => x.source === 'task');
+  if (tasksEl) tasksEl.innerHTML = taskItems.length ? taskItems.map(x => `<tr>
+    <td style="font-family:var(--font-mono);font-size:0.72rem">${x.date}</td>
+    <td style="font-size:0.82rem">${x.details}</td>
+    <td style="font-size:0.72rem;color:${x.priority==='high'?'var(--red)':x.priority==='med'?'var(--orange)':'var(--blue)'}">${x.priority?x.priority.toUpperCase():'—'}</td>
+    <td style="font-family:var(--font-mono);font-size:0.72rem">${x.due||'—'}</td>
+    <td style="color:${x.onTime?'var(--green)':'var(--red)'}">${x.onTime?'✓ On Time':'✗ Late'}</td>
+    <td style="font-size:0.72rem;color:var(--gold)">${x.goalLink||'—'}</td>
+  </tr>`).join('') : empty(6,'No tasks completed yet');
+
+  // Content tab
+  const contEl = document.getElementById('hist-content-body');
+  const contItems = all.filter(x => x.source==='task' && x.type==='Task Completed' && x.details && x.details.toLowerCase().includes('post'));
+  if (contEl) contEl.innerHTML = contItems.length ? contItems.map(x => `<tr>
+    <td style="font-family:var(--font-mono);font-size:0.72rem">${x.date}</td>
+    <td><span class="pill pill-contact" style="font-size:0.6rem">Content</span></td>
+    <td style="font-size:0.8rem">${x.details}</td>
+    <td style="color:${x.onTime?'var(--green)':'var(--red)'}">${x.onTime?'✓ On Time':'✗ Late'}</td>
+  </tr>`).join('') : empty(4,'No content activity logged yet');
+}
 function exportHistory() {
   if (!state.history || !state.history.length) { showToast('No history to export yet', 'error'); return; }
   const hdr = 'Completed,Task,Category,Priority,Due,On Time,Rolled Over,Goal Link\n';
@@ -2996,58 +3083,157 @@ function addTask() {
 function openAddTask() { openModal('modal-add-task'); }
 
 // ── SCHEDULE ──
-function renderSchedule() {
-  const container = document.getElementById('schedule-container');
-  if (!container) return;
-  const now = new Date();
-  const days = [];
-  for (let i = 0; i < 7; i++) {
-    const d = new Date(now); d.setDate(now.getDate() + i);
-    days.push(d);
-  }
-  const dayNames = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
-  const isGSDDay = (d) => [2, 5, 6].includes(d.getDay()); // Tue, Fri, Sat
-  const isAmazonDay = (d) => [0, 1, 3, 4].includes(d.getDay()); // Sun, Mon, Wed, Thu
+// ── CALENDAR / SCHEDULE+TASKS ──
+let calYear  = new Date().getFullYear();
+let calMonth = new Date().getMonth();
+let calSelectedDate = new Date().toISOString().split('T')[0];
 
-  container.innerHTML = days.map(d => {
-    const isToday = d.toDateString() === now.toDateString();
-    const gsd = isGSDDay(d);
-    const amazon = isAmazonDay(d);
-    return `
-    <div class="schedule-day" style="${isToday ? 'border-color:var(--gold)' : ''}">
-      <div class="schedule-day-header">
-        <div class="schedule-day-name">${isToday ? '★ ' : ''}${dayNames[d.getDay()]}${isToday ? ' (Today)' : ''}</div>
-        <div class="schedule-day-date">${d.toLocaleDateString('en-US',{month:'short',day:'numeric'})}</div>
-      </div>
-      ${amazon ? `
-      <div class="schedule-event">
-        <div class="event-time">10am–8pm</div>
-        <div class="event-dot" style="background:var(--blue)"></div>
-        <div class="event-body">
-          <div class="event-title">Amazon DSP Shift</div>
-          <div class="event-sub">Package delivery · Income</div>
-        </div>
-      </div>` : ''}
-      ${gsd ? `
-      <div class="schedule-event">
-        <div class="event-time">All Day</div>
-        <div class="event-dot" style="background:var(--gold)"></div>
-        <div class="event-body">
-          <div class="event-title" style="color:var(--gold)">✦ GSD Business Day</div>
-          <div class="event-sub">Fleet jobs · Outreach · Client calls</div>
-        </div>
-      </div>` : ''}
-      ${amazon ? `
-      <div class="schedule-event">
-        <div class="event-time">8:30–10pm</div>
-        <div class="event-dot" style="background:var(--gold-dim)"></div>
-        <div class="event-body">
-          <div class="event-title">GSD Evening Window</div>
-          <div class="event-sub">Emails · Follow-ups · Planning</div>
-        </div>
-      </div>` : ''}
+const monthGoalMap = {
+  4:'Close 1st new fleet contract — Foundation Month',
+  5:'Close 2 more fleet accounts — Hire 1st detailer',
+  6:'Close A. Duie Pyle — Build 3-person team',
+  7:'3-person team operational — $6K month',
+  8:'Expand radius — 2nd van — $7.5K month',
+  9:'Systematize everything — $9K month',
+  10:'Hit $10K — 12+ active fleet contracts'
+};
+
+const isAmazonDay = d => [0,1,3,4].includes(d); // Sun Mon Wed Thu
+const isGSDDay    = d => [2,5,6].includes(d);   // Tue Fri Sat
+
+function renderSchedule() {
+  const now   = new Date();
+  const today = now.toISOString().split('T')[0];
+  const mNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+
+  // Month goal title
+  const goal = monthGoalMap[calMonth] || 'Keep pushing toward $10K/month';
+  if (document.getElementById('cal-month-goal')) document.getElementById('cal-month-goal').textContent = mNames[calMonth] + ' — ' + goal;
+  if (document.getElementById('cal-title')) document.getElementById('cal-title').textContent = mNames[calMonth] + ' ' + calYear;
+
+  // Build calendar
+  const firstDay   = new Date(calYear, calMonth, 1).getDay();
+  const daysInMonth = new Date(calYear, calMonth+1, 0).getDate();
+  const daysInPrev  = new Date(calYear, calMonth, 0).getDate();
+
+  const grid = document.getElementById('cal-grid');
+  if (!grid) return;
+
+  let html = '';
+  let dayCount = 0;
+  const totalCells = Math.ceil((firstDay + daysInMonth) / 7) * 7;
+
+  for (let i = 0; i < totalCells; i++) {
+    let date, isCurrentMonth = true;
+    if (i < firstDay) {
+      date = new Date(calYear, calMonth-1, daysInPrev - firstDay + i + 1);
+      isCurrentMonth = false;
+    } else if (i >= firstDay + daysInMonth) {
+      date = new Date(calYear, calMonth+1, i - firstDay - daysInMonth + 1);
+      isCurrentMonth = false;
+    } else {
+      date = new Date(calYear, calMonth, i - firstDay + 1);
+    }
+
+    const dateStr   = date.toISOString().split('T')[0];
+    const isToday   = dateStr === today;
+    const isSelected = dateStr === calSelectedDate;
+    const dow       = date.getDay();
+    const amazon    = isCurrentMonth && isAmazonDay(dow);
+    const gsd       = isCurrentMonth && isGSDDay(dow);
+    const dayTasks  = (state.tasks||[]).filter(t => t.due === dateStr);
+    const doneTasks = dayTasks.filter(t => t.done).length;
+
+    let classes = 'cal-day';
+    if (!isCurrentMonth) classes += ' other-month';
+    if (isToday) classes += ' today';
+    if (isSelected) classes += ' selected';
+    if (amazon && !isToday && !isSelected) classes += ' amazon';
+    if (gsd && !isToday && !isSelected) classes += ' gsd-day';
+
+    let badge = '';
+    if (isCurrentMonth) {
+      if (amazon) badge = `<div class="cal-day-badge" style="color:rgba(52,152,219,0.7)">DSP</div>`;
+      if (gsd)    badge = `<div class="cal-day-badge" style="color:rgba(201,168,76,0.7)">GSD</div>`;
+    }
+
+    const taskChips = dayTasks.slice(0,3).map(t =>
+      `<div class="cal-task-chip ${t.priority==='high'?'high':''} ${t.done?'done':''}">${t.title.slice(0,20)}</div>`
+    ).join('');
+    const moreChip = dayTasks.length > 3 ? `<div style="font-size:0.5rem;color:var(--text-muted);padding-top:1px">+${dayTasks.length-3} more</div>` : '';
+
+    html += `<div class="${classes}" onclick="selectCalDay('${dateStr}')">
+      <div class="cal-day-num">${date.getDate()}</div>
+      ${badge}
+      <div class="cal-tasks-preview">${taskChips}${moreChip}</div>
     </div>`;
-  }).join('');
+  }
+  grid.innerHTML = html;
+
+  // Render selected day
+  renderCalDay(calSelectedDate);
+  // Render task lists below
+  renderTasks();
+  checkRollover();
+}
+
+function calNav(dir) {
+  calMonth += dir;
+  if (calMonth > 11) { calMonth = 0; calYear++; }
+  if (calMonth < 0)  { calMonth = 11; calYear--; }
+  renderSchedule();
+}
+
+function selectCalDay(dateStr) {
+  calSelectedDate = dateStr;
+  // Re-render grid to update selected state
+  const grid = document.getElementById('cal-grid');
+  if (grid) {
+    grid.querySelectorAll('.cal-day').forEach(el => el.classList.remove('selected'));
+    // find and mark
+    renderSchedule();
+  }
+  renderCalDay(dateStr);
+}
+
+function renderCalDay(dateStr) {
+  const panel = document.getElementById('cal-day-panel');
+  const title = document.getElementById('cal-day-title');
+  const sub   = document.getElementById('cal-day-sub');
+  const tasksEl = document.getElementById('cal-day-tasks');
+  if (!panel || !tasksEl) return;
+
+  const d   = new Date(dateStr + 'T12:00:00');
+  const dow = d.getDay();
+  const amazon = isAmazonDay(dow);
+  const gsd    = isGSDDay(dow);
+  const dayNames = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+
+  if (title) title.textContent = dayNames[dow] + ', ' + d.toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'});
+  if (sub) {
+    if (amazon) sub.textContent = '⚡ Amazon DSP day — GSD evening window 8:30–10pm';
+    else if (gsd) sub.textContent = '✦ GSD Business Day — Full day available';
+    else sub.textContent = 'Weekend day';
+  }
+
+  const dayTasks = (state.tasks||[]).filter(t => t.due === dateStr);
+  const pri = {high:0,med:1,low:2};
+
+  if (!dayTasks.length) {
+    tasksEl.innerHTML = '<div style="color:var(--text-muted);font-family:var(--font-mono);font-size:0.72rem;padding:12px 0;text-align:center">No tasks for this day — click + Add Task</div>';
+  } else {
+    tasksEl.innerHTML = dayTasks
+      .sort((a,b) => (pri[a.priority]||1)-(pri[b.priority]||1))
+      .map(t => taskHTML(t)).join('');
+  }
+}
+
+let _selectedAddDate = null;
+function openAddTaskForDate() {
+  _selectedAddDate = calSelectedDate;
+  openModal('modal-add-task');
+  const dueInput = document.getElementById('task-due');
+  if (dueInput && calSelectedDate) dueInput.value = calSelectedDate;
 }
 
 // ── FINANCES ──
@@ -3089,20 +3275,84 @@ function logIncome() {
   showToast(`Income logged for ${month}`, 'success');
 }
 
-// ── DASHBOARD METRICS ──
+// ── DASHBOARD METRICS — fully state-driven ──
 function updateDashboardMetrics() {
-  const thisMonth = new Date().getMonth();
+  const today = new Date();
+  const thisMonth = today.getMonth();
+  const todayStr = today.toISOString().split('T')[0];
+
+  // Revenue from logged jobs this month
   const monthJobs = state.jobs.filter(j => new Date(j.date).getMonth() === thisMonth);
-  const monthRev = monthJobs.reduce((s,j) => s + j.revenue, 0);
+  const monthRev  = monthJobs.reduce((s,j) => s + (j.revenue||0), 0);
   const pct = Math.min(100, (monthRev / GSD.goal) * 100);
+
   if (document.getElementById('current-mrr')) document.getElementById('current-mrr').textContent = '$' + monthRev.toLocaleString();
-  if (document.getElementById('goal-bar')) document.getElementById('goal-bar').style.width = pct + '%';
-  if (document.getElementById('goal-pct')) document.getElementById('goal-pct').textContent = pct.toFixed(0) + '%';
-  const milestones = [1000, 2500, 5000, 7500, 10000, 15000];
-  milestones.forEach((m, i) => {
-    const el = document.getElementById('m' + (i+1));
+  if (document.getElementById('goal-bar'))    document.getElementById('goal-bar').style.width = pct + '%';
+  if (document.getElementById('goal-pct'))    document.getElementById('goal-pct').textContent = pct.toFixed(0) + '%';
+  [1000,2500,5000,7500,10000,15000].forEach((m,i) => {
+    const el = document.getElementById('m'+(i+1));
     if (el) el.classList.toggle('reached', monthRev >= m);
   });
+
+  // KPIs from state
+  const activeClients = (state.clients||[]).filter(c => c.status === 'Active').length;
+  const allLeads = (state.leads||[]).length;
+  const hotLeads = (state.leads||[]).filter(l => l.priority && !['Closed Won','Closed Lost'].includes(l.status));
+  const todayTasks = (state.tasks||[]).filter(t => !t.done && (t.due === todayStr || !t.due));
+
+  if (document.getElementById('kpi-clients')) {
+    document.getElementById('kpi-clients').textContent = activeClients;
+    document.getElementById('kpi-clients-sub').textContent = activeClients === 1 ? '1 active contract' : activeClients + ' active contracts';
+  }
+  if (document.getElementById('kpi-jobs')) {
+    document.getElementById('kpi-jobs').textContent = monthJobs.length;
+    document.getElementById('kpi-jobs-sub').textContent = '$' + monthRev.toLocaleString() + ' this month';
+  }
+  if (document.getElementById('kpi-leads')) {
+    document.getElementById('kpi-leads').textContent = allLeads;
+    document.getElementById('kpi-leads-sub').textContent = hotLeads.length + ' high priority';
+  }
+  if (document.getElementById('kpi-tasks')) {
+    document.getElementById('kpi-tasks').textContent = todayTasks.length;
+    document.getElementById('kpi-tasks-sub').textContent = todayTasks.filter(t => t.priority==='high').length + ' high priority';
+  }
+
+  // Hot leads panel — top 4 from state by priority
+  const hotEl = document.getElementById('dash-hot-leads');
+  if (hotEl) {
+    const top = (state.leads||[])
+      .filter(l => !['Closed Won','Closed Lost'].includes(l.status))
+      .sort((a,b) => (b.priority?1:0)-(a.priority?1:0))
+      .slice(0,4);
+    if (!top.length) {
+      hotEl.innerHTML = '<div style="color:var(--text-muted);font-family:var(--font-mono);font-size:0.72rem;padding:12px 0;text-align:center">No active leads — add some in CRM</div>';
+    } else {
+      hotEl.innerHTML = '<table class="data-table"><thead><tr><th>Company</th><th>Fleet</th><th>Status</th></tr></thead><tbody>' +
+        top.map(l => `<tr>
+          <td><strong>${l.company}</strong><br><span style="font-size:0.7rem;color:var(--text-muted)">${l.city||''}</span></td>
+          <td><span style="font-family:var(--font-mono);color:var(--gold)">${l.fleet||'?'}</span></td>
+          <td><span class="pill ${getStatusClass(l.status)}">${l.status}</span></td>
+        </tr>`).join('') + '</tbody></table>';
+    }
+  }
+
+  // Today's tasks on dashboard
+  const todayListEl = document.getElementById('today-tasks-list');
+  if (todayListEl) {
+    const pri = {high:0,med:1,low:2};
+    const sorted = todayTasks.sort((a,b) => (pri[a.priority]||1)-(pri[b.priority]||1));
+    todayListEl.innerHTML = sorted.length
+      ? sorted.slice(0,5).map(t => taskHTML(t)).join('') + (sorted.length>5?`<div style="font-size:0.75rem;color:var(--text-muted);font-family:var(--font-mono);padding:8px 0;text-align:center">+${sorted.length-5} more — see Schedule & Tasks</div>`:'')
+      : '<div style="color:var(--text-muted);font-family:var(--font-mono);font-size:0.72rem;padding:12px 0;text-align:center">No tasks today — add one or hit AI Update</div>';
+  }
+
+  // Date sub label
+  const dateSub = document.getElementById('tasks-date-sub');
+  if (dateSub) dateSub.textContent = today.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
+
+  // Leads badge
+  const badge = document.getElementById('leads-badge');
+  if (badge) badge.textContent = allLeads;
 }
 
 // ── AI FUNCTIONS ──
@@ -3129,7 +3379,7 @@ KEY FACTS:
 - Amazon DSP schedule: Sun, Mon, Wed, Thu 10am–8pm (home by 8:20–9:15pm)
 - Available for GSD: Tue, Fri, Sat (full days) + evenings after Amazon
 - Current fleet client: Amazon DSP employer, 20 vehicles, interior only, monthly, doing 10/week
-- Fleet pricing: T1 Interior bi-weekly $31–35/vehicle, monthly $36–40/vehicle
+- Fleet pricing: Interior Only $35/vehicle (20 vehicles), Full Detail $50/vehicle (20 vehicles, $500 deposit). Retail: Interior Only $85–100, Gold $125–140, Gold+ $165–180. Maintenance plan: $100 initial, $45.75 bi-weekly, $60.75 monthly.
 - 59 fleet prospects in pipeline
 - Top leads: Leonard Logistics (25 trucks), Goodwin Trucking (28 trucks), A. Duie Pyle (50+), FFJ Logistics (12)
 - Monthly fixed expenses: $585 (car payment $300, insurance $190, gas $40, supplies $55)
@@ -3379,7 +3629,7 @@ function syncAll() {
   renderSchedule();
   renderFinances();
   renderClients();
-  renderActivityLog();
+  renderHistory();
   renderGoalsPage();
   updateDashboardMetrics();
   setTimeout(() => showToast('Gold HQ synced!', 'success'), 800);
@@ -3483,7 +3733,7 @@ function logActivity() {
   state.activities.push(activity);
   saveState();
   closeModal('modal-log-activity');
-  renderActivityLog();
+  renderHistory();
   showToast('Activity logged!', 'success');
 }
 
@@ -3522,39 +3772,69 @@ function renderGoalsPage() {
     if (el) el.classList.toggle('reached', mrr >= m);
   });
 
-  // Milestone checklist
+  if (!state.goalProgress) state.goalProgress = {};
+
   const el = document.getElementById('milestone-checklist');
   if (!el) return;
   const milestones = [
-    { month:'June 2026', target:'$1,500', tasks:['Close 1st new fleet contract','Deploy 59 outreach emails via Apps Script','Set up Instagram auto-DM replies'], done: false },
-    { month:'July 2026', target:'$2,800', tasks:['Hire 1st part-time detailer','Close 2 more fleet contracts','Reach 10+ Google reviews'], done: false },
-    { month:'August 2026', target:'$4,500', tasks:['Close A. Duie Pyle terminal contract','Hire 2nd part-time detailer','Launch weekend retail bookings'], done: false },
-    { month:'September 2026', target:'$6,000', tasks:['3-person team fully running','Close Lineage cold storage contract','Upgrade clients to T2 pricing'], done: false },
-    { month:'October 2026', target:'$7,500', tasks:['Expand radius to Edison/Woodbridge/Elizabeth','Second van or trailer','Run first paid ads $100-150/mo'], done: false },
-    { month:'November 2026', target:'$9,000', tasks:['All automations fully running','Evaluate leaving Amazon DSP','Close 2 more mid-size contracts'], done: false },
-    { month:'December 2026', target:'$10,000 ✦', tasks:['12+ active fleet contracts','3-person team on daily routes','GSD is your full-time business'], done: false },
+    { month:'June 2026', target:'$1,500', tasks:['Close 1st new fleet contract','Deploy 59 outreach emails via Apps Script','Set up Instagram auto-DM replies'] },
+    { month:'July 2026', target:'$2,800', tasks:['Hire 1st part-time detailer','Close 2 more fleet contracts','Reach 10+ Google reviews'] },
+    { month:'August 2026', target:'$4,500', tasks:['Close A. Duie Pyle terminal contract','Hire 2nd part-time detailer','Launch weekend retail bookings'] },
+    { month:'September 2026', target:'$6,000', tasks:['3-person team fully running','Close Lineage cold storage contract','Upsell clients to Full Detail fleet plan'] },
+    { month:'October 2026', target:'$7,500', tasks:['Expand radius to Edison/Woodbridge/Elizabeth','Second van or trailer','Run first paid ads $100-150/mo'] },
+    { month:'November 2026', target:'$9,000', tasks:['All automations fully running','Evaluate leaving Amazon DSP','Close 2 more mid-size contracts'] },
+    { month:'December 2026', target:'$10,000 ✦', tasks:['12+ active fleet contracts','3-person team on daily routes','GSD is your full-time business'] },
   ];
-  el.innerHTML = milestones.map((m, mi) => `
-    <div style="padding:12px 0;border-bottom:1px solid var(--border);">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-        <div style="font-family:var(--font-display);font-size:0.95rem;color:var(--gold);letter-spacing:1px">${m.month}</div>
+
+  el.innerHTML = milestones.map((m, mi) => {
+    const allDone = m.tasks.every((_,ti) => state.goalProgress['mg'+mi+'_'+ti]);
+    return `
+    <div style="padding:14px 0;border-bottom:1px solid var(--border);${allDone?'opacity:0.7':''}">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+        <div style="font-family:var(--font-display);font-size:0.95rem;color:${allDone?'var(--green)':'var(--gold)'};letter-spacing:1px">${allDone?'✓ ':''} ${m.month}</div>
         <div style="font-family:var(--font-mono);font-size:0.72rem;color:var(--green)">${m.target}</div>
       </div>
-      ${m.tasks.map((t,ti) => `
+      ${m.tasks.map((t,ti) => {
+        const key = 'mg'+mi+'_'+ti;
+        const done = !!state.goalProgress[key];
+        return `
         <div class="task-item" style="padding:6px 0;">
-          <div class="task-check" onclick="toggleGoal('mg${mi}_${ti}','mgt${mi}_${ti}')"></div>
-          <div class="task-body"><div class="task-title" id="mgt${mi}_${ti}" style="font-size:0.8rem">${t}</div></div>
-        </div>
-      `).join('')}
-    </div>
-  `).join('');
+          <div class="task-check ${done?'done':''}" onclick="toggleGoal('${key}','${t}')"></div>
+          <div class="task-body"><div class="task-title ${done?'done':''}" style="font-size:0.82rem">${t}</div></div>
+        </div>`;
+      }).join('')}
+    </div>`;
+  }).join('');
+
+  // Also restore team goal checkboxes
+  ['team-g1','team-g2','team-g3','team-g4','team-g5','team-g6'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el && state.goalProgress[id]) el.classList.add('done');
+    const txt = document.getElementById(id+'-txt');
+    if (txt && state.goalProgress[id]) txt.classList.add('done');
+  });
 }
 
-function toggleGoal(checkId, titleId) {
-  const check = document.getElementById(checkId);
-  const title = document.getElementById(titleId);
-  if (check) check.classList.toggle('done');
-  if (title) title.classList.toggle('done');
+function toggleGoal(key, label) {
+  if (!state.goalProgress) state.goalProgress = {};
+  state.goalProgress[key] = !state.goalProgress[key];
+  saveState();
+  renderGoalsPage();
+  if (state.goalProgress[key]) {
+    // Log to unified activity/history
+    if (!state.activities) state.activities = [];
+    state.activities.push({
+      id: Date.now(),
+      date: new Date().toISOString().split('T')[0],
+      client: 'GSD Business',
+      type: 'Goal Completed',
+      details: 'Milestone achieved: ' + label,
+      revenue: 0,
+      source: 'goals',
+    });
+    saveState();
+    showToast('✦ Goal marked complete!', 'success');
+  }
 }
 
 // ── ICP AI REFINE ──
@@ -3807,7 +4087,7 @@ function editActivity(id) {
   ], (result) => {
     Object.assign(state.activities[idx], result);
     saveState();
-    renderActivityLog();
+    renderHistory();
     showToast('Activity updated!', 'success');
   });
 }
@@ -3815,7 +4095,7 @@ function editActivity(id) {
 function deleteActivity(id) {
   if (!confirm('Delete this activity?')) return;
   const idx = state.activities.findIndex(a => a.id === id);
-  if (idx >= 0) { state.activities.splice(idx, 1); saveState(); renderActivityLog(); showToast('Activity deleted', 'success'); }
+  if (idx >= 0) { state.activities.splice(idx, 1); saveState(); renderHistory(); showToast('Activity deleted', 'success'); }
 }
 
 // ── CANVA PROMPT GENERATOR ──
