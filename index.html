@@ -904,6 +904,10 @@ body::before {
       </div>
       <div style="display:flex;gap:8px;flex-wrap:wrap">
         <button class="btn btn-outline btn-sm" id="sync-leads-btn" onclick="syncLeadsFromSheet()">↻ Sync Sheet</button>
+        <label class="btn btn-outline btn-sm" style="cursor:pointer" title="Import CSV from Google Sheet">
+          📥 Import CSV
+          <input type="file" accept=".csv" id="csv-import-input" style="display:none" onchange="importCSV(this)">
+        </label>
         <select id="lead-filter" onchange="filterLeads()" style="background:var(--surface3);border:1px solid var(--border);color:var(--text);padding:6px 10px;border-radius:3px;font-family:var(--font-mono);font-size:0.72rem;">
           <option value="all">All Status</option>
           <option value="To Contact">To Contact</option>
@@ -4133,7 +4137,81 @@ function openEditModal(title, fields, onSave) {
   modal.addEventListener('click', (e) => { if (e.target === modal) modal.remove(); });
 }
 
-function filterLeads() { renderLeads(); }
+function importCSV(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const text = e.target.result;
+    const lines = text.split('\n').filter(l => l.trim());
+    // Find header row (contains "Company Name")
+    let headerIdx = 0;
+    for (let i = 0; i < Math.min(5, lines.length); i++) {
+      if (lines[i].toLowerCase().includes('company')) { headerIdx = i; break; }
+    }
+    // Parse headers
+    const headers = parseCSVRow(lines[headerIdx]).map(h => h.toLowerCase().trim());
+    const col = k => headers.findIndex(h => h.includes(k));
+    const cCompany  = col('company');
+    const cCategory = col('category');
+    const cCity     = col('city');
+    const cPhone    = col('phone');
+    const cEmail    = col('email');
+    const cFleet    = col('fleet');
+    const cContact  = col('contact');
+    const cStatus   = col('status');
+    const cNotes    = col('notes') !== -1 ? col('notes') : col('opportunit');
+    const cAddress  = col('address');
+
+    const leads = [];
+    for (let i = headerIdx + 1; i < lines.length; i++) {
+      const row = parseCSVRow(lines[i]);
+      if (!row.length || !row[cCompany] || !row[cCompany].trim()) continue;
+      // Skip summary/legend rows
+      const company = row[cCompany].trim();
+      if (company.toLowerCase().includes('total') || company.toLowerCase().includes('status') || company === '#') continue;
+
+      leads.push({
+        id:       i,
+        rowIndex: i + 1,
+        company:  company,
+        category: cCategory >= 0 ? row[cCategory] || '' : '',
+        city:     cCity >= 0 ? row[cCity] || '' : '',
+        address:  cAddress >= 0 ? row[cAddress] || '' : '',
+        phone:    cPhone >= 0 ? row[cPhone] || '' : '',
+        email:    cEmail >= 0 ? row[cEmail] || '' : '',
+        fleet:    cFleet >= 0 ? row[cFleet] || '' : '',
+        contact:  cContact >= 0 ? row[cContact] || '' : '',
+        status:   cStatus >= 0 ? (row[cStatus] || 'To Contact') : 'To Contact',
+        notes:    cNotes >= 0 ? row[cNotes] || '' : '',
+        priority: false,
+      });
+    }
+
+    if (!leads.length) { showToast('No leads found in CSV — check the file', 'error'); return; }
+    state.leads = leads;
+    state.lastSheetSync = new Date().toISOString();
+    saveState();
+    renderLeads();
+    updateDashboardMetrics();
+    showToast('✓ ' + leads.length + ' leads imported from CSV!', 'success');
+    input.value = '';
+  };
+  reader.readAsText(file);
+}
+
+function parseCSVRow(row) {
+  const result = [];
+  let inQuotes = false, current = '';
+  for (let i = 0; i < row.length; i++) {
+    const ch = row[i];
+    if (ch === '"') { inQuotes = !inQuotes; }
+    else if (ch === ',' && !inQuotes) { result.push(current.trim()); current = ''; }
+    else { current += ch; }
+  }
+  result.push(current.trim());
+  return result;
+}
 
 async function updateLeadStatus(rowId, status, filteredIdx) {
   if (!status || status === 'Status...') return;
