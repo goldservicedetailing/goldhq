@@ -897,12 +897,13 @@ body::before {
        PAGE: CRM / LEADS
   ══════════════════════════════════════ -->
   <div class="page" id="page-leads">
-    <div class="section-header mb-20">
+    <div class="section-header mb-16">
       <div>
         <div class="section-title">CRM — LEADS</div>
-        <div class="section-sub">59 fleet prospects · Carteret / NJ area</div>
+        <div class="section-sub" id="leads-sync-time">Last sync: never · <span id="leads-total-count">0</span> leads</div>
       </div>
-      <div style="display:flex;gap:8px;">
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn btn-outline btn-sm" id="sync-leads-btn" onclick="syncLeadsFromSheet()">↻ Sync Sheet</button>
         <select id="lead-filter" onchange="filterLeads()" style="background:var(--surface3);border:1px solid var(--border);color:var(--text);padding:6px 10px;border-radius:3px;font-family:var(--font-mono);font-size:0.72rem;">
           <option value="all">All Status</option>
           <option value="To Contact">To Contact</option>
@@ -911,7 +912,36 @@ body::before {
           <option value="Closed Won">Closed Won</option>
           <option value="Closed Lost">Closed Lost</option>
         </select>
+        <select id="lead-category-filter" onchange="filterLeads()" style="background:var(--surface3);border:1px solid var(--border);color:var(--text);padding:6px 10px;border-radius:3px;font-family:var(--font-mono);font-size:0.72rem;">
+          <option value="all">All Categories</option>
+          <option value="Trucking">Trucking</option>
+          <option value="Delivery">Delivery</option>
+          <option value="Moving">Moving</option>
+          <option value="Cold Storage">Cold Storage</option>
+          <option value="Logistics">Logistics</option>
+          <option value="Auto Transport">Auto Transport</option>
+        </select>
         <button class="btn btn-gold btn-sm" onclick="openModal('modal-add-lead')">+ Add Lead</button>
+      </div>
+    </div>
+
+    <!-- PIPELINE STATS -->
+    <div class="grid-4 mb-16" id="pipeline-stats">
+      <div class="card" style="padding:14px">
+        <div class="card-label">To Contact</div>
+        <div class="card-value" style="font-size:2rem" id="pipe-to-contact">0</div>
+      </div>
+      <div class="card" style="padding:14px">
+        <div class="card-label">Contacted</div>
+        <div class="card-value" style="font-size:2rem" id="pipe-contacted">0</div>
+      </div>
+      <div class="card" style="padding:14px">
+        <div class="card-label">Meeting Set</div>
+        <div class="card-value" style="font-size:2rem" id="pipe-meeting">0</div>
+      </div>
+      <div class="card" style="padding:14px;border-color:rgba(46,204,113,0.3)">
+        <div class="card-label">Closed Won</div>
+        <div class="card-value" style="font-size:2rem;color:var(--green)" id="pipe-won">0</div>
       </div>
     </div>
     <div class="card" style="padding:0;overflow:hidden;">
@@ -2705,34 +2735,92 @@ function renderLeads() {
   document.getElementById('kpi-leads').textContent = state.leads.length;
 }
 
-function filterLeads() { renderLeads(); }
+function renderLeads() {
+  const statusFilter = (document.getElementById('lead-filter') || {}).value || 'all';
+  const catFilter    = (document.getElementById('lead-category-filter') || {}).value || 'all';
 
-function updateLeadStatus(idx, status) {
-  if (status === 'Update...') return;
-  const filter = document.getElementById('lead-filter').value;
-  const filtered = filter === 'all' ? state.leads : state.leads.filter(l => l.status === filter);
-  const lead = filtered[idx];
-  const realIdx = state.leads.indexOf(lead);
-  if (realIdx >= 0) {
-    state.leads[realIdx].status = status;
-    saveState();
-    renderLeads();
-    showToast(`${lead.company} → ${status}`, 'success');
+  let filtered = state.leads;
+  if (statusFilter !== 'all') filtered = filtered.filter(l => l.status === statusFilter);
+  if (catFilter !== 'all')    filtered = filtered.filter(l => (l.category||'').toLowerCase().includes(catFilter.toLowerCase()));
+
+  // Sort: priority first, then by status weight
+  const statusW = {'Meeting Set':0,'Contacted':1,'To Contact':2,'Closed Won':3,'Closed Lost':4};
+  filtered.sort((a,b) => {
+    if (a.priority && !b.priority) return -1;
+    if (!a.priority && b.priority) return 1;
+    return (statusW[a.status]||5) - (statusW[b.status]||5);
+  });
+
+  const tbody = document.getElementById('leads-tbody');
+  if (!tbody) return;
+
+  if (!filtered.length) {
+    tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;color:var(--text-muted);padding:32px;font-family:var(--font-mono);font-size:0.75rem">${state.leads.length ? 'NO LEADS MATCH THIS FILTER' : 'NO LEADS YET — HIT SYNC SHEET OR ADD A LEAD'}</td></tr>`;
+  } else {
+    tbody.innerHTML = filtered.map((l, i) => `
+      <tr>
+        <td style="font-family:var(--font-mono);font-size:0.65rem;color:var(--text-muted)">${i+1}</td>
+        <td>
+          <strong>${l.company}</strong>
+          ${l.priority ? ' <span class="pill pill-priority" style="font-size:0.55rem">🔥</span>' : ''}
+          ${l.sentDate ? '<span style="font-size:0.6rem;color:var(--green);display:block">✉ Emailed</span>' : ''}
+          ${l.notes ? `<div style="font-size:0.68rem;color:var(--text-muted);margin-top:2px;max-width:180px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${l.notes}</div>` : ''}
+        </td>
+        <td style="font-size:0.75rem;color:var(--text-muted)">${l.category||'—'}</td>
+        <td style="font-size:0.78rem">${l.city||'—'}</td>
+        <td style="font-size:0.78rem">${l.contact||'—'}</td>
+        <td style="font-size:0.72rem;font-family:var(--font-mono)">${l.email ? `<a href="mailto:${l.email}" style="color:var(--gold);text-decoration:none">${l.email}</a>` : '—'}</td>
+        <td style="font-family:var(--font-mono);color:var(--gold);text-align:center">${l.fleet||'?'}</td>
+        <td><span class="pill ${getStatusClass(l.status)}">${l.status||'To Contact'}</span></td>
+        <td>
+          <div style="display:flex;gap:4px;flex-wrap:wrap">
+            <select onchange="updateLeadStatus(${l.rowIndex||l.id},this.value,${filtered.indexOf(l)})"
+              style="background:var(--surface3);border:1px solid var(--border);color:var(--text);padding:3px 5px;border-radius:2px;font-size:0.62rem;font-family:var(--font-mono)">
+              <option>Status...</option>
+              <option>To Contact</option><option>Contacted</option><option>Meeting Set</option>
+              <option>Proposal Sent</option><option>Closed Won</option><option>Closed Lost</option>
+            </select>
+            ${l.email ? `<button class="btn btn-outline btn-sm" onclick="copyEmail('${l.company}','${l.category}','${l.contact}','${l.city}')" style="font-size:0.58rem;padding:2px 6px">📋</button>` : ''}
+            <button class="btn btn-ghost btn-sm" onclick="editLead(${filtered.indexOf(l)})" style="font-size:0.58rem;padding:2px 6px">✏️</button>
+            <button class="btn btn-danger btn-sm" onclick="deleteLead(${filtered.indexOf(l)})" style="font-size:0.58rem;padding:2px 6px">✕</button>
+          </div>
+        </td>
+      </tr>`).join('');
+  }
+
+  // Update pipeline stats
+  const all = state.leads;
+  ['to-contact','contacted','meeting','won'].forEach(k => {
+    const el = document.getElementById('pipe-' + k);
+    if (!el) return;
+    const map = {'to-contact':'To Contact','contacted':'Contacted','meeting':'Meeting Set','won':'Closed Won'};
+    el.textContent = all.filter(l => l.status === map[k]).length;
+  });
+
+  // Update counts
+  const badge = document.getElementById('leads-badge');
+  if (badge) badge.textContent = all.length;
+  const total = document.getElementById('leads-total-count');
+  if (total) total.textContent = all.length;
+  const syncTime = document.getElementById('leads-sync-time');
+  if (syncTime) {
+    const lastSync = state.lastSheetSync ? new Date(state.lastSheetSync).toLocaleTimeString() : 'never';
+    syncTime.textContent = 'Last sync: ' + lastSync + ' · ' + all.length + ' leads';
   }
 }
 
-function addLead() {
+async function addLead() {
   const lead = {
-    id: state.leads.length + 1,
-    company: document.getElementById('lead-company').value,
+    id: Date.now(),
+    company:  document.getElementById('lead-company').value,
     category: document.getElementById('lead-category').value,
-    city: document.getElementById('lead-city').value,
-    fleet: document.getElementById('lead-fleet').value,
-    contact: document.getElementById('lead-contact').value,
-    phone: document.getElementById('lead-phone').value,
-    email: document.getElementById('lead-email').value,
-    notes: document.getElementById('lead-notes').value,
-    status: 'To Contact',
+    city:     document.getElementById('lead-city').value,
+    fleet:    document.getElementById('lead-fleet').value,
+    contact:  document.getElementById('lead-contact').value,
+    phone:    document.getElementById('lead-phone').value,
+    email:    document.getElementById('lead-email').value,
+    notes:    document.getElementById('lead-notes').value,
+    status:   'To Contact',
     priority: false,
   };
   if (!lead.company) { showToast('Enter a company name', 'error'); return; }
@@ -2740,8 +2828,11 @@ function addLead() {
   saveState();
   closeModal('modal-add-lead');
   renderLeads();
-  showToast(`${lead.company} added to CRM!`, 'success');
+  showToast(lead.company + ' added to CRM!', 'success');
   ['lead-company','lead-category','lead-city','lead-fleet','lead-contact','lead-phone','lead-email','lead-notes'].forEach(id => document.getElementById(id).value = '');
+  // Push to sheet
+  const res = await pushLeadToSheet(lead);
+  showToast('Lead also added to Google Sheet ✓', 'success');
 }
 
 function copyEmail(company, category, contact, city) {
@@ -3862,7 +3953,106 @@ async function generateICP() {
 }
 
 
-// ── COPY AUTOMATION SCRIPT ──
+// ── GOOGLE SHEETS SYNC ──
+const SHEETS_URL = 'https://script.google.com/macros/s/AKfycbxLgM7pXlaOnO5sPvlHo0daWb1x_K2aNGz1vVfkgPre9McNsd2PeZikLYMClufd4OrX/exec';
+
+// Fetch leads using no-cors mode workaround via script tag injection (JSONP)
+function sheetsGet(action) {
+  return new Promise((resolve, reject) => {
+    const cbName = 'gsd_cb_' + Date.now();
+    const script = document.createElement('script');
+    window[cbName] = (data) => {
+      delete window[cbName];
+      document.body.removeChild(script);
+      resolve(data);
+    };
+    script.src = SHEETS_URL + '?action=' + action + '&callback=' + cbName;
+    script.onerror = () => reject(new Error('Script load failed'));
+    document.body.appendChild(script);
+    setTimeout(() => reject(new Error('Timeout')), 10000);
+  });
+}
+
+async function syncLeadsFromSheet() {
+  const btn = document.getElementById('sync-leads-btn');
+  if (btn) { btn.textContent = '⏳ Syncing...'; btn.disabled = true; }
+  try {
+    // Try direct fetch first (works if CORS is open)
+    let data;
+    try {
+      const res = await fetch(SHEETS_URL + '?action=getLeads', { mode: 'cors' });
+      data = await res.json();
+    } catch(corsErr) {
+      // Fallback: JSONP
+      data = await sheetsGet('getLeads');
+    }
+
+    if (data && data.result === 'success' && data.leads) {
+      state.leads = data.leads.map(l => ({
+        id:        l.rowIndex,
+        rowIndex:  l.rowIndex,
+        company:   l.company,
+        category:  l.category,
+        city:      l.city,
+        address:   l.address,
+        phone:     l.phone,
+        email:     l.email,
+        fleet:     l.fleet,
+        contact:   l.contact,
+        status:    l.status,
+        fleetType: l.fleetType,
+        notes:     l.notes,
+        sentDate:  l.sentDate,
+        followup1: l.followup1,
+        followup2: l.followup2,
+        priority:  l.priority,
+      }));
+      state.lastSheetSync = new Date().toISOString();
+      saveState();
+      renderLeads();
+      updateDashboardMetrics();
+      showToast('✓ ' + state.leads.length + ' leads synced from Google Sheet', 'success');
+    } else {
+      showToast('Sync error: ' + (data ? data.error : 'No response'), 'error');
+    }
+  } catch(e) {
+    showToast('Sync failed — check Apps Script permissions: ' + e.message, 'error');
+  }
+  if (btn) { btn.textContent = '↻ Sync Sheet'; btn.disabled = false; }
+}
+
+async function pushLeadToSheet(lead) {
+  if (!lead.rowIndex) {
+    // New lead — add to sheet
+    try {
+      await fetch(SHEETS_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'addLead', ...lead })
+      });
+    } catch(e) { console.warn('Sheet push failed:', e.message); }
+  } else {
+    // Existing lead — update row
+    try {
+      await fetch(SHEETS_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'updateLead', ...lead })
+      });
+    } catch(e) { console.warn('Sheet update failed:', e.message); }
+  }
+}
+
+async function deleteLeadFromSheet(rowIndex) {
+  if (!rowIndex) return;
+  try {
+    await fetch(SHEETS_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'deleteLead', rowIndex })
+    });
+  } catch(e) { console.warn('Sheet delete failed:', e.message); }
+}
 function copyAutomation(id) {
   const el = document.getElementById(id);
   if (!el) return;
@@ -3941,6 +4131,19 @@ function openEditModal(title, fields, onSave) {
 
   // Close on overlay click
   modal.addEventListener('click', (e) => { if (e.target === modal) modal.remove(); });
+}
+
+function filterLeads() { renderLeads(); }
+
+async function updateLeadStatus(rowId, status, filteredIdx) {
+  if (!status || status === 'Status...') return;
+  const lead = state.leads.find(l => (l.rowIndex || l.id) === rowId);
+  if (!lead) return;
+  lead.status = status;
+  saveState();
+  renderLeads();
+  showToast(lead.company + ' → ' + status, 'success');
+  await pushLeadToSheet(lead);
 }
 
 // ── EDIT LEAD ──
