@@ -669,6 +669,7 @@ body::before {
     <div class="nav-item" onclick="showPage('finances')">
       <span class="icon">💰</span> Finances
     </div>
+
   </nav>
   <div class="sidebar-footer">
     <button class="ai-chat-btn" onclick="showPage('ai-chat')">
@@ -1170,7 +1171,7 @@ body::before {
         <div class="ai-msg assistant">
           <div class="ai-msg-avatar">AI</div>
           <div class="ai-msg-bubble">
-            Hey Christ! I'm your Gold HQ AI. I can navigate the dashboard, pull up client info, add tasks, check your P&L, and help with outreach, strategy, and content.<br><br>What do you want to work on? 🏆
+            Hey Christ! I'm your Gold HQ AI. I can navigate the dashboard, pull up client info, add tasks, check your P&L, and help with outreach, strategy, and content.<br><br>What do you want to work on? 🏆\n\nTip: Say "run report" to get a live business snapshot.
           </div>
         </div>
       </div>
@@ -1234,27 +1235,62 @@ body::before {
 
 <!-- ════ PAGE: MARKETING ════ -->
 <div class="page" id="page-marketing">
-  <div class="section-header mb-16">
-    <div><div class="section-title">MARKETING</div><div class="section-sub">Campaigns, graphics, scripts, and content assets</div></div>
-    <button class="btn btn-gold btn-sm" onclick="openModal('modal-add-campaign')">+ New Campaign</button>
-  </div>
-  <div id="marketing-campaigns" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:16px;margin-bottom:24px">
-    <div style="text-align:center;padding:48px;color:var(--text-muted);font-family:var(--font-mono);font-size:0.75rem;grid-column:1/-1;border:1px dashed rgba(201,168,76,0.2);border-radius:4px">
-      NO CAMPAIGNS YET — HIT + NEW CAMPAIGN TO START
-    </div>
-  </div>
-  <div class="card">
-    <div class="flex-between mb-16">
-      <div style="font-family:var(--font-display);font-size:1rem;letter-spacing:1px;color:var(--gold)">ASSET LIBRARY</div>
-      <label class="btn btn-outline btn-sm" style="cursor:pointer">
-        📁 Upload Asset
-        <input type="file" multiple accept="image/*,video/*,.pdf,.doc,.docx,.txt" style="display:none" onchange="uploadAssets(this)">
-      </label>
-    </div>
-    <div id="asset-library" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;min-height:80px">
-      <div style="text-align:center;padding:24px;color:var(--text-muted);font-family:var(--font-mono);font-size:0.72rem;grid-column:1/-1">
-        NO ASSETS YET — UPLOAD GRAPHICS, SCRIPTS, VIDEOS
+  <!-- LIST VIEW -->
+  <div id="mkt-list-view">
+    <div class="section-header mb-16">
+      <div>
+        <div class="section-title">MARKETING & BRAND</div>
+        <div class="section-sub">Campaigns · Content · Branding · Team Workspace</div>
       </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn btn-outline btn-sm" onclick="openMktAI()">🤖 AI Brainstorm</button>
+        <button class="btn btn-gold btn-sm" onclick="openModal('modal-add-campaign')">+ New Campaign</button>
+      </div>
+    </div>
+
+    <!-- CAMPAIGN STATUS FILTER -->
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px">
+      <button class="tab-btn active" id="mkt-filter-all" onclick="filterCampaigns('all',this)">All</button>
+      <button class="tab-btn" onclick="filterCampaigns('Ideation',this)">💡 Ideation</button>
+      <button class="tab-btn" onclick="filterCampaigns('In Progress',this)">⚡ In Progress</button>
+      <button class="tab-btn" onclick="filterCampaigns('Review',this)">👀 Review</button>
+      <button class="tab-btn" onclick="filterCampaigns('Live',this)">🟢 Live</button>
+      <button class="tab-btn" onclick="filterCampaigns('Completed',this)">✓ Completed</button>
+      <button class="tab-btn" onclick="filterCampaigns('Paused',this)">⏸ Paused</button>
+    </div>
+
+    <div id="marketing-campaigns" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:16px">
+      <div style="text-align:center;padding:48px;color:var(--text-muted);font-family:var(--font-mono);font-size:0.75rem;grid-column:1/-1;border:1px dashed rgba(201,168,76,0.2);border-radius:4px">
+        NO CAMPAIGNS YET — HIT + NEW CAMPAIGN TO START
+      </div>
+    </div>
+  </div>
+
+  <!-- CAMPAIGN DETAIL VIEW (shown when a campaign is opened) -->
+  <div id="mkt-detail-view" style="display:none">
+    <div id="mkt-detail-content"></div>
+  </div>
+
+  <!-- AI BRAINSTORM PANEL -->
+  <div id="mkt-ai-panel" style="display:none;position:fixed;top:0;right:0;width:380px;height:100vh;background:var(--surface);border-left:1px solid var(--border);z-index:200;display:none;flex-direction:column">
+    <div style="padding:16px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
+      <div style="font-family:var(--font-display);font-size:1rem;color:var(--gold);letter-spacing:1px">🤖 AI BRAINSTORM</div>
+      <button onclick="closeMktAI()" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:1.2rem">✕</button>
+    </div>
+    <div style="padding:12px;border-bottom:1px solid var(--border)">
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        <button class="btn btn-outline btn-sm" onclick="mktAIPrompt('content ideas')">Content Ideas</button>
+        <button class="btn btn-outline btn-sm" onclick="mktAIPrompt('branding')">Branding</button>
+        <button class="btn btn-outline btn-sm" onclick="mktAIPrompt('social media')">Social Media</button>
+        <button class="btn btn-outline btn-sm" onclick="mktAIPrompt('logo concepts')">Logo Concepts</button>
+        <button class="btn btn-outline btn-sm" onclick="mktAIPrompt('video ideas')">Video Ideas</button>
+        <button class="btn btn-outline btn-sm" onclick="mktAIPrompt('campaign strategy')">Campaign Strategy</button>
+      </div>
+    </div>
+    <div id="mkt-ai-messages" style="flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:10px"></div>
+    <div style="padding:12px;border-top:1px solid var(--border);display:flex;gap:8px">
+      <input id="mkt-ai-input" type="text" placeholder="Ask anything about marketing..." style="flex:1;background:var(--surface3);border:1px solid var(--border);color:var(--text);padding:10px 12px;border-radius:4px;font-family:var(--font-body);font-size:0.85rem;outline:none" onkeydown="if(event.key==='Enter')sendMktAI()">
+      <button class="btn btn-gold btn-sm" onclick="sendMktAI()">Send</button>
     </div>
   </div>
 </div>
@@ -1307,18 +1343,40 @@ body::before {
     <div id="fleet-requests-list"><div style="text-align:center;padding:48px;color:var(--text-muted);font-family:var(--font-mono);font-size:0.75rem">No requests</div></div>
   </div>
   <div class="tab-content" id="ftab-settings" style="display:none">
-    <div class="card mb-16">
-      <div style="font-family:var(--font-display);font-size:0.85rem;letter-spacing:1px;color:var(--gold);margin-bottom:12px">CLIENT ACCESS CODES</div>
-      <div style="font-size:0.78rem;color:var(--text-muted);margin-bottom:12px">Share these codes with clients so they can log into their fleet portal</div>
-      <div id="fleet-access-codes"></div>
+    <div class="grid-2 mb-16">
+      <div class="card">
+        <div style="font-family:var(--font-display);font-size:0.85rem;letter-spacing:1px;color:var(--gold);margin-bottom:12px">CLIENT ACCESS CODES</div>
+        <div style="font-size:0.78rem;color:var(--text-muted);margin-bottom:12px">Share these codes with clients so they can log into the fleet portal</div>
+        <div id="fleet-access-codes"></div>
+      </div>
+      <div class="card">
+        <div style="font-family:var(--font-display);font-size:0.85rem;letter-spacing:1px;color:var(--gold);margin-bottom:12px">ADMIN PASSWORD</div>
+        <div style="font-size:0.78rem;color:var(--text-muted);margin-bottom:12px">Change the GoldHQ login password</div>
+        <div class="form-group"><label>Current Password</label><input type="password" id="hq-cur-pass" placeholder="Current password"></div>
+        <div class="form-group"><label>New Password</label><input type="password" id="hq-new-pass" placeholder="New password"></div>
+        <div class="form-group"><label>Confirm New</label><input type="password" id="hq-con-pass" placeholder="Confirm new password"></div>
+        <button class="btn btn-gold btn-sm" onclick="hqChangePass()">Update Password</button>
+        <div id="hq-pass-msg" style="font-size:0.72rem;margin-top:8px;font-family:var(--font-mono)"></div>
+      </div>
     </div>
     <div class="card">
-      <div style="font-family:var(--font-display);font-size:0.85rem;letter-spacing:1px;color:var(--gold);margin-bottom:12px">SYNC</div>
-      <div style="font-size:0.72rem;color:var(--text-muted);font-family:var(--font-mono);margin-bottom:8px" id="last-save-time">Last sync: checking...</div>
-      <button class="btn btn-outline btn-sm" onclick="fleetSync()">↻ Sync Now</button>
-      <button class="btn btn-outline btn-sm" style="margin-left:8px" onclick="fleetExport()">⬇ Export Backup</button>
+      <div style="font-family:var(--font-display);font-size:0.85rem;letter-spacing:1px;color:var(--gold);margin-bottom:12px">SYNC & BACKUP</div>
+      <div style="font-size:0.72rem;color:var(--text-muted);font-family:var(--font-mono);margin-bottom:12px" id="last-save-time">Last sync: checking...</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn btn-outline btn-sm" onclick="fleetSync()">↻ Sync Now</button>
+        <button class="btn btn-outline btn-sm" onclick="fleetExport()">⬇ Export Backup</button>
+      </div>
     </div>
   </div>
+
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-outline btn-sm" onclick="renderReport()">↻ Refresh</button>
+      <button class="btn btn-gold btn-sm" onclick="exportReportPDF()">⬇ Export PDF</button>
+    </div>
+  </div>
+  <div id="report-content"></div>
+</div>
+
 </div><!-- /main -->
 
 <!-- ══════════ MODALS ══════════ -->
@@ -1495,7 +1553,7 @@ function showPage(id) {
   const pageEl = document.getElementById('page-' + id);
   if (!pageEl) { console.warn('No page found for id:', id); return; }
   pageEl.classList.add('active');
-  const titles = { dashboard:'Dashboard', leads:'CRM / Leads', jobs:'Jobs', schedule:'Schedule', 'ai-leads':'AI Lead Finder', automations:'Automations', finances:'Finances', tasks:'Tasks', content:'Content', 'ai-chat':'AI Assistant', clients:'Client List', goals:'Goals & Roadmap', marketing:'Marketing', 'fleet-portal':'Fleet Portal','fleet':'Fleet' };
+  const titles = { dashboard:'Dashboard', leads:'CRM / Leads', jobs:'Jobs', schedule:'Schedule', 'ai-leads':'AI Lead Finder', automations:'Automations', finances:'Finances', tasks:'Tasks', content:'Content', 'ai-chat':'AI Assistant', clients:'Client List', goals:'Goals & Roadmap', marketing:'Marketing', 'fleet-portal':'Fleet Portal','fleet':'Fleet','marketing':'Marketing & Brand' };
   document.getElementById('page-title').textContent = titles[id] || id.toUpperCase();
   const navItems = document.querySelectorAll('.nav-item');
   navItems.forEach(item => { if (item.textContent.toLowerCase().includes(id.replace('-',' '))) item.classList.add('active'); });
@@ -1506,7 +1564,16 @@ function showPage(id) {
   if (id === 'jobs')         renderJobs();
   if (id === 'clients')      renderClients();
   if (id === 'goals')        renderGoals();
-  if (id === 'marketing')    { renderCampaigns(); renderAssets(); }
+  if (id === 'marketing') {
+    // Reset to list view when navigating to marketing
+    const lv = document.getElementById('mkt-list-view');
+    const dv = document.getElementById('mkt-detail-view');
+    if (lv) lv.style.display = 'block';
+    if (dv) dv.style.display = 'none';
+    viewingCampaignId = null;
+    renderCampaigns();
+  }
+
   if (window.innerWidth <= 768) closeSidebar();
 }
 
@@ -2012,6 +2079,84 @@ function updateDashboardMetrics() {
 }
 
 // ── AI FUNCTIONS ──
+function generateBusinessReport() {
+  loadState();
+  const now = new Date();
+  const month = now.getMonth();
+  const year = now.getFullYear();
+  const fmt = (n) => '$' + (+n||0).toLocaleString();
+
+  const allJobs   = state.jobs || [];
+  const monthJobs = allJobs.filter(j => new Date(j.date).getMonth()===month && new Date(j.date).getFullYear()===year);
+  const monthRev  = monthJobs.reduce((s,j)=>s+(+j.revenue||0),0);
+  const allRev    = allJobs.reduce((s,j)=>s+(+j.revenue||0),0);
+
+  const leads     = state.leads || [];
+  const openLeads = leads.filter(l=>!['Closed Won','Closed Lost'].includes(l.status));
+  const hotLeads  = leads.filter(l=>l.priority&&!['Closed Won','Closed Lost'].includes(l.status));
+  const wonLeads  = leads.filter(l=>l.status==='Closed Won');
+
+  const goals     = state.goals || [];
+  const doneGoals = goals.filter(g=>g.done);
+  const openGoals = goals.filter(g=>!g.done);
+  const soonGoals = openGoals.filter(g=>{
+    if(!g.date) return false;
+    const d=(new Date(g.date)-now)/86400000;
+    return d>=0 && d<=14;
+  });
+
+  const clients    = state.clients || [];
+  const campaigns  = state.campaigns || [];
+  const fleetCl    = fleetST?.clients || [];
+  const allVeh     = fleetCl.flatMap(c=>c.vehicles||[]);
+  const pendingDmg = fleetCl.flatMap(c=>(c.damages||[]).filter(d=>!d.acknowledged));
+  const openReq    = fleetCl.flatMap(c=>(c.requests||[]).filter(r=>r.status==='pending'));
+
+  const pct = Math.min(100,((monthRev/10000)*100)).toFixed(0);
+
+  const lines = [
+    '📊 GSD BUSINESS REPORT',
+    now.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'}),
+    '─'.repeat(40),
+    '',
+    '💰 FINANCES',
+    `  This Month Revenue : ${fmt(monthRev)} (${pct}% to $10K goal)`,
+    `  All-Time Revenue   : ${fmt(allRev)}`,
+    `  Jobs This Month    : ${monthJobs.length}`,
+    `  Total Jobs Logged  : ${allJobs.length}`,
+    '',
+    '🎯 CRM / LEADS  (${leads.length} total)',
+    `  Open / Active  : ${openLeads.length}`,
+    `  Hot Leads 🔥   : ${hotLeads.length}`,
+    `  Closed Won ✓   : ${wonLeads.length}`,
+    `  Closed Lost    : ${leads.filter(l=>l.status==='Closed Lost').length}`,
+    '',
+    '🏆 GOALS  (${goals.length} total)',
+    `  Completed      : ${doneGoals.length}`,
+    `  Still Open     : ${openGoals.length}`,
+    `  Due This Week  : ${soonGoals.length}${soonGoals.length?'\n    ⚠ '+soonGoals.map(g=>g.title+' ('+g.date+')').join('\n    ⚠ '):''}`,
+    '',
+    '🏢 CLIENTS',
+    `  Active         : ${clients.filter(c=>c.status==='Active').length}`,
+    `  Total          : ${clients.length}`,
+    '',
+    '🚛 FLEET',
+    `  Fleet Clients  : ${fleetCl.length}`,
+    `  Total Vehicles : ${allVeh.length}`,
+    `  Clean          : ${allVeh.filter(v=>v.status==='clean').length}`,
+    `  Needs Cleaning : ${allVeh.filter(v=>v.status==='needs_cleaning').length}`,
+    `  Pending Damages: ${pendingDmg.length}`,
+    `  Open Requests  : ${openReq.length}`,
+    '',
+    '📣 MARKETING',
+    `  Campaigns      : ${campaigns.length}`,
+    `  Live / Active  : ${campaigns.filter(c=>['Live','In Progress'].includes(c.status)).length}`,
+    `  In Ideation    : ${campaigns.filter(c=>c.status==='Ideation').length}`,
+  ];
+
+  return lines.join('\n');
+}
+
 async function sendAiMessage() {
   const input = document.getElementById('ai-input');
   const msg = input.value.trim();
@@ -2019,6 +2164,14 @@ async function sendAiMessage() {
   input.value = '';
   appendAiMessage('user', msg);
   state.aiHistory.push({ role: 'user', content: msg });
+
+  // ── LOCAL REPORT COMMAND ──
+  if (/run report|generate report|show report|business report|business snapshot/i.test(msg)) {
+    const report = generateBusinessReport();
+    appendAiMessage('assistant', report);
+    state.aiHistory.push({ role:'assistant', content: report });
+    return;
+  }
 
   const btn = document.getElementById('ai-send');
   btn.disabled = true; btn.textContent = '...';
@@ -2315,17 +2468,31 @@ function syncAll() {
 
 <!-- MODAL: Add Campaign -->
 <div class="modal-overlay" id="modal-add-campaign" onclick="if(event.target===this)closeModal('modal-add-campaign')">
-  <div class="modal">
+  <div class="modal" style="max-width:560px">
     <div class="modal-header"><div class="modal-title">NEW CAMPAIGN</div><button class="modal-close" onclick="closeModal('modal-add-campaign')">✕</button></div>
-    <div class="form-group"><label>Campaign Name</label><input type="text" id="camp-name" placeholder="e.g. Spring Fleet Push"></div>
-    <div class="form-group"><label>Type</label>
-      <select id="camp-type" style="background:var(--surface3);border:1px solid var(--border);color:var(--text);padding:9px 12px;border-radius:3px;font-family:var(--font-body);font-size:0.85rem;outline:none;width:100%">
-        <option>Social Media</option><option>Email Outreach</option><option>Flyer / Print</option><option>Google Ads</option><option>Facebook Ads</option><option>Other</option>
-      </select>
+    <div class="form-group"><label>Campaign Name</label><input type="text" id="camp-name" placeholder="e.g. Fleet Outreach Spring 2026"></div>
+    <div class="form-row">
+      <div class="form-group"><label>Type</label>
+        <select id="camp-type" style="background:var(--surface3);border:1px solid var(--border);color:var(--text);padding:9px 12px;border-radius:3px;font-family:var(--font-body);font-size:0.85rem;outline:none;width:100%">
+          <option>Social Media</option><option>Video</option><option>Email Outreach</option>
+          <option>Flyer / Print</option><option>Google Ads</option><option>Facebook / Instagram Ads</option>
+          <option>Branding</option><option>Content Creation</option><option>Other</option>
+        </select>
+      </div>
+      <div class="form-group"><label>Status</label>
+        <select id="camp-status" style="background:var(--surface3);border:1px solid var(--border);color:var(--text);padding:9px 12px;border-radius:3px;font-family:var(--font-body);font-size:0.85rem;outline:none;width:100%">
+          <option>Ideation</option><option>In Progress</option><option>Review</option>
+          <option>Live</option><option>Completed</option><option>Paused</option>
+        </select>
+      </div>
     </div>
-    <div class="form-group"><label>Target Audience</label><input type="text" id="camp-target" placeholder="e.g. Used car dealerships, Avenel NJ"></div>
-    <div class="form-group"><label>Budget</label><input type="text" id="camp-budget" placeholder="e.g. $50/week"></div>
-    <div class="form-group"><label>Notes / Script</label><textarea id="camp-notes" placeholder="Campaign details, talking points, schedule..."></textarea></div>
+    <div class="form-row">
+      <div class="form-group"><label>Target Audience</label><input type="text" id="camp-target" placeholder="e.g. Amazon DSP companies, NJ"></div>
+      <div class="form-group"><label>Budget</label><input type="text" id="camp-budget" placeholder="e.g. $50/week"></div>
+    </div>
+    <div class="form-group"><label>Summary</label><textarea id="camp-summary" placeholder="One paragraph — what is this campaign, what's the goal?" style="height:60px"></textarea></div>
+    <div class="form-group"><label>Notes / Script / Ideas</label><textarea id="camp-notes" placeholder="Talking points, content ideas, scripts, anything..." style="height:80px"></textarea></div>
+    <div class="form-group"><label>Next Steps</label><textarea id="camp-next" placeholder="What needs to happen next? Who is doing what?" style="height:60px"></textarea></div>
     <div style="display:flex;gap:8px;justify-content:flex-end">
       <button class="btn btn-outline" onclick="closeModal('modal-add-campaign')">Cancel</button>
       <button class="btn btn-gold" onclick="addCampaign()">Create Campaign</button>
@@ -2393,17 +2560,24 @@ function addClient() {
   ['client-company','client-category','client-contact','client-phone','client-email','client-fleet','client-rate','client-notes'].forEach(id => { const el = document.getElementById(id); if(el) el.value=''; });
 }
 
+let viewingClientIdx = null;
+
 function renderClients() {
   const grid = document.getElementById('clients-grid');
   if (!grid) return;
   const clients = state.clients || [];
+  if (viewingClientIdx !== null && clients[viewingClientIdx]) {
+    renderClientDetail(viewingClientIdx);
+    return;
+  }
   if (!clients.length) {
     grid.innerHTML = '<div style="text-align:center;padding:48px;color:var(--text-muted);font-family:var(--font-mono);font-size:0.75rem;border:1px dashed rgba(201,168,76,0.2);border-radius:4px">NO CLIENTS YET — ADD YOUR FIRST CLIENT</div>';
     return;
   }
   grid.innerHTML = '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px">' +
     clients.map((cl, i) => `
-      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:4px;padding:18px">
+      <div onclick="viewClientDetail(${i})" style="background:var(--surface2);border:1px solid var(--border);border-radius:4px;padding:18px;cursor:pointer;transition:border-color 0.2s"
+        onmouseenter="this.style.borderColor='var(--gold)'" onmouseleave="this.style.borderColor='var(--border)'">
         <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">
           <div>
             <div style="font-family:var(--font-display);font-size:1rem;color:var(--gold);letter-spacing:1px">${cl.company}</div>
@@ -2413,12 +2587,55 @@ function renderClients() {
         </div>
         ${cl.contact?`<div style="font-size:0.78rem;margin-bottom:4px">${cl.contact}${cl.phone?' · '+cl.phone:''}</div>`:''}
         ${cl.fleet?`<div style="font-size:0.78rem;color:var(--gold);font-family:var(--font-mono);margin-bottom:4px">Fleet: ${cl.fleet} ${cl.rate?'· '+cl.rate:''}</div>`:''}
-        ${cl.notes?`<div style="font-size:0.72rem;color:var(--text-muted);margin-top:6px">${cl.notes}</div>`:''}
-        <div style="margin-top:10px;display:flex;gap:6px">
-          <button class="btn btn-danger btn-sm" style="font-size:0.6rem" onclick="deleteClient(${i})">✕ Remove</button>
-        </div>
+        ${cl.notes?`<div style="font-size:0.72rem;color:var(--text-muted);margin-top:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${cl.notes}</div>`:''}
+        <div style="margin-top:12px;font-size:0.68rem;color:var(--gold);font-family:var(--font-mono)">Tap to view full profile →</div>
       </div>`
     ).join('') + '</div>';
+}
+
+function viewClientDetail(i) {
+  viewingClientIdx = i;
+  const grid = document.getElementById('clients-grid');
+  const cl = (state.clients||[])[i];
+  if (!cl || !grid) return;
+  grid.innerHTML = `
+    <div>
+      <button class="btn btn-outline btn-sm" style="margin-bottom:16px" onclick="viewingClientIdx=null;renderClients()">← Back to Clients</button>
+      <div class="grid-2 mb-16">
+        <div class="card">
+          <div style="font-family:var(--font-display);font-size:1.3rem;color:var(--gold);margin-bottom:8px">${cl.company}</div>
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">
+            <span class="pill pill-won" style="font-size:0.65rem">${cl.status}</span>
+            <span style="font-size:0.72rem;color:var(--text-muted);font-family:var(--font-mono)">${cl.category||''}</span>
+          </div>
+          ${cl.contact?`<div style="font-size:0.85rem;margin-bottom:6px"><b>Contact:</b> ${cl.contact}</div>`:''}
+          ${cl.phone?`<div style="font-size:0.85rem;margin-bottom:6px"><b>Phone:</b> ${cl.phone}</div>`:''}
+          ${cl.email?`<div style="font-size:0.85rem;margin-bottom:6px"><b>Email:</b> <a href="mailto:${cl.email}" style="color:var(--gold)">${cl.email}</a></div>`:''}
+          ${cl.fleet?`<div style="font-size:0.85rem;margin-bottom:6px"><b>Fleet Size:</b> ${cl.fleet}</div>`:''}
+          ${cl.rate?`<div style="font-size:0.85rem;margin-bottom:6px"><b>Rate:</b> ${cl.rate}</div>`:''}
+          ${cl.notes?`<div style="margin-top:12px;padding:10px;background:var(--surface3);border-radius:4px;font-size:0.8rem;color:var(--text-muted)">${cl.notes}</div>`:''}
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:16px">
+            <button class="btn btn-outline btn-sm" onclick="editClientStatus(${i})">✏ Edit Status</button>
+            <button class="btn btn-danger btn-sm" onclick="deleteClient(${i})">✕ Remove</button>
+          </div>
+        </div>
+        <div class="card">
+          <div style="font-family:var(--font-display);font-size:0.85rem;letter-spacing:1px;color:var(--gold);margin-bottom:12px">QUICK ACTIONS</div>
+          <div style="display:flex;flex-direction:column;gap:8px">
+            ${cl.phone?`<a href="tel:${cl.phone}" class="btn btn-outline btn-sm">📞 Call ${cl.contact||cl.company}</a>`:''}
+            ${cl.email?`<a href="mailto:${cl.email}" class="btn btn-outline btn-sm">✉ Email ${cl.contact||cl.company}</a>`:''}
+            <button class="btn btn-outline btn-sm" onclick="showPage('leads');setTimeout(()=>{ document.querySelectorAll('#leads-tbody tr').forEach(r=>{ if(r.textContent.includes('${cl.company}')){ r.style.background='rgba(201,168,76,0.2)'; r.scrollIntoView({behavior:'smooth',block:'center'}); } }); },300)">View in CRM →</button>
+          </div>
+        </div>
+      </div>
+    </div>`;
+}
+
+function editClientStatus(i) {
+  const cl = (state.clients||[])[i];
+  if (!cl) return;
+  const s = prompt('Update status (Active / Inactive / Paused):', cl.status);
+  if (s) { cl.status = s; saveState(); viewClientDetail(i); }
 }
 
 function deleteClient(i) {
@@ -2485,84 +2702,365 @@ function updateGoalsMetrics() {
 }
 
 // ── MARKETING ──
+// ── CAMPAIGN STATUS COLORS ──
+const CAMP_STATUS_COLORS = {
+  'Ideation':'#a855f7','In Progress':'#3b82f6','Review':'#f97316',
+  'Live':'#22c55e','Completed':'#64748b','Paused':'#64748b'
+};
+
+let mktFilter = 'all';
+let viewingCampaignId = null;
+
+function filterCampaigns(status, el) {
+  mktFilter = status;
+  document.querySelectorAll('#page-marketing .tab-btn').forEach(b=>b.classList.remove('active'));
+  if (el) el.classList.add('active');
+  renderCampaigns();
+}
+
 function addCampaign() {
   if (!state.campaigns) state.campaigns = [];
   const name = document.getElementById('camp-name').value.trim();
   if (!name) { showToast('Enter a campaign name', 'error'); return; }
-  state.campaigns.push({
-    id: Date.now(), name,
-    type:   document.getElementById('camp-type').value,
-    target: document.getElementById('camp-target').value,
-    budget: document.getElementById('camp-budget').value,
-    notes:  document.getElementById('camp-notes').value,
-    status: 'Active',
+  const camp = {
+    id: Date.now().toString(), name,
+    type:    document.getElementById('camp-type').value,
+    status:  document.getElementById('camp-status').value,
+    target:  document.getElementById('camp-target').value,
+    budget:  document.getElementById('camp-budget').value,
+    summary: document.getElementById('camp-summary').value,
+    notes:   document.getElementById('camp-notes').value,
+    nextSteps: document.getElementById('camp-next').value,
+    assets:  [],
+    ideas:   [],
     created: new Date().toISOString().split('T')[0]
-  });
+  };
+  state.campaigns.push(camp);
   saveState(); closeModal('modal-add-campaign'); renderCampaigns();
   showToast(name + ' created!', 'success');
-  ['camp-name','camp-target','camp-budget','camp-notes'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  ['camp-name','camp-target','camp-budget','camp-summary','camp-notes','camp-next'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
 }
 
 function renderCampaigns() {
   const grid = document.getElementById('marketing-campaigns');
   if (!grid) return;
-  const camps = state.campaigns || [];
+  let camps = state.campaigns || [];
+  if (mktFilter !== 'all') camps = camps.filter(c=>c.status===mktFilter);
   if (!camps.length) {
-    grid.innerHTML = '<div style="text-align:center;padding:48px;color:var(--text-muted);font-family:var(--font-mono);font-size:0.75rem;grid-column:1/-1;border:1px dashed rgba(201,168,76,0.2);border-radius:4px">NO CAMPAIGNS YET — HIT + NEW CAMPAIGN TO START</div>';
+    grid.innerHTML = '<div style="text-align:center;padding:48px;color:var(--text-muted);font-family:var(--font-mono);font-size:0.75rem;grid-column:1/-1;border:1px dashed rgba(201,168,76,0.2);border-radius:4px">'+(mktFilter==='all'?'NO CAMPAIGNS YET — HIT + NEW CAMPAIGN TO START':'NO '+mktFilter.toUpperCase()+' CAMPAIGNS')+'</div>';
     return;
   }
-  grid.innerHTML = camps.map((camp,i) => `
-    <div style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:18px">
+  grid.innerHTML = camps.map(camp => {
+    const col = CAMP_STATUS_COLORS[camp.status]||'#64748b';
+    return `<div onclick="openCampaign('${camp.id}')" style="background:var(--surface2);border:1px solid var(--border);border-top:3px solid ${col};border-radius:6px;padding:18px;cursor:pointer;transition:border-color 0.2s"
+      onmouseenter="this.style.borderColor='${col}'" onmouseleave="this.style.borderTopColor='${col}';this.style.borderRightColor='var(--border)';this.style.borderBottomColor='var(--border)';this.style.borderLeftColor='var(--border)'">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">
-        <div>
-          <div style="font-family:var(--font-display);font-size:1rem;color:var(--gold);letter-spacing:1px">${camp.name}</div>
-          <div style="font-size:0.72rem;color:var(--text-muted);font-family:var(--font-mono);margin-top:2px">${camp.type} · ${camp.created}</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-family:var(--font-display);font-size:1rem;color:var(--gold);letter-spacing:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${camp.name}</div>
+          <div style="font-size:0.68rem;color:var(--text-muted);font-family:var(--font-mono);margin-top:2px">${camp.type} · ${camp.created}</div>
         </div>
-        <span class="pill pill-won" style="font-size:0.6rem">${camp.status}</span>
+        <span style="font-size:0.58rem;padding:3px 8px;border-radius:10px;background:${col}22;color:${col};font-family:var(--font-mono);white-space:nowrap;margin-left:8px">${camp.status}</span>
       </div>
-      ${camp.target?`<div style="font-size:0.78rem;margin-bottom:6px"><span style="color:var(--text-muted)">Target:</span> ${camp.target}</div>`:''}
-      ${camp.budget?`<div style="font-size:0.78rem;margin-bottom:6px"><span style="color:var(--text-muted)">Budget:</span> ${camp.budget}</div>`:''}
-      ${camp.notes?`<div style="font-size:0.75rem;color:var(--text-muted);margin-bottom:10px">${camp.notes}</div>`:''}
-      <button class="btn btn-danger btn-sm" style="font-size:0.62rem" onclick="deleteCampaign(${i})">✕ Delete</button>
-    </div>`).join('');
-}
-function deleteCampaign(i) {
-  if(!confirm('Delete this campaign?')) return;
-  (state.campaigns||[]).splice(i,1); saveState(); renderCampaigns();
+      ${camp.summary?`<div style="font-size:0.78rem;color:var(--text-muted);margin-bottom:8px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">${camp.summary}</div>`:''}
+      <div style="display:flex;gap:10px;font-family:var(--font-mono);font-size:0.65rem;color:var(--text-muted)">
+        ${camp.target?`<span>🎯 ${camp.target}</span>`:''}
+        ${camp.budget?`<span>💰 ${camp.budget}</span>`:''}
+        <span>📎 ${(camp.assets||[]).length} assets</span>
+        <span>💡 ${(camp.ideas||[]).length} ideas</span>
+      </div>
+    </div>`;
+  }).join('');
 }
 
-function uploadAssets(input) {
-  if (!state.assets) state.assets = [];
+function openCampaign(id) {
+  viewingCampaignId = id;
+  document.getElementById('mkt-list-view').style.display = 'none';
+  document.getElementById('mkt-detail-view').style.display = 'block';
+  renderCampaignDetail(id);
+}
+
+function closeCampaign() {
+  viewingCampaignId = null;
+  document.getElementById('mkt-list-view').style.display = 'block';
+  document.getElementById('mkt-detail-view').style.display = 'none';
+  renderCampaigns();
+}
+
+function renderCampaignDetail(id) {
+  const camp = (state.campaigns||[]).find(c=>c.id===id);
+  if (!camp) return;
+  const el = document.getElementById('mkt-detail-content');
+  const col = CAMP_STATUS_COLORS[camp.status]||'#64748b';
+
+  el.innerHTML = `
+    <div class="section-header mb-16">
+      <div>
+        <button class="btn btn-outline btn-sm" onclick="closeCampaign()" style="margin-bottom:8px">← Back</button>
+        <div class="section-title">${camp.name}</div>
+        <div style="display:flex;align-items:center;gap:8px;margin-top:4px">
+          <span style="font-size:0.68rem;padding:3px 10px;border-radius:10px;background:${col}22;color:${col};font-family:var(--font-mono)">${camp.status}</span>
+          <span style="font-size:0.72rem;color:var(--text-muted);font-family:var(--font-mono)">${camp.type}</span>
+          ${camp.created?`<span style="font-size:0.68rem;color:var(--text-muted);font-family:var(--font-mono)">Created ${camp.created}</span>`:''}
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn btn-outline btn-sm" onclick="openMktAI()">🤖 AI Help</button>
+        <button class="btn btn-outline btn-sm" onclick="editCampaignStatus('${id}')">Change Status</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteCampaign('${id}')">Delete</button>
+      </div>
+    </div>
+
+    <div class="grid-2 mb-16">
+      <!-- OVERVIEW -->
+      <div class="card">
+        <div style="font-family:var(--font-display);font-size:0.85rem;letter-spacing:1px;color:var(--gold);margin-bottom:12px">OVERVIEW</div>
+        ${camp.target?`<div style="font-size:0.82rem;margin-bottom:6px"><b>Target:</b> ${camp.target}</div>`:''}
+        ${camp.budget?`<div style="font-size:0.82rem;margin-bottom:6px"><b>Budget:</b> ${camp.budget}</div>`:''}
+        ${camp.summary?`<div style="font-size:0.82rem;color:var(--text-muted);margin-top:8px;line-height:1.6">${camp.summary}</div>`:'<div style="color:var(--text-muted);font-size:0.75rem;font-family:var(--font-mono)">No summary yet</div>'}
+        <button class="btn btn-outline btn-sm" style="margin-top:12px;width:100%" onclick="editCampaignField('${id}','summary','Campaign Summary')">✏ Edit Summary</button>
+      </div>
+
+      <!-- NEXT STEPS -->
+      <div class="card">
+        <div style="font-family:var(--font-display);font-size:0.85rem;letter-spacing:1px;color:var(--gold);margin-bottom:12px">NEXT STEPS</div>
+        <div id="camp-nextsteps-display" style="font-size:0.82rem;color:var(--text-muted);line-height:1.7;white-space:pre-wrap">${camp.nextSteps||'No next steps added yet'}</div>
+        <button class="btn btn-outline btn-sm" style="margin-top:12px;width:100%" onclick="editCampaignField('${id}','nextSteps','Next Steps')">✏ Edit Next Steps</button>
+      </div>
+    </div>
+
+    <!-- NOTES / SCRIPT -->
+    <div class="card mb-16">
+      <div class="flex-between mb-12">
+        <div style="font-family:var(--font-display);font-size:0.85rem;letter-spacing:1px;color:var(--gold)">NOTES / SCRIPT / DETAILS</div>
+        <button class="btn btn-outline btn-sm" onclick="editCampaignField('${id}','notes','Notes / Script')">✏ Edit</button>
+      </div>
+      <div style="font-size:0.82rem;color:var(--text-muted);line-height:1.7;white-space:pre-wrap;min-height:60px">${camp.notes||'No notes yet — add scripts, talking points, content details...'}</div>
+    </div>
+
+    <!-- IDEAS BOARD -->
+    <div class="card mb-16">
+      <div class="flex-between mb-12">
+        <div style="font-family:var(--font-display);font-size:0.85rem;letter-spacing:1px;color:var(--gold)">IDEAS BOARD</div>
+        <button class="btn btn-gold btn-sm" onclick="addCampaignIdea('${id}')">+ Add Idea</button>
+      </div>
+      <div id="camp-ideas-list" style="display:flex;flex-direction:column;gap:8px">
+        ${(camp.ideas||[]).length ? (camp.ideas||[]).map((idea,ii)=>`
+          <div style="background:var(--surface3);border-left:3px solid ${CAMP_STATUS_COLORS[idea.type]||'var(--gold)'};border-radius:0 4px 4px 0;padding:10px 14px;display:flex;justify-content:space-between;align-items:flex-start">
+            <div>
+              <div style="font-size:0.68rem;color:var(--text-muted);font-family:var(--font-mono);margin-bottom:3px">${idea.type||'Idea'} · ${idea.date||''}</div>
+              <div style="font-size:0.82rem">${idea.text}</div>
+            </div>
+            <button onclick="deleteCampaignIdea('${id}',${ii})" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:0.7rem;margin-left:8px">✕</button>
+          </div>`).join('') :
+          '<div style="color:var(--text-muted);font-family:var(--font-mono);font-size:0.72rem;padding:8px 0">No ideas yet — add content ideas, branding concepts, video scripts...</div>'}
+      </div>
+    </div>
+
+    <!-- ASSETS -->
+    <div class="card">
+      <div class="flex-between mb-12">
+        <div style="font-family:var(--font-display);font-size:0.85rem;letter-spacing:1px;color:var(--gold)">CAMPAIGN ASSETS</div>
+        <label class="btn btn-outline btn-sm" style="cursor:pointer">
+          📁 Upload
+          <input type="file" multiple accept="image/*,video/*,.pdf,.doc,.docx,.txt,.mp4,.mov" style="display:none" onchange="uploadCampaignAssets(this,'${id}')">
+        </label>
+      </div>
+      <div id="camp-assets-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px">
+        ${(camp.assets||[]).length ? (camp.assets||[]).map((a,ai)=>{
+          const isImg = a.type?.startsWith('image/');
+          const icon = a.type?.includes('video')?'🎬':a.type?.includes('pdf')?'📄':'📝';
+          return `<div style="background:var(--surface3);border:1px solid var(--border);border-radius:6px;padding:8px;position:relative">
+            ${isImg?`<img src="${a.data}" style="width:100%;height:90px;object-fit:cover;border-radius:3px;margin-bottom:6px">`:`<div style="height:90px;display:flex;align-items:center;justify-content:center;font-size:1.8rem;background:var(--surface2);border-radius:3px;margin-bottom:6px">${icon}</div>`}
+            <div style="font-size:0.6rem;color:var(--text-muted);font-family:var(--font-mono);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${a.name}</div>
+            <button onclick="deleteCampaignAsset('${id}',${ai})" style="position:absolute;top:4px;right:4px;background:rgba(231,76,60,0.8);border:none;color:white;border-radius:3px;width:16px;height:16px;cursor:pointer;font-size:0.55rem">✕</button>
+          </div>`;
+        }).join('') : '<div style="text-align:center;padding:20px;color:var(--text-muted);font-family:var(--font-mono);font-size:0.7rem;grid-column:1/-1">No assets yet — upload graphics, videos, scripts</div>'}
+      </div>
+    </div>`;
+}
+
+function editCampaignField(id, field, label) {
+  const camp = (state.campaigns||[]).find(c=>c.id===id);
+  if (!camp) return;
+  const val = prompt('Edit '+label+':', camp[field]||'');
+  if (val === null) return;
+  camp[field] = val;
+  saveState();
+  renderCampaignDetail(id);
+}
+
+function editCampaignStatus(id) {
+  const camp = (state.campaigns||[]).find(c=>c.id===id);
+  if (!camp) return;
+  const statuses = ['Ideation','In Progress','Review','Live','Completed','Paused'];
+  const cur = statuses.indexOf(camp.status);
+  const val = prompt('Status: '+statuses.join(' / ')+' | Current: '+camp.status, camp.status);
+  if (!val || !statuses.includes(val)) { showToast('Invalid status','error'); return; }
+  camp.status = val;
+  saveState();
+  renderCampaignDetail(id);
+  showToast('Status updated to '+val,'success');
+}
+
+function addCampaignIdea(id) {
+  const text = prompt('Add idea (content idea, branding concept, video script, etc.):');
+  if (!text) return;
+  const types = ['Content Idea','Video','Social Post','Branding','Logo','Script','Other'];
+  const type = prompt('Type ('+types.join(' / ')+')', 'Content Idea') || 'Content Idea';
+  const camp = (state.campaigns||[]).find(c=>c.id===id);
+  if (!camp) return;
+  if (!camp.ideas) camp.ideas = [];
+  camp.ideas.push({ text, type, date: new Date().toISOString().split('T')[0] });
+  saveState();
+  renderCampaignDetail(id);
+  showToast('Idea added!','success');
+}
+
+function deleteCampaignIdea(id, idx) {
+  const camp = (state.campaigns||[]).find(c=>c.id===id);
+  if (!camp) return;
+  camp.ideas.splice(idx,1);
+  saveState();
+  renderCampaignDetail(id);
+}
+
+function uploadCampaignAssets(input, id) {
+  const camp = (state.campaigns||[]).find(c=>c.id===id);
+  if (!camp) return;
+  if (!camp.assets) camp.assets = [];
   Array.from(input.files).forEach(file => {
     const reader = new FileReader();
     reader.onload = e => {
-      state.assets.push({id:Date.now()+Math.random(),name:file.name,type:file.type,data:e.target.result,uploaded:new Date().toISOString().split('T')[0]});
-      saveState(); renderAssets();
+      camp.assets.push({
+        id: Date.now().toString()+Math.random(),
+        name: file.name, type: file.type,
+        data: e.target.result,
+        uploaded: new Date().toISOString().split('T')[0]
+      });
+      saveState();
+      renderCampaignDetail(id);
     };
     reader.readAsDataURL(file);
   });
   showToast(input.files.length+' asset(s) uploaded','success');
-  input.value='';
+  input.value = '';
 }
 
-function renderAssets() {
-  const lib = document.getElementById('asset-library');
-  if (!lib) return;
-  const assets = state.assets||[];
-  if (!assets.length) {
-    lib.innerHTML='<div style="text-align:center;padding:24px;color:var(--text-muted);font-family:var(--font-mono);font-size:0.72rem;grid-column:1/-1">NO ASSETS YET — UPLOAD GRAPHICS, SCRIPTS, VIDEOS</div>';
-    return;
-  }
-  lib.innerHTML = assets.map((a,i) => {
-    const isImage = a.type?.startsWith('image/');
-    return `<div style="background:var(--surface3);border:1px solid var(--border);border-radius:6px;padding:10px;position:relative">
-      ${isImage?`<img src="${a.data}" style="width:100%;height:100px;object-fit:cover;border-radius:4px;margin-bottom:6px">`:`<div style="height:100px;display:flex;align-items:center;justify-content:center;font-size:2rem;background:var(--surface2);border-radius:4px;margin-bottom:6px">${a.type?.includes('video')?'🎬':a.type?.includes('pdf')?'📄':'📝'}</div>`}
-      <div style="font-size:0.65rem;color:var(--text-muted);font-family:var(--font-mono);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${a.name}</div>
-      <button onclick="deleteAsset(${i})" style="position:absolute;top:4px;right:4px;background:rgba(231,76,60,0.8);border:none;color:white;border-radius:3px;width:18px;height:18px;cursor:pointer;font-size:0.6rem">✕</button>
-    </div>`;
-  }).join('');
+function deleteCampaignAsset(id, idx) {
+  const camp = (state.campaigns||[]).find(c=>c.id===id);
+  if (!camp) return;
+  camp.assets.splice(idx,1);
+  saveState();
+  renderCampaignDetail(id);
 }
-function deleteAsset(i) { (state.assets||[]).splice(i,1); saveState(); renderAssets(); }
+
+function deleteCampaign(id) {
+  if (!confirm('Delete this campaign and all its assets?')) return;
+  state.campaigns = (state.campaigns||[]).filter(c=>c.id!==id);
+  saveState();
+  closeCampaign();
+  showToast('Campaign deleted','success');
+}
+
+// Keep legacy uploadAssets/renderAssets as no-ops (assets now live in campaigns)
+function uploadAssets(input) { showToast('Upload assets inside a campaign','success'); input.value=''; }
+function renderAssets() {}
+function deleteAsset(i) {}
+
+// ── MARKETING AI ──
+let mktAiHistory = [];
+
+function openMktAI() {
+  const panel = document.getElementById('mkt-ai-panel');
+  panel.style.display = 'flex';
+}
+function closeMktAI() {
+  document.getElementById('mkt-ai-panel').style.display = 'none';
+}
+
+function mktAIPrompt(topic) {
+  const input = document.getElementById('mkt-ai-input');
+  const campName = viewingCampaignId ? (state.campaigns||[]).find(c=>c.id===viewingCampaignId)?.name : '';
+  input.value = 'Give me ' + topic + ' ideas for Gold Service Detailing' + (campName ? ' — '+campName+' campaign' : '');
+  sendMktAI();
+}
+
+async function sendMktAI() {
+  const input = document.getElementById('mkt-ai-input');
+  const msg = input.value.trim();
+  if (!msg) return;
+  input.value = '';
+
+  const msgs = document.getElementById('mkt-ai-messages');
+  msgs.innerHTML += `<div style="background:var(--surface3);border-radius:8px 8px 2px 8px;padding:10px 12px;font-size:0.82rem;align-self:flex-end;max-width:90%;margin-left:auto">${msg}</div>`;
+
+  const thinking = document.createElement('div');
+  thinking.id = 'mkt-ai-thinking';
+  thinking.style.cssText = 'color:var(--text-muted);font-family:var(--font-mono);font-size:0.72rem;padding:8px;';
+  thinking.textContent = 'Thinking...';
+  msgs.appendChild(thinking);
+  msgs.scrollTop = msgs.scrollHeight;
+
+  mktAiHistory.push({ role:'user', content: msg });
+
+  const camp = viewingCampaignId ? (state.campaigns||[]).find(c=>c.id===viewingCampaignId) : null;
+  const context = camp
+    ? 'Campaign: '+camp.name+' | Type: '+camp.type+' | Target: '+camp.target+' | Status: '+camp.status
+    : 'No specific campaign open';
+
+  const systemPrompt = `You are a creative marketing and branding strategist for Gold Service Detailing (GSD), a mobile auto detailing business in Carteret, NJ run by Christ Pierre.
+
+Brand identity: Premium, gold & black color scheme. Professional but approachable. Targets fleet companies (Amazon DSP, trucking), used car dealerships, and retail customers.
+
+Current campaign context: ${context}
+
+Help with: content ideas for Instagram/TikTok/Facebook, video concepts, branding ideas, logo concepts, campaign strategies, social media scripts, ad copy, outreach scripts. Be specific and practical. Format ideas clearly with numbers or bullets.`;
+
+  try {
+    const res = await fetch(GSD.claudeApiUrl, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 1000,
+        system: systemPrompt,
+        messages: mktAiHistory
+      })
+    });
+    const data = await res.json();
+    const reply = data.content?.[0]?.text || 'No response';
+    mktAiHistory.push({ role:'assistant', content: reply });
+
+    thinking.remove();
+
+    const replyEl = document.createElement('div');
+    replyEl.style.cssText = 'background:var(--surface2);border:1px solid var(--border);border-left:3px solid var(--gold);border-radius:2px 8px 8px 2px;padding:12px 14px;font-size:0.82rem;line-height:1.7;white-space:pre-wrap;max-width:95%';
+    replyEl.textContent = reply;
+
+    // Add "Save to Campaign" button if viewing a campaign
+    if (viewingCampaignId) {
+      const saveBtn = document.createElement('button');
+      saveBtn.className = 'btn btn-outline btn-sm';
+      saveBtn.style.cssText = 'margin-top:10px;font-size:0.65rem;display:block';
+      saveBtn.textContent = '+ Save as Idea in Campaign';
+      saveBtn.onclick = () => {
+        const camp = (state.campaigns||[]).find(c=>c.id===viewingCampaignId);
+        if (!camp) return;
+        if (!camp.ideas) camp.ideas = [];
+        camp.ideas.push({ text: reply.substring(0,500), type:'AI Generated', date: new Date().toISOString().split('T')[0] });
+        saveState();
+        renderCampaignDetail(viewingCampaignId);
+        showToast('Saved to campaign ideas!','success');
+      };
+      replyEl.appendChild(saveBtn);
+    }
+
+    msgs.appendChild(replyEl);
+    msgs.scrollTop = msgs.scrollHeight;
+  } catch(e) {
+    thinking.textContent = 'Error — check connection';
+  }
+}
 
 // showPage extended inline in original function above
 
@@ -2583,6 +3081,239 @@ function initApp() {
     const badge = document.getElementById('fleet-badge');
     if (badge && fleetST) badge.textContent = fleetST.clients.length;
   }).catch(() => {});
+}
+
+
+// ══════════════════════════════════════════
+// REPORTS MODULE
+// ══════════════════════════════════════════
+function renderReport() {
+  const el = document.getElementById('report-content');
+  if (!el) return;
+
+  const now   = new Date();
+  const month = now.getMonth();
+  const year  = now.getFullYear();
+
+  // ── FINANCES ──
+  if (!state || !state.jobs) loadState();
+  const allJobs   = state.jobs || [];
+  const monthJobs = allJobs.filter(j => new Date(j.date).getMonth()===month && new Date(j.date).getFullYear()===year);
+  const monthRev  = monthJobs.reduce((s,j)=>s+(+j.revenue||0),0);
+  const allRev    = allJobs.reduce((s,j)=>s+(+j.revenue||0),0);
+  const jobsByMonth = {};
+  allJobs.forEach(j => {
+    const k = new Date(j.date).toLocaleDateString('en-US',{month:'short',year:'numeric'});
+    jobsByMonth[k] = (jobsByMonth[k]||0) + (+j.revenue||0);
+  });
+
+  // ── LEADS ──
+  const leads     = state.leads || [];
+  const wonLeads  = leads.filter(l=>l.status==='Closed Won');
+  const lostLeads = leads.filter(l=>l.status==='Closed Lost');
+  const openLeads = leads.filter(l=>!['Closed Won','Closed Lost'].includes(l.status));
+  const hotLeads  = leads.filter(l=>l.priority&&!['Closed Won','Closed Lost'].includes(l.status));
+
+  // ── GOALS ──
+  const goals     = state.goals || [];
+  const doneGoals = goals.filter(g=>g.done);
+  const openGoals = goals.filter(g=>!g.done);
+  const soonGoals = openGoals.filter(g=>{
+    if (!g.date) return false;
+    const diff = (new Date(g.date)-now)/(1000*60*60*24);
+    return diff >= 0 && diff <= 14;
+  });
+
+  // ── JOBS ──
+  const completedJobs  = allJobs.filter(j=>j.status==='completed'||!j.status);
+  const scheduledJobs  = allJobs.filter(j=>j.status==='scheduled');
+  const cancelledJobs  = allJobs.filter(j=>j.status==='cancelled');
+
+  // ── CLIENTS ──
+  const clients        = state.clients || [];
+  const activeClients  = clients.filter(c=>c.status==='Active');
+
+  // ── FLEET ──
+  const fleetClients   = fleetST?.clients || [];
+  const allVehicles    = fleetClients.flatMap(c=>c.vehicles||[]);
+  const pendingDamages = fleetClients.flatMap(c=>(c.damages||[]).filter(d=>!d.acknowledged));
+  const openRequests   = fleetClients.flatMap(c=>(c.requests||[]).filter(r=>r.status==='pending'));
+
+  // ── MARKETING ──
+  const campaigns      = state.campaigns || [];
+  const activeCampaigns= campaigns.filter(c=>c.status==='Active');
+  const assets         = state.assets || [];
+
+  // ── BUILD REPORT HTML ──
+  const reportDate = now.toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+  const pct = Math.min(100,((monthRev/10000)*100)).toFixed(0);
+
+  // Revenue by month for chart
+  const chartMonths = Object.keys(jobsByMonth).slice(-6);
+  const chartVals   = chartMonths.map(m=>jobsByMonth[m]||0);
+  const chartMax    = Math.max(...chartVals, 1);
+
+  el.innerHTML = `
+  <div id="report-printable" style="max-width:900px;margin:0 auto">
+
+    <!-- HEADER -->
+    <div style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:24px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center">
+      <div>
+        <div style="font-family:var(--font-display);font-size:1.8rem;color:var(--gold);letter-spacing:3px">GOLD SERVICE DETAILING</div>
+        <div style="font-family:var(--font-mono);font-size:0.72rem;color:var(--text-muted);margin-top:4px">Business Report · Generated ${reportDate}</div>
+      </div>
+      <div style="text-align:right">
+        <div style="font-size:0.72rem;color:var(--text-muted);font-family:var(--font-mono)">2026 REVENUE GOAL</div>
+        <div style="font-family:var(--font-display);font-size:1.4rem;color:var(--gold)">$10K – $15K/mo</div>
+        <div style="font-family:var(--font-mono);font-size:0.72rem;color:var(--green)">${pct}% to $10K this month</div>
+      </div>
+    </div>
+
+    <!-- KPI ROW -->
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px">
+      ${[
+        ['This Month Revenue','$'+monthRev.toLocaleString(),'var(--green)'],
+        ['Total Revenue (All Time)','$'+allRev.toLocaleString(),'var(--gold)'],
+        ['Active Clients',activeClients.length,'var(--text)'],
+        ['Fleet Clients',fleetClients.length,'var(--text)'],
+      ].map(([label,val,color])=>`
+        <div style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:16px;text-align:center">
+          <div style="font-size:0.65rem;color:var(--text-muted);font-family:var(--font-mono);margin-bottom:6px">${label}</div>
+          <div style="font-family:var(--font-display);font-size:1.4rem;color:${color}">${val}</div>
+        </div>`).join('')}
+    </div>
+
+    <!-- REVENUE CHART -->
+    <div style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:20px;margin-bottom:16px">
+      <div style="font-family:var(--font-display);font-size:0.85rem;letter-spacing:1px;color:var(--gold);margin-bottom:16px">REVENUE BY MONTH</div>
+      ${chartMonths.length ? `
+      <div style="display:flex;align-items:flex-end;gap:8px;height:120px;padding-bottom:24px;position:relative">
+        ${chartVals.map((v,i)=>`
+          <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;height:100%">
+            <div style="flex:1;display:flex;align-items:flex-end;width:100%">
+              <div style="width:100%;background:var(--gold);border-radius:3px 3px 0 0;height:${Math.max(4,(v/chartMax)*100)}%;min-height:4px;opacity:${i===chartVals.length-1?1:0.6}"></div>
+            </div>
+            <div style="font-family:var(--font-mono);font-size:0.58rem;color:var(--text-muted);white-space:nowrap">${chartMonths[i]}</div>
+            <div style="font-family:var(--font-mono);font-size:0.62rem;color:var(--gold)">$${v.toLocaleString()}</div>
+          </div>`).join('')}
+      </div>` : '<div style="color:var(--text-muted);font-family:var(--font-mono);font-size:0.72rem;padding:16px 0;text-align:center">No job revenue logged yet</div>'}
+    </div>
+
+    <!-- GRID: LEADS + JOBS -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
+      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:20px">
+        <div style="font-family:var(--font-display);font-size:0.85rem;letter-spacing:1px;color:var(--gold);margin-bottom:14px">CRM / LEADS</div>
+        ${[
+          ['Total Leads',leads.length,'var(--text)'],
+          ['Open / Active',openLeads.length,'var(--gold)'],
+          ['Hot Leads 🔥',hotLeads.length,'var(--orange)'],
+          ['Closed Won ✓',wonLeads.length,'var(--green)'],
+          ['Closed Lost',lostLeads.length,'var(--red)'],
+        ].map(([l,v,col])=>`
+          <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);font-size:0.82rem">
+            <span style="color:var(--text-muted)">${l}</span>
+            <span style="font-family:var(--font-mono);font-weight:700;color:${col}">${v}</span>
+          </div>`).join('')}
+      </div>
+      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:20px">
+        <div style="font-family:var(--font-display);font-size:0.85rem;letter-spacing:1px;color:var(--gold);margin-bottom:14px">JOBS</div>
+        ${[
+          ['Total Jobs Logged',allJobs.length,'var(--text)'],
+          ['This Month',monthJobs.length,'var(--gold)'],
+          ['Completed',completedJobs.length,'var(--green)'],
+          ['Scheduled',scheduledJobs.length,'var(--blue)'],
+          ['Cancelled',cancelledJobs.length,'var(--red)'],
+        ].map(([l,v,col])=>`
+          <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);font-size:0.82rem">
+            <span style="color:var(--text-muted)">${l}</span>
+            <span style="font-family:var(--font-mono);font-weight:700;color:${col}">${v}</span>
+          </div>`).join('')}
+      </div>
+    </div>
+
+    <!-- GRID: GOALS + FLEET -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
+      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:20px">
+        <div style="font-family:var(--font-display);font-size:0.85rem;letter-spacing:1px;color:var(--gold);margin-bottom:14px">GOALS</div>
+        ${[
+          ['Total Goals',goals.length,'var(--text)'],
+          ['Completed ✓',doneGoals.length,'var(--green)'],
+          ['Still Open',openGoals.length,'var(--gold)'],
+          ['Deadline This Week ⚠',soonGoals.length,'var(--orange)'],
+        ].map(([l,v,col])=>`
+          <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);font-size:0.82rem">
+            <span style="color:var(--text-muted)">${l}</span>
+            <span style="font-family:var(--font-mono);font-weight:700;color:${col}">${v}</span>
+          </div>`).join('')}
+        ${soonGoals.length ? `<div style="margin-top:10px">
+          ${soonGoals.map(g=>`<div style="font-size:0.72rem;color:var(--orange);font-family:var(--font-mono);padding:3px 0">⚠ ${g.title} — due ${g.date}</div>`).join('')}
+        </div>`:''}
+      </div>
+      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:20px">
+        <div style="font-family:var(--font-display);font-size:0.85rem;letter-spacing:1px;color:var(--gold);margin-bottom:14px">FLEET</div>
+        ${[
+          ['Fleet Clients',fleetClients.length,'var(--text)'],
+          ['Total Vehicles',allVehicles.length,'var(--text)'],
+          ['Clean',allVehicles.filter(v=>v.status==='clean').length,'var(--green)'],
+          ['Needs Cleaning',allVehicles.filter(v=>v.status==='needs_cleaning').length,'var(--orange)'],
+          ['Pending Damages',pendingDamages.length,'var(--red)'],
+          ['Open Requests',openRequests.length,'var(--gold)'],
+        ].map(([l,v,col])=>`
+          <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);font-size:0.82rem">
+            <span style="color:var(--text-muted)">${l}</span>
+            <span style="font-family:var(--font-mono);font-weight:700;color:${col}">${v}</span>
+          </div>`).join('')}
+      </div>
+    </div>
+
+    <!-- MARKETING -->
+    <div style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:20px;margin-bottom:16px">
+      <div style="font-family:var(--font-display);font-size:0.85rem;letter-spacing:1px;color:var(--gold);margin-bottom:14px">MARKETING</div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px">
+        ${[
+          ['Total Campaigns',campaigns.length],
+          ['Active Campaigns',activeCampaigns.length],
+          ['Assets in Library',assets.length],
+        ].map(([l,v])=>`
+          <div style="text-align:center;padding:12px;background:var(--surface3);border-radius:4px">
+            <div style="font-size:0.65rem;color:var(--text-muted);font-family:var(--font-mono);margin-bottom:6px">${l}</div>
+            <div style="font-family:var(--font-display);font-size:1.4rem;color:var(--gold)">${v}</div>
+          </div>`).join('')}
+      </div>
+      ${activeCampaigns.length ? `<div style="margin-top:12px">
+        ${activeCampaigns.map(camp=>`<div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border);font-size:0.78rem">
+          <span>${camp.name}</span>
+          <span style="color:var(--text-muted);font-family:var(--font-mono)">${camp.type}</span>
+          <span style="color:var(--text-muted);font-family:var(--font-mono)">${camp.budget||'—'}</span>
+        </div>`).join('')}
+      </div>`:''}
+    </div>
+
+    <!-- FOOTER -->
+    <div style="text-align:center;padding:16px;font-family:var(--font-mono);font-size:0.65rem;color:var(--text-muted)">
+      Gold Service Detailing · GoldHQ Report · ${reportDate}
+    </div>
+  </div>`;
+}
+
+function exportReportPDF() {
+  renderReport();
+  setTimeout(() => {
+    const el = document.getElementById('report-printable');
+    if (!el) return;
+    // Use browser print with print-only styles
+    const printCSS = `
+      <style>
+        body { background: #fff !important; color: #111 !important; font-family: Arial, sans-serif; }
+        * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+        .nav, .topbar, .btn, button { display: none !important; }
+        #report-printable { max-width: 100% !important; }
+      </style>`;
+    const win = window.open('','_blank');
+    win.document.write('<html><head><title>GSD Business Report</title>' + printCSS + '</head><body>' + el.outerHTML + '</body></html>');
+    win.document.close();
+    setTimeout(() => { win.print(); }, 500);
+  }, 300);
 }
 
 document.addEventListener('DOMContentLoaded', checkAuth);
@@ -2752,6 +3483,7 @@ const FLEET_JB_KEY = '$2a$10$jaBNXrBoHENhiCFuFwW9muhIyQ4bNYYkiTzN.Tr2WHj/MJakubv
 let fleetST = null;     // fleet state from JSONBin
 let fleetViewCid = null; // currently viewed client id
 let fleetSvcCid  = null; // client id for service log modal
+let fleetDmgCid  = null; // client id for damage modal
 let fleetPayCid  = null; // client id for payment modal
 let fleetVehCid  = null; // client id for add vehicle modal
 
@@ -2985,13 +3717,69 @@ function renderFleetClients() {
 }
 
 // ── RENDER: CLIENT DETAIL ──
+function fleetVehicleStatusColor(s) {
+  const map = {
+    'clean':'#22c55e','needs_cleaning':'#f97316',
+    'cleaning_done':'#3b82f6','out_of_service':'#e74c3c','no_status':'#64748b'
+  };
+  return map[s]||'#64748b';
+}
+function fleetVehicleStatusLabel(s) {
+  const map = {
+    'clean':'Clean','needs_cleaning':'Needs Cleaning',
+    'cleaning_done':'Cleaning Done','out_of_service':'Out of Service','no_status':'No Status'
+  };
+  return map[s]||s||'No Status';
+}
+function fleetSetVehicleStatus(cid, vid, status) {
+  const cl = (fleetST?.clients||[]).find(c=>c.id===cid);
+  const v  = (cl?.vehicles||[]).find(v=>v.id===vid);
+  if (!v) return;
+  v.status = status;
+  v.lastUpdated = new Date().toISOString();
+  fleetLog('Vehicle Status Updated', vid+' → '+fleetVehicleStatusLabel(status)+' ('+cl.name+')');
+  fleetSaveCloud();
+  renderFleetDetail(cid);
+}
+function fleetOpenAddDamage(cid) {
+  fleetDmgCid = cid;
+  const cl = (fleetST?.clients||[]).find(c=>c.id===cid);
+  const opts = (cl?.vehicles||[]).map(v=>`<option value="${v.id}">${v.id}</option>`).join('');
+  const sel = document.getElementById('fad-vehicle');
+  if (sel) sel.innerHTML = '<option value="">— Select vehicle —</option>' + opts;
+  document.getElementById('fad-date').value = new Date().toISOString().split('T')[0];
+  const desc = document.getElementById('fad-desc');
+  if (desc) desc.value = '';
+  openModal('modal-fleet-add-damage');
+}
+function fleetAddDamage() {
+  const cl = (fleetST?.clients||[]).find(c=>c.id===fleetDmgCid);
+  if (!cl) return;
+  const desc = document.getElementById('fad-desc').value.trim();
+  if (!desc) { showToast('Enter a damage description','error'); return; }
+  if (!cl.damages) cl.damages = [];
+  cl.damages.push({
+    id: Date.now().toString(),
+    vehicleId:   document.getElementById('fad-vehicle').value,
+    date:        document.getElementById('fad-date').value,
+    description: desc,
+    acknowledged: false,
+    createdBy:   'admin'
+  });
+  fleetLog('Damage Logged', (document.getElementById('fad-vehicle').value||'unknown')+' — '+cl.name);
+  fleetSaveCloud();
+  closeModal('modal-fleet-add-damage');
+  renderFleetDetail(fleetDmgCid);
+  renderFleetDamages();
+  showToast('Damage report added','success');
+}
+
 function renderFleetDetail(cid) {
   const cl = (fleetST?.clients||[]).find(c => c.id === cid);
   if (!cl) return;
   const el = document.getElementById('fleet-detail-content');
   const vehicles = cl.vehicles || [];
   const damages  = cl.damages  || [];
-  const requests = cl.requests || [];
   const payments = cl.payments || [];
   const services = cl.services || [];
 
@@ -3009,41 +3797,62 @@ function renderFleetDetail(cid) {
           <button class="btn btn-gold btn-sm" onclick="fleetOpenLogService('${cl.id}')">+ Log Service</button>
           <button class="btn btn-outline btn-sm" onclick="fleetOpenLogPayment('${cl.id}')">+ Log Payment</button>
           <button class="btn btn-outline btn-sm" onclick="fleetOpenAddVehicle('${cl.id}')">+ Add Vehicle</button>
+          <button class="btn btn-outline btn-sm" onclick="fleetOpenAddDamage('${cl.id}')">+ Log Damage</button>
           <button class="btn btn-danger btn-sm" onclick="fleetDeleteClient('${cl.id}')">Delete Client</button>
         </div>
       </div>
       <div class="card">
         <div style="font-family:var(--font-display);font-size:0.85rem;letter-spacing:1px;color:var(--gold);margin-bottom:12px">PAYMENT HISTORY</div>
         ${payments.length ? payments.slice().reverse().map(p=>`
-          <div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border);font-size:0.78rem">
-            <span>${p.date}</span>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--border);font-size:0.78rem">
+            <span style="font-family:var(--font-mono)">${p.date}</span>
             <span style="font-family:var(--font-mono);color:var(--green)">${p.amount}</span>
             <span style="color:var(--text-muted)">${p.method}</span>
+            <button onclick="fleetDeletePayment('${cl.id}','${p.id}')" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:0.65rem">✕</button>
           </div>`).join('') :
           '<div style="color:var(--text-muted);font-family:var(--font-mono);font-size:0.72rem;padding:8px 0">No payments logged</div>'}
+        <button class="btn btn-outline btn-sm" style="margin-top:10px;width:100%" onclick="fleetOpenLogPayment('${cl.id}')">+ Log Payment</button>
       </div>
     </div>
 
     <div class="card mb-16">
       <div class="flex-between mb-12">
         <div style="font-family:var(--font-display);font-size:0.85rem;letter-spacing:1px;color:var(--gold)">FLEET VEHICLES (${vehicles.length})</div>
-        <button class="btn btn-outline btn-sm" onclick="fleetOpenAddVehicle('${cl.id}')">+ Add</button>
+        <button class="btn btn-outline btn-sm" onclick="fleetOpenAddVehicle('${cl.id}')">+ Add Vehicle</button>
       </div>
-      ${vehicles.length ? `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px">` +
-        vehicles.map(v=>`<div style="background:var(--surface3);border:1px solid var(--border);border-radius:4px;padding:12px">
-          <div style="font-family:var(--font-mono);font-size:0.85rem;font-weight:700;color:var(--gold)">${v.id}</div>
-          <div style="font-size:0.72rem;color:var(--text-muted);margin:2px 0">${v.type}</div>
-          ${v.plate?`<div style="font-size:0.72rem;font-family:var(--font-mono)">${v.plate}</div>`:''}
-          <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">
-            <button class="btn btn-danger btn-sm" style="font-size:0.58rem" onclick="fleetRemoveVehicle('${cl.id}','${v.id}')">Remove</button>
-          </div>
-        </div>`).join('') + '</div>' :
-        '<div style="color:var(--text-muted);font-family:var(--font-mono);font-size:0.72rem;padding:8px 0">No vehicles added</div>'}
+      ${vehicles.length ? `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px">` +
+        vehicles.map(v=>{
+          const sc = fleetVehicleStatusColor(v.status);
+          const sl = fleetVehicleStatusLabel(v.status);
+          return `<div style="background:var(--surface3);border:1px solid var(--border);border-top:3px solid ${sc};border-radius:4px;padding:12px">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px">
+              <div style="font-family:var(--font-mono);font-size:0.88rem;font-weight:700;color:var(--gold)">${v.id}</div>
+              <span style="font-size:0.58rem;padding:2px 6px;border-radius:10px;background:${sc}22;color:${sc};font-family:var(--font-mono)">${sl}</span>
+            </div>
+            <div style="font-size:0.68rem;color:var(--text-muted);margin-bottom:2px">${v.type}</div>
+            ${v.plate?`<div style="font-size:0.68rem;font-family:var(--font-mono);color:var(--text-muted);margin-bottom:8px">Plate: ${v.plate}</div>`:'<div style="margin-bottom:8px"></div>'}
+            <div style="margin-bottom:8px">
+              <select onchange="fleetSetVehicleStatus('${cl.id}','${v.id}',this.value)"
+                style="width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:5px 8px;border-radius:3px;font-family:var(--font-mono);font-size:0.65rem;outline:none">
+                <option value="no_status" ${v.status==='no_status'||!v.status?'selected':''}>No Status</option>
+                <option value="clean" ${v.status==='clean'?'selected':''}>Clean</option>
+                <option value="needs_cleaning" ${v.status==='needs_cleaning'?'selected':''}>Needs Cleaning</option>
+                <option value="cleaning_done" ${v.status==='cleaning_done'?'selected':''}>Cleaning Done</option>
+                <option value="out_of_service" ${v.status==='out_of_service'?'selected':''}>Out of Service</option>
+              </select>
+            </div>
+            <button class="btn btn-danger btn-sm" style="font-size:0.58rem;width:100%" onclick="fleetRemoveVehicle('${cl.id}','${v.id}')">Remove</button>
+          </div>`;
+        }).join('') + '</div>' :
+        '<div style="color:var(--text-muted);font-family:var(--font-mono);font-size:0.72rem;padding:8px 0">No vehicles added — click + Add Vehicle</div>'}
     </div>
 
     <div class="grid-2">
       <div class="card">
-        <div style="font-family:var(--font-display);font-size:0.85rem;letter-spacing:1px;color:var(--gold);margin-bottom:12px">SERVICE LOG</div>
+        <div class="flex-between mb-12">
+          <div style="font-family:var(--font-display);font-size:0.85rem;letter-spacing:1px;color:var(--gold)">SERVICE LOG</div>
+          <button class="btn btn-outline btn-sm" onclick="fleetOpenLogService('${cl.id}')">+ Log</button>
+        </div>
         ${services.length ? services.slice().reverse().map(s=>`
           <div style="padding:8px 0;border-bottom:1px solid var(--border);font-size:0.78rem">
             <div style="display:flex;justify-content:space-between"><span style="font-family:var(--font-mono)">${s.date}</span><span style="color:var(--green);font-family:var(--font-mono)">${s.amount||''}</span></div>
@@ -3052,7 +3861,10 @@ function renderFleetDetail(cid) {
           '<div style="color:var(--text-muted);font-family:var(--font-mono);font-size:0.72rem;padding:8px 0">No service logs</div>'}
       </div>
       <div class="card">
-        <div style="font-family:var(--font-display);font-size:0.85rem;letter-spacing:1px;color:var(--gold);margin-bottom:12px">DAMAGE REPORTS (${damages.length})</div>
+        <div class="flex-between mb-12">
+          <div style="font-family:var(--font-display);font-size:0.85rem;letter-spacing:1px;color:var(--gold)">DAMAGE REPORTS (${damages.length})</div>
+          <button class="btn btn-outline btn-sm" onclick="fleetOpenAddDamage('${cl.id}')">+ Log</button>
+        </div>
         ${damages.length ? damages.slice().reverse().map(d=>`
           <div style="background:${d.acknowledged?'transparent':'rgba(231,76,60,0.08)'};border-left:3px solid ${d.acknowledged?'var(--border)':'var(--red)'};padding:8px;border-radius:2px;margin-bottom:8px;font-size:0.78rem">
             <div style="display:flex;justify-content:space-between">
@@ -3319,6 +4131,30 @@ function fleetRespRequest(cid, rid, status) {
   showToast('Request '+status,'success');
 }
 
+function fleetDeletePayment(cid, pid) {
+  const cl = (fleetST?.clients||[]).find(c=>c.id===cid);
+  if (!cl) return;
+  cl.payments = (cl.payments||[]).filter(p=>p.id!==pid);
+  fleetSaveCloud();
+  renderFleetDetail(cid);
+  showToast('Payment removed','success');
+}
+
+function hqChangePass() {
+  const cur  = document.getElementById('hq-cur-pass').value;
+  const nw   = document.getElementById('hq-new-pass').value;
+  const con  = document.getElementById('hq-con-pass').value;
+  const msg  = document.getElementById('hq-pass-msg');
+  if (cur !== HQ_PASS) { msg.style.color='var(--red)'; msg.textContent='Current password incorrect'; return; }
+  if (!nw)             { msg.style.color='var(--red)'; msg.textContent='Enter a new password'; return; }
+  if (nw !== con)      { msg.style.color='var(--red)'; msg.textContent='Passwords do not match'; return; }
+  // Update in-memory and localStorage — user must update the file for permanent change
+  localStorage.setItem('goldhq_pass_override', nw);
+  msg.style.color='var(--green)';
+  msg.textContent='Password updated for this session. Update HQ_PASS in the file for permanent change.';
+  ['hq-cur-pass','hq-new-pass','hq-con-pass'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+}
+
 function fleetExport() {
   const blob = new Blob([JSON.stringify(fleetST,null,2)],{type:'application/json'});
   const url = URL.createObjectURL(blob);
@@ -3348,5 +4184,26 @@ showPage = function(id) {
 // ── UPDATE TITLES MAP ──
 // (done inline — fleet page is registered as 'fleet')
 </script>
+
+<!-- MODAL: Fleet Log Damage -->
+<div class="modal-overlay" id="modal-fleet-add-damage" onclick="if(event.target===this)closeModal('modal-fleet-add-damage')">
+  <div class="modal">
+    <div class="modal-header"><div class="modal-title">LOG DAMAGE REPORT</div><button class="modal-close" onclick="closeModal('modal-fleet-add-damage')">✕</button></div>
+    <div class="form-row">
+      <div class="form-group"><label>Vehicle</label>
+        <select id="fad-vehicle" style="background:var(--surface3);border:1px solid var(--border);color:var(--text);padding:9px 12px;border-radius:3px;width:100%;font-family:var(--font-mono);font-size:0.85rem;outline:none">
+          <option value="">— Select vehicle —</option>
+        </select>
+      </div>
+      <div class="form-group"><label>Date</label><input type="date" id="fad-date"></div>
+    </div>
+    <div class="form-group"><label>Description</label><textarea id="fad-desc" placeholder="Describe the damage — location on vehicle, severity, how it was found..."></textarea></div>
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button class="btn btn-outline" onclick="closeModal('modal-fleet-add-damage')">Cancel</button>
+      <button class="btn btn-gold" onclick="fleetAddDamage()">Log Damage</button>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
