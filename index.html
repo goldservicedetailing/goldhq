@@ -2751,40 +2751,97 @@ let fleetVehCid  = null; // client id for add vehicle modal
 
 // ── SYNC ──
 async function fleetLoadCloud() {
+  const statusEl = document.getElementById('fleet-sync-status');
+  const empty = {actLog:[], clients:[]};
+
+  // Helper: seed the bin with empty state then use it
+  async function seedBin() {
+    try {
+      await fetch(FLEET_JB_URL, {
+        method: 'PUT',
+        headers: {'X-Master-Key': FLEET_JB_KEY, 'Content-Type': 'application/json'},
+        body: JSON.stringify(empty)
+      });
+      fleetST = empty;
+      console.log('Fleet bin seeded automatically');
+      if (statusEl) statusEl.textContent = 'Ready · 0 clients · New bin initialized';
+      return true;
+    } catch(e) {
+      console.warn('Fleet seed failed:', e);
+      return false;
+    }
+  }
+
   try {
     const res = await fetch(FLEET_JB_URL+'/latest', {
       headers: {'X-Master-Key': FLEET_JB_KEY, 'X-Bin-Meta': 'false'}
     });
+
+    // 404 = bin empty/never written — seed it automatically
+    if (res.status === 404) {
+      console.warn('Fleet bin empty — seeding now');
+      return await seedBin();
+    }
+
     if (!res.ok) throw new Error('HTTP '+res.status);
+
     const data = await res.json();
     fleetST = data;
     if (!fleetST.clients) fleetST.clients = [];
     if (!fleetST.actLog)  fleetST.actLog  = [];
-    document.getElementById('fleet-sync-status').textContent =
-      'Synced · ' + fleetST.clients.length + ' clients · Last sync: ' + new Date().toLocaleTimeString();
+
+    // Also migrate any missing fields so old bins never break
+    fleetST.clients.forEach(cl => {
+      if (!cl.vehicles) cl.vehicles = [];
+      if (!cl.damages)  cl.damages  = [];
+      if (!cl.requests) cl.requests = [];
+      if (!cl.payments) cl.payments = [];
+      if (!cl.services) cl.services = [];
+    });
+
+    if (statusEl) statusEl.textContent =
+      'Synced · ' + fleetST.clients.length + ' client(s) · ' + new Date().toLocaleTimeString();
     return true;
+
   } catch(e) {
     console.warn('Fleet load failed:', e);
-    document.getElementById('fleet-sync-status').textContent = '⚠ Sync failed — showing cached data';
+    // Fall back to localStorage cache so phone/other devices still work offline
+    try {
+      const cached = localStorage.getItem('gsd_fleet_hq_cache');
+      if (cached) {
+        fleetST = JSON.parse(cached);
+        if (statusEl) statusEl.textContent = '⚠ Offline — showing cached data · ' + new Date().toLocaleTimeString();
+        return true;
+      }
+    } catch(ce) {}
+    // No cache — initialize empty so UI still works
+    fleetST = empty;
+    if (statusEl) statusEl.textContent = '⚠ Could not connect — working offline';
     return false;
   }
 }
 
 async function fleetSaveCloud() {
+  // Always write to localStorage first — instant, works offline
+  try { localStorage.setItem('gsd_fleet_hq_cache', JSON.stringify(fleetST)); } catch(e) {}
+
+  // Then push to JSONBin
   try {
-    await fetch(FLEET_JB_URL, {
+    const res = await fetch(FLEET_JB_URL, {
       method: 'PUT',
       headers: {'X-Master-Key': FLEET_JB_KEY, 'Content-Type': 'application/json'},
       body: JSON.stringify(fleetST)
     });
+    if (!res.ok) throw new Error('HTTP '+res.status);
     const now = new Date().toLocaleTimeString();
-    document.getElementById('fleet-sync-status').textContent =
-      'Synced · ' + fleetST.clients.length + ' clients · Last sync: ' + now;
+    const statusEl = document.getElementById('fleet-sync-status');
+    if (statusEl) statusEl.textContent = 'Synced · ' + fleetST.clients.length + ' client(s) · ' + now;
     const el = document.getElementById('last-save-time');
     if (el) el.textContent = 'Last sync: ' + now;
   } catch(e) {
     console.warn('Fleet save failed:', e);
-    document.getElementById('fleet-sync-status').textContent = '⚠ Save failed — check connection';
+    const statusEl = document.getElementById('fleet-sync-status');
+    if (statusEl) statusEl.textContent = '⚠ Saved locally — cloud sync failed, will retry on next save';
   }
 }
 
