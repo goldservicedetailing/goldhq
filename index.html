@@ -2577,6 +2577,12 @@ function initApp() {
   renderTasks();
   const jobDate = document.getElementById('job-date');
   if (jobDate) jobDate.value = new Date().toISOString().split('T')[0];
+  // Pre-load fleet data in background so it's ready when user clicks Fleet tab
+  fleetLoadCloud().then(() => {
+    renderFleetDash();
+    const badge = document.getElementById('fleet-badge');
+    if (badge && fleetST) badge.textContent = fleetST.clients.length;
+  }).catch(() => {});
 }
 
 document.addEventListener('DOMContentLoaded', checkAuth);
@@ -2756,19 +2762,30 @@ async function fleetLoadCloud() {
 
   // Helper: seed the bin with empty state then use it
   async function seedBin() {
+    console.log('Seeding fleet bin...');
     try {
-      await fetch(FLEET_JB_URL, {
+      const r = await fetch(FLEET_JB_URL, {
         method: 'PUT',
         headers: {'X-Master-Key': FLEET_JB_KEY, 'Content-Type': 'application/json'},
         body: JSON.stringify(empty)
       });
-      fleetST = empty;
-      console.log('Fleet bin seeded automatically');
-      if (statusEl) statusEl.textContent = 'Ready · 0 clients · New bin initialized';
-      return true;
+      const txt = await r.text();
+      console.log('Seed response:', r.status, txt.substring(0,200));
+      if (r.ok) {
+        fleetST = empty;
+        if (statusEl) statusEl.textContent = 'Ready · 0 clients';
+        return true;
+      } else {
+        console.error('Seed failed:', r.status, txt);
+        // Bin PUT failed — use empty state locally so UI still works
+        fleetST = empty;
+        if (statusEl) statusEl.textContent = '⚠ Working offline — could not reach cloud';
+        return true; // return true so UI doesn't block — data saves locally
+      }
     } catch(e) {
-      console.warn('Fleet seed failed:', e);
-      return false;
+      console.warn('Fleet seed exception:', e);
+      fleetST = empty;
+      return true; // still let UI work offline
     }
   }
 
@@ -2777,13 +2794,18 @@ async function fleetLoadCloud() {
       headers: {'X-Master-Key': FLEET_JB_KEY, 'X-Bin-Meta': 'false'}
     });
 
-    // 404 = bin empty/never written — seed it automatically
+    // 404 = bin empty/never written — seed automatically
     if (res.status === 404) {
-      console.warn('Fleet bin empty — seeding now');
+      console.warn('Fleet bin 404 — seeding now');
       return await seedBin();
     }
-
-    if (!res.ok) throw new Error('HTTP '+res.status);
+    // Any other non-ok status — still try to work offline
+    if (!res.ok) {
+      console.error('Fleet load bad status:', res.status);
+      fleetST = empty;
+      if (statusEl) statusEl.textContent = '⚠ Working offline (HTTP '+res.status+')';
+      return true;
+    }
 
     const data = await res.json();
     fleetST = data;
@@ -2822,6 +2844,7 @@ async function fleetLoadCloud() {
 }
 
 async function fleetSaveCloud() {
+  if (!fleetST) return; // nothing to save
   // Always write to localStorage first — instant, works offline
   try { localStorage.setItem('gsd_fleet_hq_cache', JSON.stringify(fleetST)); } catch(e) {}
 
@@ -3119,12 +3142,17 @@ function fleetLog(action, detail) {
   if (fleetST.actLog.length > 100) fleetST.actLog = fleetST.actLog.slice(-100);
 }
 
-function fleetAddClient() {
+async function fleetAddClient() {
   const name = document.getElementById('fac-name').value.trim();
   const code = document.getElementById('fac-code').value.trim();
   if (!name) { showToast('Enter a company name','error'); return; }
   if (!code) { showToast('Enter a client code','error'); return; }
-  if (!fleetST) { showToast('Fleet not loaded — hit Sync first','error'); return; }
+  // Auto-load fleet data if not yet loaded
+  if (!fleetST) {
+    showToast('Connecting to fleet data...', 'success');
+    await fleetLoadCloud();
+  }
+  if (!fleetST) { showToast('Could not connect — check internet and try again','error'); return; }
   const existing = fleetST.clients.find(c => c.code === code);
   if (existing) { showToast('Code already in use','error'); return; }
   const client = {
