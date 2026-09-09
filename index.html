@@ -3490,88 +3490,98 @@ let fleetVehCid  = null; // client id for add vehicle modal
 // ── SYNC ──
 async function fleetLoadCloud() {
   const statusEl = document.getElementById('fleet-sync-status');
-  const empty = {actLog:[], clients:[]};
 
-  // Helper: seed the bin with empty state then use it
-  async function seedBin() {
-    console.log('Seeding fleet bin...');
+  // ALWAYS load localStorage first — it is the source of truth for local data
+  // Cloud is secondary — we sync TO cloud, we don't replace local WITH cloud blindly
+  function loadLocalCache() {
     try {
-      const r = await fetch(FLEET_JB_URL, {
-        method: 'PUT',
-        headers: {'X-Master-Key': FLEET_JB_KEY, 'Content-Type': 'application/json'},
-        body: JSON.stringify(empty)
-      });
-      const txt = await r.text();
-      console.log('Seed response:', r.status, txt.substring(0,200));
-      if (r.ok) {
-        fleetST = empty;
-        if (statusEl) statusEl.textContent = 'Ready · 0 clients';
-        return true;
-      } else {
-        console.error('Seed failed:', r.status, txt);
-        // Bin PUT failed — use empty state locally so UI still works
-        fleetST = empty;
-        if (statusEl) statusEl.textContent = '⚠ Working offline — could not reach cloud';
-        return true; // return true so UI doesn't block — data saves locally
+      const cached = localStorage.getItem('gsd_fleet_hq_cache');
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (parsed && Array.isArray(parsed.clients)) return parsed;
       }
-    } catch(e) {
-      console.warn('Fleet seed exception:', e);
-      fleetST = empty;
-      return true; // still let UI work offline
-    }
+    } catch(e) {}
+    return null;
   }
 
-  try {
-    const res = await fetch(FLEET_JB_URL+'/latest', {
-      headers: {'X-Master-Key': FLEET_JB_KEY, 'X-Bin-Meta': 'false'}
-    });
-
-    // 404 = bin empty/never written — seed automatically
-    if (res.status === 404) {
-      console.warn('Fleet bin 404 — seeding now');
-      return await seedBin();
-    }
-    // Any other non-ok status — still try to work offline
-    if (!res.ok) {
-      console.error('Fleet load bad status:', res.status);
-      fleetST = empty;
-      if (statusEl) statusEl.textContent = '⚠ Working offline (HTTP '+res.status+')';
-      return true;
-    }
-
-    const data = await res.json();
-    fleetST = data;
-    if (!fleetST.clients) fleetST.clients = [];
-    if (!fleetST.actLog)  fleetST.actLog  = [];
-
-    // Also migrate any missing fields so old bins never break
-    fleetST.clients.forEach(cl => {
+  function migrate(data) {
+    if (!data.clients) data.clients = [];
+    if (!data.actLog)  data.actLog  = [];
+    data.clients.forEach(cl => {
       if (!cl.vehicles) cl.vehicles = [];
       if (!cl.damages)  cl.damages  = [];
       if (!cl.requests) cl.requests = [];
       if (!cl.payments) cl.payments = [];
       if (!cl.services) cl.services = [];
     });
+    return data;
+  }
 
-    if (statusEl) statusEl.textContent =
-      'Synced · ' + fleetST.clients.length + ' client(s) · ' + new Date().toLocaleTimeString();
+  // Step 1: load local cache immediately so UI is never blank
+  const local = loadLocalCache();
+  if (local) {
+    fleetST = migrate(local);
+  } else {
+    fleetST = {actLog:[], clients:[]};
+  }
+
+  // Step 2: try to fetch from cloud
+  try {
+    if (statusEl) statusEl.textContent = 'Syncing with cloud...';
+    const res = await fetch(FLEET_JB_URL+'/latest', {
+      method: 'GET',
+      mode: 'cors',
+      headers: {
+        'X-Master-Key': FLEET_JB_KEY,
+        'X-Access-Key': FLEET_JB_KEY,
+        'X-Bin-Meta': 'false'
+      }
+    });
+
+    if (res.status === 404) {
+      // Bin is empty — push our local data to it (DO NOT overwrite with empty)
+      if (local && local.clients && local.clients.length > 0) {
+        console.log('Bin empty but we have local data — pushing local to cloud');
+        await fleetSaveCloud(); // push local up to cloud
+        if (statusEl) statusEl.textContent = 'Synced · ' + fleetST.clients.length + ' client(s) · ' + new Date().toLocaleTimeString();
+      } else {
+        // Truly empty everywhere — initialize
+        if (statusEl) statusEl.textContent = 'Ready — add your first fleet client';
+      }
+      return true;
+    }
+
+    if (!res.ok) {
+      const txt = await res.text();
+      console.error('Fleet cloud load failed:', res.status, txt.substring(0,200));
+      if (statusEl) statusEl.textContent = (local ? '⚠ Using local data (cloud error '+res.status+')' : '⚠ Cloud error '+res.status+' — no local cache');
+      return !!local;
+    }
+
+    const cloud = await res.json();
+    if (!cloud || !Array.isArray(cloud.clients)) {
+      if (statusEl) statusEl.textContent = '⚠ Bad cloud data — using local cache';
+      return !!local;
+    }
+
+    // Step 3: use whichever has MORE clients (prevents sync from wiping data)
+    const cloudHasMore = cloud.clients.length >= (local?.clients?.length || 0);
+    if (cloudHasMore) {
+      fleetST = migrate(cloud);
+      // Update local cache with cloud data
+      try { localStorage.setItem('gsd_fleet_hq_cache', JSON.stringify(fleetST)); } catch(e) {}
+    }
+    // else: local has more data — keep local, it will save to cloud on next action
+
+    if (statusEl) statusEl.textContent = 'Synced · ' + fleetST.clients.length + ' client(s) · ' + new Date().toLocaleTimeString();
     return true;
 
   } catch(e) {
-    console.warn('Fleet load failed:', e);
-    // Fall back to localStorage cache so phone/other devices still work offline
-    try {
-      const cached = localStorage.getItem('gsd_fleet_hq_cache');
-      if (cached) {
-        fleetST = JSON.parse(cached);
-        if (statusEl) statusEl.textContent = '⚠ Offline — showing cached data · ' + new Date().toLocaleTimeString();
-        return true;
-      }
-    } catch(ce) {}
-    // No cache — initialize empty so UI still works
-    fleetST = empty;
-    if (statusEl) statusEl.textContent = '⚠ Could not connect — working offline';
-    return false;
+    console.warn('Fleet cloud fetch exception:', e.message);
+    if (statusEl) statusEl.textContent = local
+      ? '✓ Using local data (' + fleetST.clients.length + ' clients) — cloud unreachable'
+      : '⚠ Cloud unreachable — no local cache';
+    return !!local;
   }
 }
 
@@ -3584,7 +3594,12 @@ async function fleetSaveCloud() {
   try {
     const res = await fetch(FLEET_JB_URL, {
       method: 'PUT',
-      headers: {'X-Master-Key': FLEET_JB_KEY, 'Content-Type': 'application/json'},
+      mode: 'cors',
+      headers: {
+        'X-Master-Key': FLEET_JB_KEY,
+        'X-Access-Key': FLEET_JB_KEY,
+        'Content-Type': 'application/json'
+      },
       body: JSON.stringify(fleetST)
     });
     if (!res.ok) throw new Error('HTTP '+res.status);
