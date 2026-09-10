@@ -700,8 +700,9 @@ body::before {
     <div class="card mb-20">
       <div class="flex-between mb-16">
         <div>
-          <div class="card-label">2026 Revenue Goal</div>
-          <div style="font-family:var(--font-display);font-size:1.8rem;color:var(--gold);letter-spacing:1px;">$10,000 – $15,000 / Month</div>
+          <div class="card-label">Revenue Goal</div>
+          <div style="font-family:var(--font-display);font-size:1.8rem;color:var(--gold);letter-spacing:1px;" id="dash-goal-display">$10,000 / Month</div>
+          <button class="btn btn-outline btn-sm" style="margin-top:6px;font-size:0.62rem" onclick="editRevenueGoal()">✏ Edit Goal</button>
         </div>
         <div style="text-align:right;">
           <div class="card-label">Current MRR</div>
@@ -710,7 +711,7 @@ body::before {
       </div>
       <div class="goal-bar-wrap">
         <div class="goal-bar-header">
-          <span style="color:var(--text-muted);font-family:var(--font-mono);font-size:0.7rem;">Progress to $10k</span>
+          <span style="color:var(--text-muted);font-family:var(--font-mono);font-size:0.7rem;" id="dash-bar-label">Progress to $10K/month</span>
           <span style="color:var(--gold);font-family:var(--font-mono);font-size:0.7rem;" id="goal-pct">0%</span>
         </div>
         <div class="goal-bar-track">
@@ -755,25 +756,6 @@ body::before {
     <!-- TWO COLUMN -->
     <div class="grid-2 mb-20">
 
-      <!-- TOP PRIORITY LEADS -->
-      <div class="card">
-        <div class="section-header">
-          <div>
-            <div class="section-title">HOT LEADS</div>
-            <div class="section-sub">Highest value — contact today</div>
-          </div>
-          <button class="btn btn-outline btn-sm" onclick="showPage('leads')">View All</button>
-        </div>
-        <table class="data-table">
-          <thead><tr>
-            <th>Company</th>
-            <th>Fleet</th>
-            <th>Status</th>
-          </tr></thead>
-          <tbody id="dash-hot-leads-tbody"><tr><td colspan="3" style="text-align:center;color:var(--text-muted);padding:16px;font-family:var(--font-mono);font-size:0.72rem">NO HOT LEADS YET — IMPORT FROM SHEET OR ADD LEADS</td></tr></tbody>
-        </table>
-      </div>
-
       <!-- TODAY'S TASKS -->
       <div class="card">
         <div class="section-header">
@@ -784,6 +766,20 @@ body::before {
           <button class="btn btn-outline btn-sm" onclick="openAddTask()">+ Task</button>
         </div>
         <div id="today-tasks-list"><div style="color:var(--text-muted);font-family:var(--font-mono);font-size:0.72rem;padding:12px 0;text-align:center">No tasks today — add one!</div></div>
+      </div>
+
+      <!-- RECENT ACTIVITY -->
+      <div class="card">
+        <div class="section-header">
+          <div>
+            <div class="section-title">RECENT JOBS</div>
+            <div class="section-sub">Last 5 logged</div>
+          </div>
+          <button class="btn btn-outline btn-sm" onclick="showPage('jobs')">View All</button>
+        </div>
+        <div id="dash-recent-jobs">
+          <div style="color:var(--text-muted);font-family:var(--font-mono);font-size:0.72rem;padding:12px 0;text-align:center">No jobs logged yet</div>
+        </div>
       </div>
     </div>
 
@@ -803,10 +799,7 @@ body::before {
           <div class="ql-icon">✅</div>
           <div class="ql-label">Add Task</div>
         </div>
-        <div class="quick-log-card" onclick="showPage('ai-leads')">
-          <div class="ql-icon">🤖</div>
-          <div class="ql-label">Find Leads</div>
-        </div>
+
       </div>
     </div>
   </div>
@@ -829,7 +822,8 @@ body::before {
           <option value="Closed Won">Closed Won</option>
           <option value="Closed Lost">Closed Lost</option>
         </select>
-        <button class="btn btn-gold btn-sm" onclick="openModal('modal-add-lead')">+ Add Lead</button>
+        <button class="btn btn-outline btn-sm" onclick="syncLeadsFromSheets()" id="sheets-sync-btn">⟳ Sync Sheets</button>
+      <button class="btn btn-gold btn-sm" onclick="openModal('modal-add-lead')">+ Add Lead</button>
       </div>
     </div>
     <div class="card" style="padding:0;overflow:hidden;">
@@ -1204,19 +1198,24 @@ body::before {
   </div>
   <div class="card mb-20">
     <div class="flex-between mb-16">
-      <div><div class="card-label">2026 Revenue Goal</div>
-      <div style="font-family:var(--font-display);font-size:1.6rem;color:var(--gold)">$10,000 – $15,000 / Month</div></div>
-      <div style="text-align:right"><div class="card-label">Current MRR</div>
-      <div style="font-family:var(--font-display);font-size:1.8rem;color:var(--green)" id="goals-mrr">$0</div></div>
+      <div>
+        <div class="card-label">Revenue Goal</div>
+        <div style="font-family:var(--font-display);font-size:1.6rem;color:var(--gold)" id="revenue-goal-display">$10,000 / Month</div>
+        <button class="btn btn-outline btn-sm" style="margin-top:8px;font-size:0.65rem" onclick="editRevenueGoal()">✏ Edit Goal</button>
+      </div>
+      <div style="text-align:right">
+        <div class="card-label">Current MRR</div>
+        <div style="font-family:var(--font-display);font-size:1.8rem;color:var(--green)" id="goals-mrr">$0</div>
+      </div>
     </div>
     <div class="goal-bar-wrap">
       <div class="goal-bar-header">
-        <span style="font-family:var(--font-mono);font-size:0.7rem;color:var(--text-muted)">Progress to $10K/month</span>
+        <span style="font-family:var(--font-mono);font-size:0.7rem;color:var(--text-muted)" id="goals-bar-label">Progress to goal</span>
         <span style="font-family:var(--font-mono);font-size:0.7rem;color:var(--gold)" id="goals-pct">0%</span>
       </div>
       <div class="goal-bar-track"><div class="goal-bar-fill" id="goals-bar" style="width:0%"></div></div>
     </div>
-    <div class="milestones" style="margin-top:12px">
+    <div class="milestones" style="margin-top:12px" id="goals-milestones">
       <div class="milestone" id="gm1">$1K</div><div class="milestone" id="gm2">$2.5K</div>
       <div class="milestone" id="gm3">$5K</div><div class="milestone" id="gm4">$7.5K</div>
       <div class="milestone" id="gm5">$10K ✦</div><div class="milestone" id="gm6">$15K 🏆</div>
@@ -1227,8 +1226,15 @@ body::before {
       <div class="section-title" style="font-size:1rem">CUSTOM GOALS</div>
       <button class="btn btn-gold btn-sm" onclick="openModal('modal-add-goal')">+ Add Goal</button>
     </div>
+    <!-- ACTIVE GOALS -->
+    <div style="font-family:var(--font-mono);font-size:0.68rem;color:var(--text-muted);letter-spacing:1px;margin-bottom:10px">ACTIVE</div>
     <div id="custom-goals-list">
       <div style="text-align:center;padding:32px;color:var(--text-muted);font-family:var(--font-mono);font-size:0.75rem">NO GOALS YET — ADD YOUR FIRST GOAL</div>
+    </div>
+    <!-- COMPLETED GOALS -->
+    <div style="font-family:var(--font-mono);font-size:0.68rem;color:var(--text-muted);letter-spacing:1px;margin-top:24px;margin-bottom:10px;padding-top:16px;border-top:1px solid var(--border)">COMPLETED / MET</div>
+    <div id="completed-goals-list">
+      <div style="text-align:center;padding:16px;color:var(--text-muted);font-family:var(--font-mono);font-size:0.72rem">No completed goals yet</div>
     </div>
   </div>
 </div>
@@ -1299,82 +1305,67 @@ body::before {
 <div class="page" id="page-fleet">
   <div class="section-header mb-16">
     <div><div class="section-title">FLEET</div><div class="section-sub" id="fleet-sync-status">Loading...</div></div>
-    <div style="display:flex;gap:8px;flex-wrap:wrap">
-      <button class="btn btn-outline btn-sm" onclick="fleetSync()">↻ Sync</button>
-      <button class="btn btn-gold btn-sm" onclick="openModal('modal-fleet-add-client')">+ Add Client</button>
-    </div>
+    <button class="btn btn-gold btn-sm" onclick="openModal('modal-fleet-add-client')">+ Add Client</button>
   </div>
   <div class="tab-bar" style="margin-bottom:16px">
     <button class="tab-btn active" onclick="fleetTab('dash',this)">Dashboard</button>
     <button class="tab-btn" onclick="fleetTab('clients',this)">Clients</button>
-    <button class="tab-btn" onclick="fleetTab('damages',this)">Damages</button>
-    <button class="tab-btn" onclick="fleetTab('requests',this)">Requests</button>
-    <button class="tab-btn" onclick="fleetTab('settings',this)">Settings</button>
+    <button class="tab-btn" onclick="fleetTab('damage-reports',this)">Damage Reports</button>
+    <button class="tab-btn" onclick="fleetTab('clean-report',this)">Clean Report</button>
   </div>
+
+  <!-- DASHBOARD TAB -->
   <div class="tab-content active" id="ftab-dash">
-    <div class="grid-4 mb-16">
-      <div class="card"><div class="card-label">Active Clients</div><div class="card-value" id="fk-clients">0</div></div>
-      <div class="card"><div class="card-label">Total Vehicles</div><div class="card-value" id="fk-vehicles">0</div></div>
-      <div class="card"><div class="card-label">Pending Damages</div><div class="card-value" id="fk-damages" style="color:var(--red)">0</div></div>
-      <div class="card"><div class="card-label">Open Requests</div><div class="card-value" id="fk-requests" style="color:var(--gold)">0</div></div>
-    </div>
-    <div class="grid-2">
-      <div class="card">
-        <div class="flex-between mb-12"><div style="font-family:var(--font-display);font-size:0.85rem;letter-spacing:1px;color:var(--gold)">RECENT ACTIVITY</div></div>
-        <div id="fleet-activity" style="font-family:var(--font-mono);font-size:0.72rem;color:var(--text-muted)">No activity yet</div>
-      </div>
-      <div class="card">
-        <div class="flex-between mb-12"><div style="font-family:var(--font-display);font-size:0.85rem;letter-spacing:1px;color:var(--gold)">ALERTS</div></div>
-        <div id="fleet-alerts"><div style="color:var(--text-muted);font-family:var(--font-mono);font-size:0.72rem;text-align:center;padding:16px">All clear</div></div>
-      </div>
-    </div>
-  </div>
-  <div class="tab-content" id="ftab-clients" style="display:none">
-    <div id="fleet-clients-list"><div style="text-align:center;padding:48px;color:var(--text-muted);font-family:var(--font-mono);font-size:0.75rem;border:1px dashed rgba(201,168,76,0.2);border-radius:4px">NO FLEET CLIENTS YET — HIT + ADD CLIENT</div></div>
-  </div>
-  <div class="tab-content" id="ftab-client-detail" style="display:none">
-    <button class="btn btn-outline btn-sm" style="margin-bottom:16px" onclick="fleetTab('clients',null);fleetViewCid=null;">← Back to Clients</button>
-    <div id="fleet-detail-content"></div>
-  </div>
-  <div class="tab-content" id="ftab-damages" style="display:none">
-    <div id="fleet-damages-list"><div style="text-align:center;padding:48px;color:var(--text-muted);font-family:var(--font-mono);font-size:0.75rem">No damage reports</div></div>
-  </div>
-  <div class="tab-content" id="ftab-requests" style="display:none">
-    <div id="fleet-requests-list"><div style="text-align:center;padding:48px;color:var(--text-muted);font-family:var(--font-mono);font-size:0.75rem">No requests</div></div>
-  </div>
-  <div class="tab-content" id="ftab-settings" style="display:none">
-    <div class="grid-2 mb-16">
-      <div class="card">
-        <div style="font-family:var(--font-display);font-size:0.85rem;letter-spacing:1px;color:var(--gold);margin-bottom:12px">CLIENT ACCESS CODES</div>
-        <div style="font-size:0.78rem;color:var(--text-muted);margin-bottom:12px">Share these codes with clients so they can log into the fleet portal</div>
-        <div id="fleet-access-codes"></div>
-      </div>
-      <div class="card">
-        <div style="font-family:var(--font-display);font-size:0.85rem;letter-spacing:1px;color:var(--gold);margin-bottom:12px">ADMIN PASSWORD</div>
-        <div style="font-size:0.78rem;color:var(--text-muted);margin-bottom:12px">Change the GoldHQ login password</div>
-        <div class="form-group"><label>Current Password</label><input type="password" id="hq-cur-pass" placeholder="Current password"></div>
-        <div class="form-group"><label>New Password</label><input type="password" id="hq-new-pass" placeholder="New password"></div>
-        <div class="form-group"><label>Confirm New</label><input type="password" id="hq-con-pass" placeholder="Confirm new password"></div>
-        <button class="btn btn-gold btn-sm" onclick="hqChangePass()">Update Password</button>
-        <div id="hq-pass-msg" style="font-size:0.72rem;margin-top:8px;font-family:var(--font-mono)"></div>
-      </div>
+    <div class="grid-3 mb-16">
+      <div class="card"><div class="card-label">Fleet Clients</div><div class="card-value" id="fk-clients">0</div></div>
+      <div class="card"><div class="card-label">Total Vehicles</div><div class="card-value" id="fk-vehicles">0</div><div class="card-sub">All clients combined</div></div>
+      <div class="card"><div class="card-label">Damage Reports</div><div class="card-value" id="fk-damages" style="color:var(--red)">0</div><div class="card-sub">Unacknowledged</div></div>
     </div>
     <div class="card">
-      <div style="font-family:var(--font-display);font-size:0.85rem;letter-spacing:1px;color:var(--gold);margin-bottom:12px">SYNC & BACKUP</div>
-      <div style="font-size:0.72rem;color:var(--text-muted);font-family:var(--font-mono);margin-bottom:12px" id="last-save-time">Last sync: checking...</div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap">
-        <button class="btn btn-outline btn-sm" onclick="fleetSync()">↻ Sync Now</button>
-        <button class="btn btn-outline btn-sm" onclick="fleetExport()">⬇ Export Backup</button>
+      <div class="flex-between mb-12">
+        <div style="font-family:var(--font-display);font-size:0.85rem;letter-spacing:1px;color:var(--gold)">RECENT ACTIVITY</div>
+      </div>
+      <div id="fleet-activity" style="font-family:var(--font-mono);font-size:0.72rem;color:var(--text-muted)">No activity yet</div>
+    </div>
+  </div>
+
+  <!-- CLIENTS TAB -->
+  <div class="tab-content" id="ftab-clients" style="display:none">
+    <div id="fleet-clients-list">
+      <div style="text-align:center;padding:48px;color:var(--text-muted);font-family:var(--font-mono);font-size:0.75rem;border:1px dashed rgba(201,168,76,0.2);border-radius:4px">
+        NO FLEET CLIENTS YET — HIT + ADD CLIENT
       </div>
     </div>
   </div>
 
-    <div style="display:flex;gap:8px">
-      <button class="btn btn-outline btn-sm" onclick="renderReport()">↻ Refresh</button>
-      <button class="btn btn-gold btn-sm" onclick="exportReportPDF()">⬇ Export PDF</button>
+  <!-- CLIENT DETAIL (drill-in) -->
+  <div class="tab-content" id="ftab-client-detail" style="display:none">
+    <button class="btn btn-outline btn-sm" style="margin-bottom:16px" onclick="fleetTab('clients',null);fleetViewCid=null;">← Back to Clients</button>
+    <div id="fleet-detail-content"></div>
+  </div>
+
+  <!-- DAMAGE REPORTS TAB -->
+  <div class="tab-content" id="ftab-damage-reports" style="display:none">
+    <div id="fleet-damages-list">
+      <div style="text-align:center;padding:48px;color:var(--text-muted);font-family:var(--font-mono);font-size:0.75rem">No damage reports</div>
     </div>
   </div>
-  <div id="report-content"></div>
+
+  <!-- CLEAN REPORT TAB -->
+  <div class="tab-content" id="ftab-clean-report" style="display:none">
+    <div class="section-header mb-12">
+      <div style="font-family:var(--font-display);font-size:0.9rem;color:var(--gold)">VEHICLE CLEANING REPORT</div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <input type="month" id="clean-report-month" style="background:var(--surface3);border:1px solid var(--border);color:var(--text);padding:6px 10px;border-radius:3px;font-family:var(--font-mono);font-size:0.8rem;outline:none" onchange="renderCleanReport()">
+        <select id="clean-report-client" style="background:var(--surface3);border:1px solid var(--border);color:var(--text);padding:6px 10px;border-radius:3px;font-family:var(--font-mono);font-size:0.8rem;outline:none" onchange="renderCleanReport()">
+          <option value="all">All Clients</option>
+        </select>
+      </div>
+    </div>
+    <div id="clean-report-content">
+      <div style="text-align:center;padding:48px;color:var(--text-muted);font-family:var(--font-mono);font-size:0.75rem">Select a month to view cleaning records</div>
+    </div>
+  </div>
 </div>
 
 </div><!-- /main -->
@@ -1640,6 +1631,62 @@ function renderLeads() {
   `).join('');
   document.getElementById('leads-badge').textContent = state.leads.length;
   document.getElementById('kpi-leads').textContent = state.leads.length;
+}
+
+
+// ── GOOGLE SHEETS LEAD SYNC ──
+const LEADS_SHEET_URL = 'https://script.google.com/macros/s/AKfycbxLgM7pXlaOnO5sPvlHo0daWb1x_K2aNGz1vVfkgPre9McNsd2PeZikLYMClufd4OrX/exec';
+
+async function syncLeadsFromSheets() {
+  const btn = document.getElementById('sheets-sync-btn');
+  if (btn) { btn.textContent = '⟳ Syncing...'; btn.disabled = true; }
+  const statusEl = document.getElementById('leads-sync-time');
+  try {
+    const res = await fetch(LEADS_SHEET_URL + '?action=getLeads');
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const data = await res.json();
+    const rows = Array.isArray(data) ? data : (data.leads || data.data || []);
+    if (!rows.length) throw new Error('No data returned');
+
+    // Merge — add new leads, don't overwrite existing ones that have been updated
+    const existing = state.leads || [];
+    const existingIds = new Set(existing.map(l => (l.company||'').toLowerCase().trim()));
+    let added = 0;
+
+    rows.forEach(row => {
+      const company = (row.company || row.Company || row['Company Name'] || '').trim();
+      if (!company) return;
+      if (existingIds.has(company.toLowerCase())) return; // already have it
+      existing.push({
+        id: Date.now() + Math.random(),
+        company,
+        category: row.category || row.Category || row['Business Type'] || '',
+        city:     row.city     || row.City     || row.Location || '',
+        contact:  row.contact  || row.Contact  || row['Contact Name'] || '',
+        phone:    row.phone    || row.Phone    || '',
+        email:    row.email    || row.Email    || '',
+        fleet:    row.fleet    || row.Fleet    || row['Fleet Size'] || '',
+        status:   row.status   || row.Status   || 'To Contact',
+        priority: false,
+        notes:    row.notes    || row.Notes    || '',
+      });
+      existingIds.add(company.toLowerCase());
+      added++;
+    });
+
+    state.leads = existing;
+    saveState();
+    renderLeads();
+    const now = new Date().toLocaleTimeString();
+    if (statusEl) statusEl.innerHTML = 'Last sync: ' + now + ' · <span id="leads-total-count">' + state.leads.length + '</span> leads · ' + added + ' new';
+    showToast(added + ' new leads imported from Sheets', 'success');
+  } catch(e) {
+    console.warn('Sheets sync failed:', e.message);
+    showToast('Sheets sync failed: ' + e.message, 'error');
+    if (statusEl) statusEl.innerHTML = '⚠ Sync failed · <span id="leads-total-count">' + (state.leads||[]).length + '</span> leads';
+  } finally {
+    if (btn) { btn.textContent = '⟳ Sync Sheets'; btn.disabled = false; }
+  }
 }
 
 function filterLeads() { renderLeads(); }
@@ -2042,13 +2089,46 @@ function updateDashboardMetrics() {
   const today = new Date().toISOString().split('T')[0];
   const monthJobs = (state.jobs||[]).filter(j => new Date(j.date).getMonth() === thisMonth);
   const monthRev = monthJobs.reduce((s,j) => s + j.revenue, 0);
-  const pct = Math.min(100, (monthRev / GSD.goal) * 100);
-  if (document.getElementById('current-mrr')) document.getElementById('current-mrr').textContent = '$' + monthRev.toLocaleString();
-  if (document.getElementById('goal-bar')) document.getElementById('goal-bar').style.width = pct + '%';
-  if (document.getElementById('goal-pct')) document.getElementById('goal-pct').textContent = pct.toFixed(0) + '%';
-  [1000,2500,5000,7500,10000,15000].forEach((m,i) => {
-    const el = document.getElementById('m'+(i+1));
-    if (el) el.classList.toggle('reached', monthRev >= m);
+  const pct = Math.min(100, (monthRev / (state.revenueGoal||GSD.goal||10000)) * 100);
+  // Update BOTH dashboard and goals page — same data, same goal
+  const goal = state.revenueGoal || GSD.goal || 10000;
+  const _pct = Math.min(100, (monthRev / goal) * 100);
+
+  // Dashboard elements
+  const _cmrr = document.getElementById('current-mrr');
+  if (_cmrr) _cmrr.textContent = '$' + monthRev.toLocaleString();
+  const _gbar = document.getElementById('goal-bar');
+  if (_gbar) _gbar.style.width = _pct + '%';
+  const _gpct = document.getElementById('goal-pct');
+  if (_gpct) _gpct.textContent = _pct.toFixed(0) + '%';
+
+  // Goals page elements (same values)
+  const _gmrr = document.getElementById('goals-mrr');
+  if (_gmrr) _gmrr.textContent = '$' + monthRev.toLocaleString();
+  const _gbar2 = document.getElementById('goals-bar');
+  if (_gbar2) _gbar2.style.width = _pct + '%';
+  const _gpct2 = document.getElementById('goals-pct');
+  if (_gpct2) _gpct2.textContent = _pct.toFixed(0) + '%';
+  const _glabel = document.getElementById('goals-bar-label');
+  if (_glabel) _glabel.textContent = 'Progress to $' + goal.toLocaleString() + '/month';
+  const _gdisplay = document.getElementById('revenue-goal-display');
+  if (_gdisplay) _gdisplay.textContent = '$' + goal.toLocaleString() + ' / Month';
+  const _ddisplay = document.getElementById('dash-goal-display');
+  if (_ddisplay) _ddisplay.textContent = '$' + goal.toLocaleString() + ' / Month';
+  const _dlabel = document.getElementById('dash-bar-label');
+  if (_dlabel) _dlabel.textContent = 'Progress to $' + goal.toLocaleString() + '/month';
+
+  // Milestone steps — auto-scale to goal, same for both dashboard and goals page
+  const steps = [goal*0.1, goal*0.25, goal*0.5, goal*0.75, goal, goal*1.5];
+  const mLabels = ['10%','25%','50%','75%','✦','🏆'];
+  steps.forEach((m, i) => {
+    const lbl = (m >= 1000 ? '$'+Math.round(m/1000)+'K' : '$'+Math.round(m)) + mLabels[i].replace(/[^✦🏆]/g,'');
+    // Dashboard milestones (m1–m6)
+    const dm = document.getElementById('m'+(i+1));
+    if (dm) { dm.textContent = lbl; dm.classList.toggle('reached', monthRev >= m); }
+    // Goals page milestones (gm1–gm6)
+    const gm = document.getElementById('gm'+(i+1));
+    if (gm) { gm.textContent = lbl; gm.classList.toggle('reached', monthRev >= m); }
   });
   // KPIs
   const el_clients = document.getElementById('kpi-clients');
@@ -2061,13 +2141,17 @@ function updateDashboardMetrics() {
   if (el_badge) el_badge.textContent = (state.leads||[]).length;
   const el_tasks = document.getElementById('kpi-tasks');
   if (el_tasks) el_tasks.textContent = (state.tasks||[]).filter(t=>!t.done&&(t.due===today||!t.due)).length;
-  // Hot leads table on dashboard
-  const hotTbody = document.getElementById('dash-hot-leads-tbody');
-  if (hotTbody) {
-    const hot = (state.leads||[]).filter(l=>l.priority&&!['Closed Won','Closed Lost'].includes(l.status)).slice(0,5);
-    hotTbody.innerHTML = hot.length
-      ? hot.map(l=>`<tr><td><strong>${l.company}</strong></td><td style="font-family:var(--font-mono);color:var(--gold)">${l.fleet||'?'}</td><td><span class="pill ${getStatusClass(l.status)}">${l.status}</span></td></tr>`).join('')
-      : '<tr><td colspan="3" style="text-align:center;color:var(--text-muted);padding:16px;font-family:var(--font-mono);font-size:0.72rem">NO PRIORITY LEADS — ADD LEADS IN GROWTH → CRM</td></tr>';
+  // Recent jobs on dashboard
+  const recentJobsEl = document.getElementById('dash-recent-jobs');
+  if (recentJobsEl) {
+    const recent = (state.jobs||[]).slice(-5).reverse();
+    recentJobsEl.innerHTML = recent.length
+      ? recent.map(j=>`<div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border);font-size:0.8rem">
+          <span>${j.client||j.type||'Job'}</span>
+          <span style="font-family:var(--font-mono);color:var(--gold)">$${(+j.revenue||0).toLocaleString()}</span>
+          <span style="color:var(--text-muted);font-size:0.7rem;font-family:var(--font-mono)">${j.date||''}</span>
+        </div>`).join('')
+      : '<div style="color:var(--text-muted);font-family:var(--font-mono);font-size:0.72rem;padding:12px 0;text-align:center">No jobs logged yet</div>';
   }
   // Finances live metrics
   const fin_rev = document.getElementById('fin-month-rev');
@@ -2481,7 +2565,7 @@ function syncAll() {
       </div>
       <div class="form-group"><label>Status</label>
         <select id="camp-status" style="background:var(--surface3);border:1px solid var(--border);color:var(--text);padding:9px 12px;border-radius:3px;font-family:var(--font-body);font-size:0.85rem;outline:none;width:100%">
-          <option>Ideation</option><option>In Progress</option><option>Review</option>
+          <option>Planning</option><option>In Progress</option><option>Review</option>
           <option>Live</option><option>Completed</option><option>Paused</option>
         </select>
       </div>
@@ -2539,7 +2623,7 @@ function openFleetPortalAdmin() {
 function addClient() {
   if (!state.clients) state.clients = [];
   const client = {
-    id: Date.now(),
+    id: Date.now().toString(),
     company:  document.getElementById('client-company').value,
     category: document.getElementById('client-category').value,
     contact:  document.getElementById('client-contact').value,
@@ -2598,50 +2682,108 @@ function viewClientDetail(i) {
   const grid = document.getElementById('clients-grid');
   const cl = (state.clients||[])[i];
   if (!cl || !grid) return;
-  grid.innerHTML = `
-    <div>
-      <button class="btn btn-outline btn-sm" style="margin-bottom:16px" onclick="viewingClientIdx=null;renderClients()">← Back to Clients</button>
-      <div class="grid-2 mb-16">
-        <div class="card">
-          <div style="font-family:var(--font-display);font-size:1.3rem;color:var(--gold);margin-bottom:8px">${cl.company}</div>
-          <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">
-            <span class="pill pill-won" style="font-size:0.65rem">${cl.status}</span>
-            <span style="font-size:0.72rem;color:var(--text-muted);font-family:var(--font-mono)">${cl.category||''}</span>
-          </div>
-          ${cl.contact?`<div style="font-size:0.85rem;margin-bottom:6px"><b>Contact:</b> ${cl.contact}</div>`:''}
-          ${cl.phone?`<div style="font-size:0.85rem;margin-bottom:6px"><b>Phone:</b> ${cl.phone}</div>`:''}
-          ${cl.email?`<div style="font-size:0.85rem;margin-bottom:6px"><b>Email:</b> <a href="mailto:${cl.email}" style="color:var(--gold)">${cl.email}</a></div>`:''}
-          ${cl.fleet?`<div style="font-size:0.85rem;margin-bottom:6px"><b>Fleet Size:</b> ${cl.fleet}</div>`:''}
-          ${cl.rate?`<div style="font-size:0.85rem;margin-bottom:6px"><b>Rate:</b> ${cl.rate}</div>`:''}
-          ${cl.notes?`<div style="margin-top:12px;padding:10px;background:var(--surface3);border-radius:4px;font-size:0.8rem;color:var(--text-muted)">${cl.notes}</div>`:''}
-          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:16px">
-            <button class="btn btn-outline btn-sm" onclick="editClientStatus(${i})">✏ Edit Status</button>
-            <button class="btn btn-danger btn-sm" onclick="deleteClient(${i})">✕ Remove</button>
-          </div>
-        </div>
-        <div class="card">
-          <div style="font-family:var(--font-display);font-size:0.85rem;letter-spacing:1px;color:var(--gold);margin-bottom:12px">QUICK ACTIONS</div>
-          <div style="display:flex;flex-direction:column;gap:8px">
-            ${cl.phone?`<a href="tel:${cl.phone}" class="btn btn-outline btn-sm">📞 Call ${cl.contact||cl.company}</a>`:''}
-            ${cl.email?`<a href="mailto:${cl.email}" class="btn btn-outline btn-sm">✉ Email ${cl.contact||cl.company}</a>`:''}
-            <button class="btn btn-outline btn-sm" onclick="showPage('leads');setTimeout(()=>{ document.querySelectorAll('#leads-tbody tr').forEach(r=>{ if(r.textContent.includes('${cl.company}')){ r.style.background='rgba(201,168,76,0.2)'; r.scrollIntoView({behavior:'smooth',block:'center'}); } }); },300)">View in CRM →</button>
-          </div>
-        </div>
-      </div>
-    </div>`;
-}
 
-function editClientStatus(i) {
-  const cl = (state.clients||[])[i];
-  if (!cl) return;
-  const s = prompt('Update status (Active / Inactive / Paused):', cl.status);
-  if (s) { cl.status = s; saveState(); viewClientDetail(i); }
-}
+  // Build detail as DOM elements — no nested template literals
+  const wrap = document.createElement('div');
 
-function deleteClient(i) {
-  if (!confirm('Remove this client?')) return;
-  (state.clients||[]).splice(i,1);
-  saveState(); renderClients();
+  const back = document.createElement('button');
+  back.className = 'btn btn-outline btn-sm';
+  back.style.marginBottom = '16px';
+  back.textContent = '← Back to Clients';
+  back.onclick = () => { viewingClientIdx = null; renderClients(); };
+  wrap.appendChild(back);
+
+  const row = document.createElement('div');
+  row.className = 'grid-2 mb-16';
+
+  // INFO CARD
+  const info = document.createElement('div');
+  info.className = 'card';
+  info.innerHTML = `
+    <div style="font-family:var(--font-display);font-size:1.3rem;color:var(--gold);margin-bottom:8px">${cl.company}</div>
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">
+      <span id="client-status-pill" class="pill pill-won" style="font-size:0.65rem">${cl.status||'Active'}</span>
+      <span style="font-size:0.72rem;color:var(--text-muted);font-family:var(--font-mono)">${cl.category||''}</span>
+    </div>
+    ${cl.contact?`<div style="font-size:0.85rem;margin-bottom:6px"><b>Contact:</b> ${cl.contact}</div>`:''}
+    ${cl.phone?`<div style="font-size:0.85rem;margin-bottom:6px"><b>Phone:</b> ${cl.phone}</div>`:''}
+    ${cl.email?`<div style="font-size:0.85rem;margin-bottom:6px"><b>Email:</b> <a href="mailto:${cl.email}" style="color:var(--gold)">${cl.email}</a></div>`:''}
+    ${cl.fleet?`<div style="font-size:0.85rem;margin-bottom:6px"><b>Fleet Size:</b> ${cl.fleet}</div>`:''}
+    ${cl.rate?`<div style="font-size:0.85rem;margin-bottom:6px"><b>Rate:</b> ${cl.rate}</div>`:''}
+    ${cl.notes?`<div style="margin-top:12px;padding:10px;background:var(--surface3);border-radius:4px;font-size:0.8rem;color:var(--text-muted)">${cl.notes}</div>`:''}`;
+
+  // Status edit
+  const statusDiv = document.createElement('div');
+  statusDiv.style.cssText = 'display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:16px';
+  const statusSel = document.createElement('select');
+  statusSel.style.cssText = 'background:var(--surface3);border:1px solid var(--border);color:var(--text);padding:8px 12px;border-radius:3px;font-family:var(--font-mono);font-size:0.82rem;outline:none';
+  ['Active','Inactive','Paused','On Hold'].forEach(s => {
+    const opt = document.createElement('option');
+    opt.value = s; opt.textContent = s;
+    if (s === (cl.status||'Active')) opt.selected = true;
+    statusSel.appendChild(opt);
+  });
+  const saveStatusBtn = document.createElement('button');
+  saveStatusBtn.className = 'btn btn-gold btn-sm';
+  saveStatusBtn.textContent = '✓ Save Status';
+  saveStatusBtn.onclick = () => {
+    cl.status = statusSel.value;
+    saveState();
+    document.getElementById('client-status-pill').textContent = cl.status;
+    showToast('Status updated to '+cl.status,'success');
+  };
+  const delBtn = document.createElement('button');
+  delBtn.className = 'btn btn-danger btn-sm';
+  delBtn.textContent = '✕ Remove Client';
+  delBtn.onclick = () => {
+    showSelectModal('Remove ' + cl.company + '?',
+      ['Yes — remove this client', 'Cancel'],
+      (choice) => {
+        if (choice !== 'Yes — remove this client') return;
+        (state.clients||[]).splice(i, 1);
+        saveState();
+        viewingClientIdx = null;
+        renderClients();
+        showToast(cl.company + ' removed', 'success');
+      }
+    );
+  };
+  statusDiv.appendChild(statusSel);
+  statusDiv.appendChild(saveStatusBtn);
+  statusDiv.appendChild(delBtn);
+  info.appendChild(statusDiv);
+
+  // ACTIONS CARD
+  const actions = document.createElement('div');
+  actions.className = 'card';
+  actions.innerHTML = `<div style="font-family:var(--font-display);font-size:0.85rem;letter-spacing:1px;color:var(--gold);margin-bottom:12px">QUICK ACTIONS</div>`;
+  const actBtns = document.createElement('div');
+  actBtns.style.cssText = 'display:flex;flex-direction:column;gap:8px';
+  if (cl.phone) {
+    const a = document.createElement('a');
+    a.href = 'tel:'+cl.phone; a.className = 'btn btn-outline btn-sm';
+    a.textContent = '📞 Call '+(cl.contact||cl.company);
+    actBtns.appendChild(a);
+  }
+  if (cl.email) {
+    const a = document.createElement('a');
+    a.href = 'mailto:'+cl.email; a.className = 'btn btn-outline btn-sm';
+    a.textContent = '✉ Email '+(cl.contact||cl.company);
+    actBtns.appendChild(a);
+  }
+  const crmBtn = document.createElement('button');
+  crmBtn.className = 'btn btn-outline btn-sm';
+  crmBtn.textContent = 'View in CRM →';
+  crmBtn.onclick = () => showPage('leads');
+  actBtns.appendChild(crmBtn);
+  actions.appendChild(actBtns);
+
+  row.appendChild(info);
+  row.appendChild(actions);
+  wrap.appendChild(row);
+
+  grid.innerHTML = '';
+  grid.appendChild(wrap);
 }
 
 // ── GOALS ──
@@ -2650,61 +2792,226 @@ function addGoal() {
   const title = document.getElementById('goal-title').value.trim();
   if (!title) { showToast('Enter a goal', 'error'); return; }
   state.goals.push({
-    id: Date.now(), title,
-    date:  document.getElementById('goal-date').value,
-    cat:   document.getElementById('goal-cat').value,
-    notes: document.getElementById('goal-notes').value,
-    done:  false
+    id: Date.now().toString(), title,
+    date:   document.getElementById('goal-date').value,
+    cat:    document.getElementById('goal-cat').value,
+    notes:  document.getElementById('goal-notes').value,
+    status: 'Started',
+    done:   false
   });
   saveState(); closeModal('modal-add-goal'); renderGoals();
   showToast('Goal added!', 'success');
   ['goal-title','goal-date','goal-notes'].forEach(id => { const el=document.getElementById(id); if(el) el.value=''; });
 }
 
+const GOAL_STATUSES = ['Started','Workshopping','Awaiting Approval','Closing','Goal Met'];
+const GOAL_STATUS_COLORS = {
+  'Started':'#3b82f6','Workshopping':'#a855f7','Awaiting Approval':'#f97316',
+  'Closing':'#22c55e','Goal Met':'#C9A84C'
+};
+
 function renderGoals() {
-  const list = document.getElementById('custom-goals-list');
-  if (!list) return;
-  const goals = state.goals || [];
-  if (!goals.length) {
-    list.innerHTML = '<div style="text-align:center;padding:32px;color:var(--text-muted);font-family:var(--font-mono);font-size:0.75rem">NO GOALS YET — ADD YOUR FIRST GOAL</div>';
-    return;
+  const activeList    = document.getElementById('custom-goals-list');
+  const completedList = document.getElementById('completed-goals-list');
+  if (!activeList) return;
+
+  const goals     = state.goals || [];
+  const active    = goals.filter(g => !g.done);
+  const completed = goals.filter(g => g.done);
+
+  // ACTIVE — build with DOM to avoid nested backtick issues
+  if (!active.length) {
+    activeList.innerHTML = '<div style="text-align:center;padding:24px;color:var(--text-muted);font-family:var(--font-mono);font-size:0.75rem">No active goals — add one above</div>';
+  } else {
+    activeList.innerHTML = '';
+    active.forEach(g => {
+      const gid = g.id || g.title; // fallback for old goals without id
+      const st  = g.status || 'Started';
+      const col = GOAL_STATUS_COLORS[st] || '#64748b';
+
+      const item = document.createElement('div');
+      item.className = 'task-item';
+      item.style.cssText = 'border-left:3px solid '+col+';padding-left:12px;margin-bottom:8px;align-items:flex-start';
+
+      const body = document.createElement('div');
+      body.className = 'task-body';
+      body.style.flex = '1';
+
+      const titleEl = document.createElement('div');
+      titleEl.className = 'task-title';
+      titleEl.textContent = g.title;
+      body.appendChild(titleEl);
+
+      const meta = document.createElement('div');
+      meta.className = 'task-meta';
+      meta.textContent = (g.cat||'')+(g.date?' · Due: '+g.date:'')+(g.notes?' · '+g.notes:'');
+      body.appendChild(meta);
+
+      const controls = document.createElement('div');
+      controls.style.cssText = 'margin-top:6px;display:flex;align-items:center;gap:8px;flex-wrap:wrap';
+
+      const sel = document.createElement('select');
+      sel.style.cssText = 'background:'+col+'22;border:1px solid '+col+';color:'+col+';padding:3px 8px;border-radius:10px;font-family:var(--font-mono);font-size:0.62rem;outline:none;cursor:pointer';
+      GOAL_STATUSES.forEach(s => {
+        const opt = document.createElement('option');
+        opt.value = s; opt.textContent = s;
+        if (s === st) opt.selected = true;
+        sel.appendChild(opt);
+      });
+      sel.onchange = () => setGoalById(gid, sel.value);
+      controls.appendChild(sel);
+
+      const doneBtn = document.createElement('button');
+      doneBtn.className = 'btn btn-gold btn-sm';
+      doneBtn.style.cssText = 'font-size:0.58rem;padding:3px 8px';
+      doneBtn.textContent = 'Mark Complete';
+      doneBtn.onclick = () => markGoalDoneById(gid);
+      controls.appendChild(doneBtn);
+
+      body.appendChild(controls);
+      item.appendChild(body);
+
+      const delBtn = document.createElement('button');
+      delBtn.className = 'btn btn-danger btn-sm';
+      delBtn.style.cssText = 'font-size:0.6rem;align-self:flex-start;margin-top:2px';
+      delBtn.textContent = '✕';
+      delBtn.onclick = () => deleteGoalById(gid);
+      item.appendChild(delBtn);
+
+      activeList.appendChild(item);
+    });
   }
-  list.innerHTML = goals.map((g,i) => `
-    <div class="task-item">
-      <div class="task-check ${g.done?'done':''}" onclick="toggleGoal(${i})"></div>
-      <div class="task-body">
-        <div class="task-title ${g.done?'done':''}">${g.title}</div>
-        <div class="task-meta">${g.cat}${g.date?' · Target: '+g.date:''}${g.notes?' · '+g.notes:''}</div>
-      </div>
-      <button class="btn btn-danger btn-sm" style="font-size:0.6rem" onclick="deleteGoal(${i})">✕</button>
-    </div>`).join('');
-  // Update goal bar from jobs
+
+  // COMPLETED
+  if (!completed.length) {
+    completedList.innerHTML = '<div style="text-align:center;padding:16px;color:var(--text-muted);font-family:var(--font-mono);font-size:0.72rem">No completed goals yet</div>';
+  } else {
+    completedList.innerHTML = '';
+    completed.forEach(g => {
+      const gid = g.id || g.title;
+      const row = document.createElement('div');
+      row.style.cssText = 'display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border)';
+
+      const info = document.createElement('div');
+      info.innerHTML = '<div style="font-size:0.85rem;text-decoration:line-through;color:var(--text-muted)">'+g.title+'</div>'+
+        '<div style="font-size:0.68rem;color:var(--text-muted);font-family:var(--font-mono);margin-top:2px">'+
+        (g.cat||'')+(g.completedOn?' · Completed: '+g.completedOn:'')+
+        '<span style="color:var(--gold);margin-left:8px">✦ Goal Met</span></div>';
+      row.appendChild(info);
+
+      const btns = document.createElement('div');
+      btns.style.cssText = 'display:flex;gap:6px';
+
+      const reopenBtn = document.createElement('button');
+      reopenBtn.className = 'btn btn-outline btn-sm';
+      reopenBtn.style.fontSize = '0.58rem';
+      reopenBtn.textContent = 'Reopen';
+      reopenBtn.onclick = () => reopenGoalById(gid);
+      btns.appendChild(reopenBtn);
+
+      const delBtn = document.createElement('button');
+      delBtn.className = 'btn btn-danger btn-sm';
+      delBtn.style.fontSize = '0.58rem';
+      delBtn.textContent = '✕';
+      delBtn.onclick = () => deleteGoalById(gid);
+      btns.appendChild(delBtn);
+
+      row.appendChild(btns);
+      completedList.appendChild(row);
+    });
+  }
+
   updateGoalsMetrics();
 }
 
-function toggleGoal(i) {
-  (state.goals||[])[i].done = !(state.goals||[])[i].done;
+function findGoal(gid) {
+  return (state.goals||[]).find(g => (g.id||g.title) === gid);
+}
+function setGoalById(gid, status) {
+  const g = findGoal(gid); if (!g) return;
+  g.status = status; saveState(); renderGoals();
+}
+function markGoalDoneById(gid) {
+  const g = findGoal(gid); if (!g) return;
+  g.done = true; g.status = 'Goal Met'; g.completedOn = new Date().toLocaleDateString();
+  saveState(); renderGoals(); showToast('Goal marked complete! 🏆','success');
+}
+function reopenGoalById(gid) {
+  const g = findGoal(gid); if (!g) return;
+  g.done = false; g.status = 'Started'; g.completedOn = null;
   saveState(); renderGoals();
 }
+function deleteGoalById(gid) {
+  if (!confirm('Delete this goal?')) return;
+  state.goals = (state.goals||[]).filter(g => (g.id||g.title) !== gid);
+  saveState(); renderGoals();
+}
+// Keep old index-based functions for compatibility
+function setGoalStatus(i,s) { const g=(state.goals||[])[i]; if(g){g.status=s;saveState();renderGoals();} }
+function markGoalDone(i)    { const g=(state.goals||[])[i]; if(g){g.done=true;g.status='Goal Met';g.completedOn=new Date().toLocaleDateString();saveState();renderGoals();} }
+function reopenGoal(i)      { const g=(state.goals||[])[i]; if(g){g.done=false;g.status='Started';g.completedOn=null;saveState();renderGoals();} }
+function deleteGoal(i)      { if(!confirm('Delete?'))return;(state.goals||[]).splice(i,1);saveState();renderGoals(); }
+function toggleGoal(i)      { const g=(state.goals||[])[i]; if(!g)return;if(!g.done)markGoalDone(i);else reopenGoal(i); }
+
+function setGoalStatus(i, status) {
+  const g = (state.goals||[])[i];
+  if (!g) return;
+  g.status = status;
+  saveState(); renderGoals();
+}
+
+function markGoalDone(i) {
+  const g = (state.goals||[])[i];
+  if (!g) return;
+  g.done = true;
+  g.status = 'Goal Met';
+  g.completedOn = new Date().toLocaleDateString();
+  saveState(); renderGoals();
+  showToast('Goal marked complete! 🏆', 'success');
+}
+
+function reopenGoal(i) {
+  const g = (state.goals||[])[i];
+  if (!g) return;
+  g.done = false;
+  g.status = 'Started';
+  g.completedOn = null;
+  saveState(); renderGoals();
+}
+
+function toggleGoal(i) {
+  const g = (state.goals||[])[i];
+  if (!g) return;
+  if (!g.done) markGoalDone(i); else reopenGoal(i);
+}
+
 function deleteGoal(i) {
+  if (!confirm('Delete this goal?')) return;
   (state.goals||[]).splice(i,1);
   saveState(); renderGoals();
 }
 
+function editRevenueGoal() {
+  const current = state.revenueGoal || 10000;
+  showInputModal('Edit Revenue Goal', 'Monthly target in dollars (number only, e.g. 10000)', String(current), (val) => {
+    const num = parseInt(val.replace(/[^0-9]/g,''));
+    if (!num || num < 1) { showToast('Enter a valid dollar amount','error'); return; }
+    state.revenueGoal = num;
+    saveState();
+    updateGoalsMetrics();
+    showToast('Revenue goal updated to $'+num.toLocaleString()+'/month','success');
+  });
+}
+
 function updateGoalsMetrics() {
-  const thisMonth = new Date().getMonth();
-  const monthRev = (state.jobs||[]).filter(j=>new Date(j.date).getMonth()===thisMonth).reduce((s,j)=>s+j.revenue,0);
-  const pct = Math.min(100,(monthRev/10000)*100);
-  ['goals-mrr'].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent='$'+monthRev.toLocaleString();});
-  ['goals-bar'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.width=pct+'%';});
-  ['goals-pct'].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent=pct.toFixed(0)+'%';});
-  [1000,2500,5000,7500,10000,15000].forEach((m,i)=>{const el=document.getElementById('gm'+(i+1));if(el)el.classList.toggle('reached',monthRev>=m);});
+  // Always delegates to updateDashboardMetrics so both pages show identical data
+  updateDashboardMetrics();
 }
 
 // ── MARKETING ──
 // ── CAMPAIGN STATUS COLORS ──
 const CAMP_STATUS_COLORS = {
-  'Ideation':'#a855f7','In Progress':'#3b82f6','Review':'#f97316',
+  'Planning':'#a855f7','Ideation':'#a855f7','In Progress':'#3b82f6','Review':'#f97316',
   'Live':'#22c55e','Completed':'#64748b','Paused':'#64748b'
 };
 
@@ -2752,7 +3059,7 @@ function renderCampaigns() {
   }
   grid.innerHTML = camps.map(camp => {
     const col = CAMP_STATUS_COLORS[camp.status]||'#64748b';
-    return `<div onclick="openCampaign('${camp.id}')" style="background:var(--surface2);border:1px solid var(--border);border-top:3px solid ${col};border-radius:6px;padding:18px;cursor:pointer;transition:border-color 0.2s"
+    return `<div onclick="openCampaign('${String(camp.id)}')" style="background:var(--surface2);border:1px solid var(--border);border-top:3px solid ${col};border-radius:6px;padding:18px;cursor:pointer;transition:border-color 0.2s"
       onmouseenter="this.style.borderColor='${col}'" onmouseleave="this.style.borderTopColor='${col}';this.style.borderRightColor='var(--border)';this.style.borderBottomColor='var(--border)';this.style.borderLeftColor='var(--border)'">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">
         <div style="flex:1;min-width:0">
@@ -2773,7 +3080,7 @@ function renderCampaigns() {
 }
 
 function openCampaign(id) {
-  viewingCampaignId = id;
+  viewingCampaignId = String(id);
   document.getElementById('mkt-list-view').style.display = 'none';
   document.getElementById('mkt-detail-view').style.display = 'block';
   renderCampaignDetail(id);
@@ -2787,7 +3094,7 @@ function closeCampaign() {
 }
 
 function renderCampaignDetail(id) {
-  const camp = (state.campaigns||[]).find(c=>c.id===id);
+  const camp = (state.campaigns||[]).find(c=>String(c.id)===String(id));
   if (!camp) return;
   const el = document.getElementById('mkt-detail-content');
   const col = CAMP_STATUS_COLORS[camp.status]||'#64748b';
@@ -2880,26 +3187,27 @@ function renderCampaignDetail(id) {
 }
 
 function editCampaignField(id, field, label) {
-  const camp = (state.campaigns||[]).find(c=>c.id===id);
+  const camp = (state.campaigns||[]).find(c=>String(c.id)===String(id));
   if (!camp) return;
-  const val = prompt('Edit '+label+':', camp[field]||'');
-  if (val === null) return;
-  camp[field] = val;
-  saveState();
-  renderCampaignDetail(id);
+  showInputModal('Edit ' + label, label, camp[field]||'', (val) => {
+    camp[field] = val;
+    saveState();
+    renderCampaignDetail(id);
+  });
 }
 
 function editCampaignStatus(id) {
-  const camp = (state.campaigns||[]).find(c=>c.id===id);
+  const camp = (state.campaigns||[]).find(c=>String(c.id)===String(id));
   if (!camp) return;
-  const statuses = ['Ideation','In Progress','Review','Live','Completed','Paused'];
-  const cur = statuses.indexOf(camp.status);
-  const val = prompt('Status: '+statuses.join(' / ')+' | Current: '+camp.status, camp.status);
-  if (!val || !statuses.includes(val)) { showToast('Invalid status','error'); return; }
-  camp.status = val;
-  saveState();
-  renderCampaignDetail(id);
-  showToast('Status updated to '+val,'success');
+  showSelectModal('Change Campaign Status',
+    ['Planning','In Progress','Review','Live','Completed','Paused'],
+    (val) => {
+      camp.status = val;
+      saveState();
+      renderCampaignDetail(id);
+      showToast('Status → '+val,'success');
+    }
+  );
 }
 
 function addCampaignIdea(id) {
@@ -2907,7 +3215,7 @@ function addCampaignIdea(id) {
   if (!text) return;
   const types = ['Content Idea','Video','Social Post','Branding','Logo','Script','Other'];
   const type = prompt('Type ('+types.join(' / ')+')', 'Content Idea') || 'Content Idea';
-  const camp = (state.campaigns||[]).find(c=>c.id===id);
+  const camp = (state.campaigns||[]).find(c=>String(c.id)===String(id));
   if (!camp) return;
   if (!camp.ideas) camp.ideas = [];
   camp.ideas.push({ text, type, date: new Date().toISOString().split('T')[0] });
@@ -2917,7 +3225,7 @@ function addCampaignIdea(id) {
 }
 
 function deleteCampaignIdea(id, idx) {
-  const camp = (state.campaigns||[]).find(c=>c.id===id);
+  const camp = (state.campaigns||[]).find(c=>String(c.id)===String(id));
   if (!camp) return;
   camp.ideas.splice(idx,1);
   saveState();
@@ -2925,7 +3233,7 @@ function deleteCampaignIdea(id, idx) {
 }
 
 function uploadCampaignAssets(input, id) {
-  const camp = (state.campaigns||[]).find(c=>c.id===id);
+  const camp = (state.campaigns||[]).find(c=>String(c.id)===String(id));
   if (!camp) return;
   if (!camp.assets) camp.assets = [];
   Array.from(input.files).forEach(file => {
@@ -2947,7 +3255,7 @@ function uploadCampaignAssets(input, id) {
 }
 
 function deleteCampaignAsset(id, idx) {
-  const camp = (state.campaigns||[]).find(c=>c.id===id);
+  const camp = (state.campaigns||[]).find(c=>String(c.id)===String(id));
   if (!camp) return;
   camp.assets.splice(idx,1);
   saveState();
@@ -2955,11 +3263,15 @@ function deleteCampaignAsset(id, idx) {
 }
 
 function deleteCampaign(id) {
-  if (!confirm('Delete this campaign and all its assets?')) return;
-  state.campaigns = (state.campaigns||[]).filter(c=>c.id!==id);
-  saveState();
-  closeCampaign();
-  showToast('Campaign deleted','success');
+  const camp = (state.campaigns||[]).find(c=>String(c.id)===String(id));
+  if (!camp) return;
+  showSelectModal('Delete "'+camp.name+'"?', ['Yes, delete it','Cancel'], (choice) => {
+    if (choice !== 'Yes, delete it') return;
+    state.campaigns = (state.campaigns||[]).filter(c=>String(c.id)!==String(id));
+    saveState();
+    closeCampaign();
+    showToast('Campaign deleted','success');
+  });
 }
 
 // Keep legacy uploadAssets/renderAssets as no-ops (assets now live in campaigns)
@@ -3075,245 +3387,45 @@ function initApp() {
   renderTasks();
   const jobDate = document.getElementById('job-date');
   if (jobDate) jobDate.value = new Date().toISOString().split('T')[0];
-  // Pre-load fleet data in background so it's ready when user clicks Fleet tab
-  fleetLoadCloud().then(() => {
-    renderFleetDash();
-    const badge = document.getElementById('fleet-badge');
-    if (badge && fleetST) badge.textContent = fleetST.clients.length;
-  }).catch(() => {});
+  // Load fleet data instantly from localStorage
+  fleetLoad();
+  const badge = document.getElementById('fleet-badge');
+  if (badge && fleetST) badge.textContent = fleetST.clients.length;
 }
 
 
 // ══════════════════════════════════════════
 // REPORTS MODULE
 // ══════════════════════════════════════════
-function renderReport() {
-  const el = document.getElementById('report-content');
-  if (!el) return;
 
-  const now   = new Date();
-  const month = now.getMonth();
-  const year  = now.getFullYear();
 
-  // ── FINANCES ──
-  if (!state || !state.jobs) loadState();
-  const allJobs   = state.jobs || [];
-  const monthJobs = allJobs.filter(j => new Date(j.date).getMonth()===month && new Date(j.date).getFullYear()===year);
-  const monthRev  = monthJobs.reduce((s,j)=>s+(+j.revenue||0),0);
-  const allRev    = allJobs.reduce((s,j)=>s+(+j.revenue||0),0);
-  const jobsByMonth = {};
-  allJobs.forEach(j => {
-    const k = new Date(j.date).toLocaleDateString('en-US',{month:'short',year:'numeric'});
-    jobsByMonth[k] = (jobsByMonth[k]||0) + (+j.revenue||0);
-  });
-
-  // ── LEADS ──
-  const leads     = state.leads || [];
-  const wonLeads  = leads.filter(l=>l.status==='Closed Won');
-  const lostLeads = leads.filter(l=>l.status==='Closed Lost');
-  const openLeads = leads.filter(l=>!['Closed Won','Closed Lost'].includes(l.status));
-  const hotLeads  = leads.filter(l=>l.priority&&!['Closed Won','Closed Lost'].includes(l.status));
-
-  // ── GOALS ──
-  const goals     = state.goals || [];
-  const doneGoals = goals.filter(g=>g.done);
-  const openGoals = goals.filter(g=>!g.done);
-  const soonGoals = openGoals.filter(g=>{
-    if (!g.date) return false;
-    const diff = (new Date(g.date)-now)/(1000*60*60*24);
-    return diff >= 0 && diff <= 14;
-  });
-
-  // ── JOBS ──
-  const completedJobs  = allJobs.filter(j=>j.status==='completed'||!j.status);
-  const scheduledJobs  = allJobs.filter(j=>j.status==='scheduled');
-  const cancelledJobs  = allJobs.filter(j=>j.status==='cancelled');
-
-  // ── CLIENTS ──
-  const clients        = state.clients || [];
-  const activeClients  = clients.filter(c=>c.status==='Active');
-
-  // ── FLEET ──
-  const fleetClients   = fleetST?.clients || [];
-  const allVehicles    = fleetClients.flatMap(c=>c.vehicles||[]);
-  const pendingDamages = fleetClients.flatMap(c=>(c.damages||[]).filter(d=>!d.acknowledged));
-  const openRequests   = fleetClients.flatMap(c=>(c.requests||[]).filter(r=>r.status==='pending'));
-
-  // ── MARKETING ──
-  const campaigns      = state.campaigns || [];
-  const activeCampaigns= campaigns.filter(c=>c.status==='Active');
-  const assets         = state.assets || [];
-
-  // ── BUILD REPORT HTML ──
-  const reportDate = now.toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
-  const pct = Math.min(100,((monthRev/10000)*100)).toFixed(0);
-
-  // Revenue by month for chart
-  const chartMonths = Object.keys(jobsByMonth).slice(-6);
-  const chartVals   = chartMonths.map(m=>jobsByMonth[m]||0);
-  const chartMax    = Math.max(...chartVals, 1);
-
-  el.innerHTML = `
-  <div id="report-printable" style="max-width:900px;margin:0 auto">
-
-    <!-- HEADER -->
-    <div style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:24px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center">
-      <div>
-        <div style="font-family:var(--font-display);font-size:1.8rem;color:var(--gold);letter-spacing:3px">GOLD SERVICE DETAILING</div>
-        <div style="font-family:var(--font-mono);font-size:0.72rem;color:var(--text-muted);margin-top:4px">Business Report · Generated ${reportDate}</div>
-      </div>
-      <div style="text-align:right">
-        <div style="font-size:0.72rem;color:var(--text-muted);font-family:var(--font-mono)">2026 REVENUE GOAL</div>
-        <div style="font-family:var(--font-display);font-size:1.4rem;color:var(--gold)">$10K – $15K/mo</div>
-        <div style="font-family:var(--font-mono);font-size:0.72rem;color:var(--green)">${pct}% to $10K this month</div>
-      </div>
-    </div>
-
-    <!-- KPI ROW -->
-    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px">
-      ${[
-        ['This Month Revenue','$'+monthRev.toLocaleString(),'var(--green)'],
-        ['Total Revenue (All Time)','$'+allRev.toLocaleString(),'var(--gold)'],
-        ['Active Clients',activeClients.length,'var(--text)'],
-        ['Fleet Clients',fleetClients.length,'var(--text)'],
-      ].map(([label,val,color])=>`
-        <div style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:16px;text-align:center">
-          <div style="font-size:0.65rem;color:var(--text-muted);font-family:var(--font-mono);margin-bottom:6px">${label}</div>
-          <div style="font-family:var(--font-display);font-size:1.4rem;color:${color}">${val}</div>
-        </div>`).join('')}
-    </div>
-
-    <!-- REVENUE CHART -->
-    <div style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:20px;margin-bottom:16px">
-      <div style="font-family:var(--font-display);font-size:0.85rem;letter-spacing:1px;color:var(--gold);margin-bottom:16px">REVENUE BY MONTH</div>
-      ${chartMonths.length ? `
-      <div style="display:flex;align-items:flex-end;gap:8px;height:120px;padding-bottom:24px;position:relative">
-        ${chartVals.map((v,i)=>`
-          <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;height:100%">
-            <div style="flex:1;display:flex;align-items:flex-end;width:100%">
-              <div style="width:100%;background:var(--gold);border-radius:3px 3px 0 0;height:${Math.max(4,(v/chartMax)*100)}%;min-height:4px;opacity:${i===chartVals.length-1?1:0.6}"></div>
-            </div>
-            <div style="font-family:var(--font-mono);font-size:0.58rem;color:var(--text-muted);white-space:nowrap">${chartMonths[i]}</div>
-            <div style="font-family:var(--font-mono);font-size:0.62rem;color:var(--gold)">$${v.toLocaleString()}</div>
-          </div>`).join('')}
-      </div>` : '<div style="color:var(--text-muted);font-family:var(--font-mono);font-size:0.72rem;padding:16px 0;text-align:center">No job revenue logged yet</div>'}
-    </div>
-
-    <!-- GRID: LEADS + JOBS -->
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
-      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:20px">
-        <div style="font-family:var(--font-display);font-size:0.85rem;letter-spacing:1px;color:var(--gold);margin-bottom:14px">CRM / LEADS</div>
-        ${[
-          ['Total Leads',leads.length,'var(--text)'],
-          ['Open / Active',openLeads.length,'var(--gold)'],
-          ['Hot Leads 🔥',hotLeads.length,'var(--orange)'],
-          ['Closed Won ✓',wonLeads.length,'var(--green)'],
-          ['Closed Lost',lostLeads.length,'var(--red)'],
-        ].map(([l,v,col])=>`
-          <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);font-size:0.82rem">
-            <span style="color:var(--text-muted)">${l}</span>
-            <span style="font-family:var(--font-mono);font-weight:700;color:${col}">${v}</span>
-          </div>`).join('')}
-      </div>
-      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:20px">
-        <div style="font-family:var(--font-display);font-size:0.85rem;letter-spacing:1px;color:var(--gold);margin-bottom:14px">JOBS</div>
-        ${[
-          ['Total Jobs Logged',allJobs.length,'var(--text)'],
-          ['This Month',monthJobs.length,'var(--gold)'],
-          ['Completed',completedJobs.length,'var(--green)'],
-          ['Scheduled',scheduledJobs.length,'var(--blue)'],
-          ['Cancelled',cancelledJobs.length,'var(--red)'],
-        ].map(([l,v,col])=>`
-          <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);font-size:0.82rem">
-            <span style="color:var(--text-muted)">${l}</span>
-            <span style="font-family:var(--font-mono);font-weight:700;color:${col}">${v}</span>
-          </div>`).join('')}
-      </div>
-    </div>
-
-    <!-- GRID: GOALS + FLEET -->
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
-      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:20px">
-        <div style="font-family:var(--font-display);font-size:0.85rem;letter-spacing:1px;color:var(--gold);margin-bottom:14px">GOALS</div>
-        ${[
-          ['Total Goals',goals.length,'var(--text)'],
-          ['Completed ✓',doneGoals.length,'var(--green)'],
-          ['Still Open',openGoals.length,'var(--gold)'],
-          ['Deadline This Week ⚠',soonGoals.length,'var(--orange)'],
-        ].map(([l,v,col])=>`
-          <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);font-size:0.82rem">
-            <span style="color:var(--text-muted)">${l}</span>
-            <span style="font-family:var(--font-mono);font-weight:700;color:${col}">${v}</span>
-          </div>`).join('')}
-        ${soonGoals.length ? `<div style="margin-top:10px">
-          ${soonGoals.map(g=>`<div style="font-size:0.72rem;color:var(--orange);font-family:var(--font-mono);padding:3px 0">⚠ ${g.title} — due ${g.date}</div>`).join('')}
-        </div>`:''}
-      </div>
-      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:20px">
-        <div style="font-family:var(--font-display);font-size:0.85rem;letter-spacing:1px;color:var(--gold);margin-bottom:14px">FLEET</div>
-        ${[
-          ['Fleet Clients',fleetClients.length,'var(--text)'],
-          ['Total Vehicles',allVehicles.length,'var(--text)'],
-          ['Clean',allVehicles.filter(v=>v.status==='clean').length,'var(--green)'],
-          ['Needs Cleaning',allVehicles.filter(v=>v.status==='needs_cleaning').length,'var(--orange)'],
-          ['Pending Damages',pendingDamages.length,'var(--red)'],
-          ['Open Requests',openRequests.length,'var(--gold)'],
-        ].map(([l,v,col])=>`
-          <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);font-size:0.82rem">
-            <span style="color:var(--text-muted)">${l}</span>
-            <span style="font-family:var(--font-mono);font-weight:700;color:${col}">${v}</span>
-          </div>`).join('')}
-      </div>
-    </div>
-
-    <!-- MARKETING -->
-    <div style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:20px;margin-bottom:16px">
-      <div style="font-family:var(--font-display);font-size:0.85rem;letter-spacing:1px;color:var(--gold);margin-bottom:14px">MARKETING</div>
-      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px">
-        ${[
-          ['Total Campaigns',campaigns.length],
-          ['Active Campaigns',activeCampaigns.length],
-          ['Assets in Library',assets.length],
-        ].map(([l,v])=>`
-          <div style="text-align:center;padding:12px;background:var(--surface3);border-radius:4px">
-            <div style="font-size:0.65rem;color:var(--text-muted);font-family:var(--font-mono);margin-bottom:6px">${l}</div>
-            <div style="font-family:var(--font-display);font-size:1.4rem;color:var(--gold)">${v}</div>
-          </div>`).join('')}
-      </div>
-      ${activeCampaigns.length ? `<div style="margin-top:12px">
-        ${activeCampaigns.map(camp=>`<div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border);font-size:0.78rem">
-          <span>${camp.name}</span>
-          <span style="color:var(--text-muted);font-family:var(--font-mono)">${camp.type}</span>
-          <span style="color:var(--text-muted);font-family:var(--font-mono)">${camp.budget||'—'}</span>
-        </div>`).join('')}
-      </div>`:''}
-    </div>
-
-    <!-- FOOTER -->
-    <div style="text-align:center;padding:16px;font-family:var(--font-mono);font-size:0.65rem;color:var(--text-muted)">
-      Gold Service Detailing · GoldHQ Report · ${reportDate}
-    </div>
-  </div>`;
+// ── INLINE MODAL HELPERS (replace all prompt() calls) ──
+function showInputModal(title, label, currentVal, onSave) {
+  document.getElementById('inline-input-title').textContent = title;
+  document.getElementById('inline-input-label').textContent = label;
+  document.getElementById('inline-input-value').value = currentVal || '';
+  document.getElementById('inline-input-save').onclick = () => {
+    const val = document.getElementById('inline-input-value').value;
+    closeModal('modal-inline-input');
+    onSave(val);
+  };
+  openModal('modal-inline-input');
+  setTimeout(() => document.getElementById('inline-input-value').focus(), 100);
 }
 
-function exportReportPDF() {
-  renderReport();
-  setTimeout(() => {
-    const el = document.getElementById('report-printable');
-    if (!el) return;
-    // Use browser print with print-only styles
-    const printCSS = `
-      <style>
-        body { background: #fff !important; color: #111 !important; font-family: Arial, sans-serif; }
-        * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-        .nav, .topbar, .btn, button { display: none !important; }
-        #report-printable { max-width: 100% !important; }
-      </style>`;
-    const win = window.open('','_blank');
-    win.document.write('<html><head><title>GSD Business Report</title>' + printCSS + '</head><body>' + el.outerHTML + '</body></html>');
-    win.document.close();
-    setTimeout(() => { win.print(); }, 500);
-  }, 300);
+function showSelectModal(title, options, onSelect) {
+  document.getElementById('inline-select-title').textContent = title;
+  const container = document.getElementById('inline-select-options');
+  container.innerHTML = '';
+  options.forEach(opt => {
+    const btn = document.createElement('button');
+    btn.className = 'btn btn-outline';
+    btn.style.textAlign = 'left';
+    btn.textContent = opt;
+    btn.onclick = () => { closeModal('modal-inline-select'); onSelect(opt); };
+    container.appendChild(btn);
+  });
+  openModal('modal-inline-select');
 }
 
 document.addEventListener('DOMContentLoaded', checkAuth);
@@ -3390,7 +3502,6 @@ document.addEventListener('DOMContentLoaded', checkAuth);
     <div class="modal-header"><div class="modal-title">ADD FLEET CLIENT</div><button class="modal-close" onclick="closeModal('modal-fleet-add-client')">✕</button></div>
     <div class="form-row">
       <div class="form-group"><label>Company Name</label><input type="text" id="fac-name" placeholder="e.g. Everon"></div>
-      <div class="form-group"><label>Client Code</label><input type="text" id="fac-code" placeholder="e.g. EVR2026" style="font-family:var(--font-mono)"></div>
     </div>
     <div class="form-row">
       <div class="form-group"><label>Contact Name</label><input type="text" id="fac-contact" placeholder="Primary contact"></div>
@@ -3477,10 +3588,8 @@ document.addEventListener('DOMContentLoaded', checkAuth);
 // ══════════════════════════════════════════
 // FLEET MODULE — JSONBin synced
 // ══════════════════════════════════════════
-const FLEET_JB_URL = 'https://api.jsonbin.io/v3/b/6a98f4be3919920ec4859051';
-const FLEET_JB_KEY = '$2a$10$jaBNXrBoHENhiCFuFwW9muhIyQ4bNYYkiTzN.Tr2WHj/MJakubvhu';
-
-let fleetST = null;     // fleet state from JSONBin
+// ── FLEET STATE (localStorage only — no external dependency) ──
+let fleetST = null;
 let fleetViewCid = null; // currently viewed client id
 let fleetSvcCid  = null; // client id for service log modal
 let fleetDmgCid  = null; // client id for damage modal
@@ -3488,146 +3597,60 @@ let fleetPayCid  = null; // client id for payment modal
 let fleetVehCid  = null; // client id for add vehicle modal
 
 // ── SYNC ──
-async function fleetLoadCloud() {
-  const statusEl = document.getElementById('fleet-sync-status');
-
-  // ALWAYS load localStorage first — it is the source of truth for local data
-  // Cloud is secondary — we sync TO cloud, we don't replace local WITH cloud blindly
-  function loadLocalCache() {
-    try {
-      const cached = localStorage.getItem('gsd_fleet_hq_cache');
-      if (cached) {
-        const parsed = JSON.parse(cached);
-        if (parsed && Array.isArray(parsed.clients)) return parsed;
-      }
-    } catch(e) {}
-    return null;
-  }
-
-  function migrate(data) {
-    if (!data.clients) data.clients = [];
-    if (!data.actLog)  data.actLog  = [];
-    data.clients.forEach(cl => {
-      if (!cl.vehicles) cl.vehicles = [];
-      if (!cl.damages)  cl.damages  = [];
-      if (!cl.requests) cl.requests = [];
-      if (!cl.payments) cl.payments = [];
-      if (!cl.services) cl.services = [];
-    });
-    return data;
-  }
-
-  // Step 1: load local cache immediately so UI is never blank
-  const local = loadLocalCache();
-  if (local) {
-    fleetST = migrate(local);
-  } else {
-    fleetST = {actLog:[], clients:[]};
-  }
-
-  // Step 2: try to fetch from cloud
+function fleetLoad() {
+  // Load fleet data from localStorage — instant, no network, no errors
   try {
-    if (statusEl) statusEl.textContent = 'Syncing with cloud...';
-    const res = await fetch(FLEET_JB_URL+'/latest', {
-      method: 'GET',
-      mode: 'cors',
-      headers: {
-        'X-Master-Key': FLEET_JB_KEY,
-        'X-Access-Key': FLEET_JB_KEY,
-        'X-Bin-Meta': 'false'
-      }
-    });
-
-    if (res.status === 404) {
-      // Bin is empty — push our local data to it (DO NOT overwrite with empty)
-      if (local && local.clients && local.clients.length > 0) {
-        console.log('Bin empty but we have local data — pushing local to cloud');
-        await fleetSaveCloud(); // push local up to cloud
-        if (statusEl) statusEl.textContent = 'Synced · ' + fleetST.clients.length + ' client(s) · ' + new Date().toLocaleTimeString();
-      } else {
-        // Truly empty everywhere — initialize
-        if (statusEl) statusEl.textContent = 'Ready — add your first fleet client';
-      }
-      return true;
+    const saved = localStorage.getItem('gsd_fleet_data');
+    if (saved) {
+      fleetST = JSON.parse(saved);
     }
-
-    if (!res.ok) {
-      const txt = await res.text();
-      console.error('Fleet cloud load failed:', res.status, txt.substring(0,200));
-      if (statusEl) statusEl.textContent = (local ? '⚠ Using local data (cloud error '+res.status+')' : '⚠ Cloud error '+res.status+' — no local cache');
-      return !!local;
-    }
-
-    const cloud = await res.json();
-    if (!cloud || !Array.isArray(cloud.clients)) {
-      if (statusEl) statusEl.textContent = '⚠ Bad cloud data — using local cache';
-      return !!local;
-    }
-
-    // Step 3: use whichever has MORE clients (prevents sync from wiping data)
-    const cloudHasMore = cloud.clients.length >= (local?.clients?.length || 0);
-    if (cloudHasMore) {
-      fleetST = migrate(cloud);
-      // Update local cache with cloud data
-      try { localStorage.setItem('gsd_fleet_hq_cache', JSON.stringify(fleetST)); } catch(e) {}
-    }
-    // else: local has more data — keep local, it will save to cloud on next action
-
-    if (statusEl) statusEl.textContent = 'Synced · ' + fleetST.clients.length + ' client(s) · ' + new Date().toLocaleTimeString();
-    return true;
-
-  } catch(e) {
-    console.warn('Fleet cloud fetch exception:', e.message);
-    if (statusEl) statusEl.textContent = local
-      ? '✓ Using local data (' + fleetST.clients.length + ' clients) — cloud unreachable'
-      : '⚠ Cloud unreachable — no local cache';
-    return !!local;
-  }
+  } catch(e) {}
+  if (!fleetST) fleetST = {actLog:[], clients:[]};
+  // Migrate any missing fields
+  if (!fleetST.clients) fleetST.clients = [];
+  if (!fleetST.actLog)  fleetST.actLog  = [];
+  fleetST.clients.forEach(cl => {
+    if (!cl.vehicles) cl.vehicles = [];
+    if (!cl.damages)  cl.damages  = [];
+    if (!cl.requests) cl.requests = [];
+    if (!cl.payments) cl.payments = [];
+    if (!cl.services) cl.services = [];
+  });
+  const statusEl = document.getElementById('fleet-sync-status');
+  if (statusEl) statusEl.textContent = fleetST.clients.length + ' client(s) · Last saved: ' + (localStorage.getItem('gsd_fleet_saved') || 'never');
+  return true;
 }
 
-async function fleetSaveCloud() {
-  if (!fleetST) return; // nothing to save
-  // Always write to localStorage first — instant, works offline
-  try { localStorage.setItem('gsd_fleet_hq_cache', JSON.stringify(fleetST)); } catch(e) {}
+// Keep async wrapper for backward compatibility with existing calls
+async function fleetLoadCloud() {
+  fleetLoad();
+  return true;
+}
 
-  // Then push to JSONBin
+function fleetSaveCloud() {
+  if (!fleetST) return;
+  const now = new Date().toLocaleString();
   try {
-    const res = await fetch(FLEET_JB_URL, {
-      method: 'PUT',
-      mode: 'cors',
-      headers: {
-        'X-Master-Key': FLEET_JB_KEY,
-        'X-Access-Key': FLEET_JB_KEY,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(fleetST)
-    });
-    if (!res.ok) throw new Error('HTTP '+res.status);
-    const now = new Date().toLocaleTimeString();
-    const statusEl = document.getElementById('fleet-sync-status');
-    if (statusEl) statusEl.textContent = 'Synced · ' + fleetST.clients.length + ' client(s) · ' + now;
-    const el = document.getElementById('last-save-time');
-    if (el) el.textContent = 'Last sync: ' + now;
+    localStorage.setItem('gsd_fleet_data', JSON.stringify(fleetST));
+    localStorage.setItem('gsd_fleet_saved', now);
   } catch(e) {
     console.warn('Fleet save failed:', e);
-    const statusEl = document.getElementById('fleet-sync-status');
-    if (statusEl) statusEl.textContent = '⚠ Saved locally — cloud sync failed, will retry on next save';
   }
+  const statusEl = document.getElementById('fleet-sync-status');
+  if (statusEl) statusEl.textContent = fleetST.clients.length + ' client(s) · Saved: ' + new Date().toLocaleTimeString();
+  const el = document.getElementById('last-save-time');
+  if (el) el.textContent = 'Last saved: ' + now;
 }
 
-async function fleetSync() {
-  document.getElementById('fleet-sync-status').textContent = 'Syncing...';
-  await fleetLoadCloud();
+function fleetSync() {
+  fleetLoad();
   renderFleetDash();
   renderFleetClients();
   renderFleetDamages();
-  renderFleetRequests();
-  renderFleetSettings();
 }
 
 // ── TAB SWITCHING ──
 function fleetTab(name, el) {
-  // Hide detail tab unless explicitly shown
   document.querySelectorAll('#page-fleet .tab-content').forEach(t => {
     t.classList.remove('active');
     if (t.id === 'ftab-client-detail') t.style.setProperty('display','none','important');
@@ -3636,11 +3659,10 @@ function fleetTab(name, el) {
   const tab = document.getElementById('ftab-'+name);
   if (tab) { tab.classList.add('active'); tab.style.removeProperty('display'); }
   if (el) el.classList.add('active');
-  if (name === 'dash')     renderFleetDash();
-  if (name === 'clients')  renderFleetClients();
-  if (name === 'damages')  renderFleetDamages();
-  if (name === 'requests') renderFleetRequests();
-  if (name === 'settings') renderFleetSettings();
+  if (name === 'dash')           renderFleetDash();
+  if (name === 'clients')        renderFleetClients();
+  if (name === 'damage-reports') renderFleetDamages();
+  if (name === 'clean-report')   renderCleanReport();
 }
 
 function fleetShowDetail(cid) {
@@ -3662,39 +3684,22 @@ function renderFleetDash() {
   const clients = fleetST.clients || [];
   const allVeh  = clients.flatMap(c => c.vehicles || []);
   const allDmg  = clients.flatMap(c => (c.damages||[]).filter(d => !d.acknowledged));
-  const allReq  = clients.flatMap(c => (c.requests||[]).filter(r => r.status === 'pending'));
 
   document.getElementById('fk-clients').textContent  = clients.length;
   document.getElementById('fk-vehicles').textContent = allVeh.length;
   document.getElementById('fk-damages').textContent  = allDmg.length;
-  document.getElementById('fk-requests').textContent = allReq.length;
   document.getElementById('fleet-badge').textContent = clients.length;
 
-  // Recent activity
-  const logs = (fleetST.actLog || []).slice(-10).reverse();
+  const logs = (fleetST.actLog || []).slice(-15).reverse();
   document.getElementById('fleet-activity').innerHTML = logs.length
-    ? logs.map(l => `<div style="padding:5px 0;border-bottom:1px solid var(--border)">
-        <span style="color:var(--gold)">${l.who||''}</span>
-        <span style="color:var(--text-muted)"> · ${l.action} — ${l.detail||''}</span>
-        <div style="font-size:0.62rem;color:var(--text-dim)">${new Date(l.at||l.ts||Date.now()).toLocaleString()}</div>
+    ? logs.map(l => `<div style="padding:6px 0;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:flex-start">
+        <div>
+          <span style="color:var(--gold);font-weight:600">${l.action}</span>
+          <span style="color:var(--text-muted)"> — ${l.detail||''}</span>
+        </div>
+        <div style="font-size:0.6rem;color:var(--text-muted);white-space:nowrap;margin-left:8px">${new Date(l.at||Date.now()).toLocaleString()}</div>
       </div>`).join('')
     : '<div style="color:var(--text-muted);font-size:0.72rem;text-align:center;padding:12px">No activity yet</div>';
-
-  // Alerts
-  const alerts = [];
-  allDmg.forEach(d => {
-    const cn = clients.find(c=>(c.damages||[]).includes(d))?.name || '';
-    alerts.push(`<div style="background:rgba(231,76,60,0.1);border-left:3px solid var(--red);padding:8px 12px;border-radius:3px;margin-bottom:6px;font-size:0.78rem">
-      🛡 Unacknowledged damage — ${d.vehicleId} ${cn?'('+cn+')':''}</div>`);
-  });
-  allReq.forEach(r => {
-    const cn = clients.find(c=>(c.requests||[]).includes(r))?.name || '';
-    alerts.push(`<div style="background:rgba(201,168,76,0.1);border-left:3px solid var(--gold);padding:8px 12px;border-radius:3px;margin-bottom:6px;font-size:0.78rem">
-      📋 Pending request — ${cn}: ${r.type||r.title||''}</div>`);
-  });
-  document.getElementById('fleet-alerts').innerHTML = alerts.length
-    ? alerts.join('')
-    : '<div style="color:var(--text-muted);font-family:var(--font-mono);font-size:0.72rem;text-align:center;padding:16px">✓ All clear</div>';
 }
 
 // ── RENDER: CLIENTS ──
@@ -3897,7 +3902,7 @@ function renderFleetDetail(cid) {
 
 // ── RENDER: DAMAGES (all) ──
 function renderFleetDamages() {
-  const el = document.getElementById('fleet-damages-list');
+  const el = document.getElementById('fleet-damages-list'); // also used in ftab-damage-reports
   if (!el || !fleetST) return;
   const all = (fleetST.clients||[]).flatMap(c =>
     (c.damages||[]).map(d => ({...d, clientName: c.name, clientId: c.id}))
@@ -3944,23 +3949,84 @@ function renderFleetRequests() {
 }
 
 // ── RENDER: SETTINGS ──
-function renderFleetSettings() {
-  const el = document.getElementById('fleet-access-codes');
-  if (!el || !fleetST) return;
+
+function renderCleanReport() {
+  if (!fleetST) return;
+  const monthInput = document.getElementById('clean-report-month');
+  const clientSel  = document.getElementById('clean-report-client');
+  const content    = document.getElementById('clean-report-content');
+  if (!content) return;
+
+  // Populate client dropdown
   const clients = fleetST.clients || [];
-  el.innerHTML = clients.length ? clients.map(cl => `
-    <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border)">
-      <div>
-        <div style="font-weight:600;font-size:0.85rem">${cl.name}</div>
-        <div style="font-family:var(--font-mono);font-size:0.8rem;color:var(--gold);margin-top:2px">${cl.code||'No code set'}</div>
-      </div>
-      <div style="display:flex;gap:8px;align-items:center">
-        <span class="pill ${cl.disabled?'':'pill-won'}" style="font-size:0.6rem">${cl.disabled?'DISABLED':'ACTIVE'}</span>
-        <button class="btn btn-outline btn-sm" style="font-size:0.62rem" onclick="fleetToggleAccess('${cl.id}')">${cl.disabled?'Enable':'Disable'}</button>
-      </div>
-    </div>`).join('') :
-    '<div style="color:var(--text-muted);font-family:var(--font-mono);font-size:0.72rem">No clients — add one first</div>';
+  if (clientSel) {
+    const cur = clientSel.value;
+    clientSel.innerHTML = '<option value="all">All Clients</option>' +
+      clients.map(cl=>`<option value="${cl.id}" ${cl.id===cur?'selected':''}>${cl.name}</option>`).join('');
+  }
+
+  const selMonth  = monthInput?.value || '';
+  const selClient = clientSel?.value  || 'all';
+
+  // Gather all service logs
+  let entries = [];
+  clients.forEach(cl => {
+    if (selClient !== 'all' && cl.id !== selClient) return;
+    (cl.services||[]).forEach(svc => {
+      if (selMonth && !svc.date?.startsWith(selMonth)) return;
+      entries.push({ client: cl.name, clientId: cl.id, ...svc });
+    });
+  });
+
+  entries.sort((a,b) => (b.date||'').localeCompare(a.date||''));
+
+  if (!entries.length) {
+    content.innerHTML = '<div style="text-align:center;padding:48px;color:var(--text-muted);font-family:var(--font-mono);font-size:0.75rem">No cleaning records found for the selected filters</div>';
+    return;
+  }
+
+  // Summary row
+  const totalVehicles = entries.reduce((s,e)=>s+(+e.count||0),0);
+  const totalRevenue  = entries.reduce((s,e)=>s+(parseFloat((e.amount||'0').replace(/[^0-9.]/g,''))||0),0);
+
+  content.innerHTML = `
+    <div class="grid-3 mb-16">
+      <div class="card"><div class="card-label">Service Visits</div><div class="card-value">${entries.length}</div></div>
+      <div class="card"><div class="card-label">Vehicles Cleaned</div><div class="card-value" style="color:var(--green)">${totalVehicles}</div></div>
+      <div class="card"><div class="card-label">Total Billed</div><div class="card-value" style="color:var(--gold)">$${totalRevenue.toFixed(2)}</div></div>
+    </div>
+    <div class="card">
+      <table style="width:100%;border-collapse:collapse;font-size:0.82rem">
+        <thead>
+          <tr style="background:var(--surface3)">
+            <th style="padding:10px 12px;text-align:left;font-family:var(--font-mono);font-size:0.7rem;color:var(--text-muted);font-weight:600">DATE</th>
+            <th style="padding:10px 12px;text-align:left;font-family:var(--font-mono);font-size:0.7rem;color:var(--text-muted);font-weight:600">CLIENT</th>
+            <th style="padding:10px 12px;text-align:center;font-family:var(--font-mono);font-size:0.7rem;color:var(--text-muted);font-weight:600">VEHICLES</th>
+            <th style="padding:10px 12px;text-align:right;font-family:var(--font-mono);font-size:0.7rem;color:var(--text-muted);font-weight:600">AMOUNT</th>
+            <th style="padding:10px 12px;text-align:left;font-family:var(--font-mono);font-size:0.7rem;color:var(--text-muted);font-weight:600">NOTES</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${entries.map((e,i)=>`
+            <tr style="border-bottom:1px solid var(--border);background:${i%2===0?'transparent':'rgba(255,255,255,0.02)'}">
+              <td style="padding:10px 12px;font-family:var(--font-mono);color:var(--text-muted)">${e.date||'—'}</td>
+              <td style="padding:10px 12px;font-weight:600;color:var(--gold)">${e.client}</td>
+              <td style="padding:10px 12px;text-align:center;font-family:var(--font-mono)">${e.count||'—'}</td>
+              <td style="padding:10px 12px;text-align:right;font-family:var(--font-mono);color:var(--green)">${e.amount||'—'}</td>
+              <td style="padding:10px 12px;color:var(--text-muted);font-size:0.75rem">${e.notes||''}</td>
+            </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>`;
 }
+
+function renderFleetSettings() {
+  if (!fleetST) return;
+  const saved = localStorage.getItem('gsd_fleet_saved');
+  const st = document.getElementById('last-save-time');
+  if (st) st.textContent = 'Last saved: ' + (saved||'never');
+}
+
 
 // ── ACTIONS ──
 function fleetLog(action, detail) {
@@ -3971,20 +4037,19 @@ function fleetLog(action, detail) {
 
 async function fleetAddClient() {
   const name = document.getElementById('fac-name').value.trim();
-  const code = document.getElementById('fac-code').value.trim();
   if (!name) { showToast('Enter a company name','error'); return; }
   if (!code) { showToast('Enter a client code','error'); return; }
   // Auto-load fleet data if not yet loaded
   if (!fleetST) {
     showToast('Connecting to fleet data...', 'success');
-    await fleetLoadCloud();
+    fleetLoad();
   }
   if (!fleetST) { showToast('Could not connect — check internet and try again','error'); return; }
   const existing = fleetST.clients.find(c => c.code === code);
   if (existing) { showToast('Code already in use','error'); return; }
   const client = {
     id:       Date.now().toString(),
-    name,     code,
+    name,
     contact:  document.getElementById('fac-contact').value,
     phone:    document.getElementById('fac-phone').value,
     email:    document.getElementById('fac-email').value,
@@ -4003,7 +4068,7 @@ async function fleetAddClient() {
   renderFleetClients();
   renderFleetDash();
   showToast(name + ' added!', 'success');
-  ['fac-name','fac-code','fac-contact','fac-phone','fac-email','fac-address','fac-rate','fac-days','fac-hours','fac-notes'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  ['fac-name','fac-contact','fac-phone','fac-email','fac-address','fac-rate','fac-days','fac-hours','fac-notes'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
 }
 
 function fleetDeleteClient(cid) {
@@ -4016,15 +4081,7 @@ function fleetDeleteClient(cid) {
   showToast('Client deleted','success');
 }
 
-function fleetToggleAccess(cid) {
-  const cl = fleetST.clients.find(c=>c.id===cid);
-  if (!cl) return;
-  cl.disabled = !cl.disabled;
-  fleetLog(cl.disabled?'Disabled':'Enabled', cl.name);
-  fleetSaveCloud();
-  renderFleetSettings();
-  showToast(cl.name+' '+(cl.disabled?'disabled':'enabled'),'success');
-}
+
 
 function fleetOpenAddVehicle(cid) {
   fleetVehCid = cid;
@@ -4171,12 +4228,36 @@ function hqChangePass() {
 }
 
 function fleetExport() {
+  if (!fleetST) { showToast('No fleet data to export','error'); return; }
   const blob = new Blob([JSON.stringify(fleetST,null,2)],{type:'application/json'});
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
-  a.href=url; a.download='GSD-Fleet-Backup-'+new Date().toISOString().slice(0,10)+'.json';
+  a.href=url; a.download='GSD-Fleet-'+new Date().toISOString().slice(0,10)+'.json';
   document.body.appendChild(a); a.click(); document.body.removeChild(a);
   showToast('Backup downloaded','success');
+}
+
+function fleetImport() {
+  const input = document.createElement('input');
+  input.type='file'; input.accept='.json';
+  input.onchange = e => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = ev => {
+      try {
+        const data = JSON.parse(ev.target.result);
+        if (!data || !Array.isArray(data.clients)) { showToast('Invalid backup file','error'); return; }
+        if (!confirm('Import backup? This will replace all current fleet data.')) return;
+        fleetST = data;
+        fleetSaveCloud();
+        fleetSync();
+        showToast('Fleet data imported — ' + data.clients.length + ' clients','success');
+      } catch(err) { showToast('Could not read file','error'); }
+    };
+    reader.readAsText(file);
+  };
+  input.click();
 }
 
 // ── HOOK INTO showPage ──
@@ -4184,15 +4265,10 @@ const _fleetOrigShowPage = showPage;
 showPage = function(id) {
   _fleetOrigShowPage(id);
   if (id === 'fleet') {
-    if (!fleetST) {
-      fleetLoadCloud().then(() => {
-        renderFleetDash();
-        renderFleetClients();
-        renderFleetSettings();
-      });
-    } else {
-      renderFleetDash();
-    }
+    fleetLoad();
+    renderFleetDash();
+    renderFleetClients();
+    renderFleetSettings();
   }
 };
 
@@ -4217,6 +4293,37 @@ showPage = function(id) {
       <button class="btn btn-outline" onclick="closeModal('modal-fleet-add-damage')">Cancel</button>
       <button class="btn btn-gold" onclick="fleetAddDamage()">Log Damage</button>
     </div>
+  </div>
+</div>
+
+
+<!-- MODAL: Inline Text Input (replaces all prompt() calls) -->
+<div class="modal-overlay" id="modal-inline-input" onclick="if(event.target===this)closeModal('modal-inline-input')">
+  <div class="modal" style="max-width:480px">
+    <div class="modal-header">
+      <div class="modal-title" id="inline-input-title">EDIT</div>
+      <button class="modal-close" onclick="closeModal('modal-inline-input')">✕</button>
+    </div>
+    <div class="form-group">
+      <label id="inline-input-label">Value</label>
+      <textarea id="inline-input-value" style="min-height:80px"></textarea>
+    </div>
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button class="btn btn-outline" onclick="closeModal('modal-inline-input')">Cancel</button>
+      <button class="btn btn-gold" id="inline-input-save" onclick="">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Inline Select (replaces status prompt) -->
+<div class="modal-overlay" id="modal-inline-select" onclick="if(event.target===this)closeModal('modal-inline-select')">
+  <div class="modal" style="max-width:400px">
+    <div class="modal-header">
+      <div class="modal-title" id="inline-select-title">SELECT</div>
+      <button class="modal-close" onclick="closeModal('modal-inline-select')">✕</button>
+    </div>
+    <div id="inline-select-options" style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px"></div>
+    <button class="btn btn-outline" style="width:100%" onclick="closeModal('modal-inline-select')">Cancel</button>
   </div>
 </div>
 
