@@ -2250,7 +2250,7 @@ async function sendAiMessage() {
   state.aiHistory.push({ role: 'user', content: msg });
 
   // ── LOCAL REPORT COMMAND ──
-  if (/run report|generate report|show report|business report|business snapshot/i.test(msg)) {
+  if (/report|all the data|snapshot|how.*doing|business summary/i.test(msg)) {
     const report = generateBusinessReport();
     appendAiMessage('assistant', report);
     state.aiHistory.push({ role:'assistant', content: report });
@@ -2284,18 +2284,30 @@ Be direct, practical, and business-focused. Help Christ grow GSD. Write outreach
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
+        model: 'claude-sonnet-4-5',
         max_tokens: 1000,
         system: systemPrompt,
         messages: state.aiHistory,
       })
     });
+    if (!response.ok) {
+      const errText = await response.text();
+      console.error('AI error:', response.status, errText);
+      appendAiMessage('assistant', '⚠️ Error ' + response.status + ': ' + errText.substring(0,120));
+      btn.disabled = false; btn.textContent = 'Send';
+      return;
+    }
     const data = await response.json();
-    const reply = data.content?.[0]?.text || 'Something went wrong. Try again.';
+    console.log('AI response:', JSON.stringify(data).substring(0,400));
+    const reply = data.content?.[0]?.text
+      || (data.error?.message ? '⚠️ API error: ' + data.error.message : null)
+      || (data.type === 'error' ? '⚠️ ' + (data.message || JSON.stringify(data).substring(0,200)) : null)
+      || 'No response returned.';
     state.aiHistory.push({ role: 'assistant', content: reply });
     appendAiMessage('assistant', reply);
   } catch(e) {
-    appendAiMessage('assistant', '⚠️ API not connected yet. To activate the AI, set up a proxy worker and add your Claude API key. See the GitHub setup guide.');
+    console.error('AI fetch exception:', e);
+    appendAiMessage('assistant', '⚠️ Could not reach AI — check your internet connection. (' + e.message + ')');
   }
   btn.disabled = false; btn.textContent = 'Send';
   saveState();
@@ -2351,7 +2363,7 @@ Return ONLY the JSON array, no other text. Make the businesses realistic and pla
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
+        model: 'claude-sonnet-4-5',
         max_tokens: 1000,
         messages: [{ role: 'user', content: prompt }]
       })
@@ -2429,7 +2441,7 @@ Brand voice: professional but approachable, confident, gold/luxury aesthetic. Go
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
+        model: 'claude-sonnet-4-5',
         max_tokens: 1000,
         messages: [{ role: 'user', content: prompt }]
       })
@@ -3333,7 +3345,7 @@ Help with: content ideas for Instagram/TikTok/Facebook, video concepts, branding
       method: 'POST',
       headers: {'Content-Type':'application/json'},
       body: JSON.stringify({
-        model: 'claude-sonnet-4-6',
+        model: 'claude-sonnet-4-5',
         max_tokens: 1000,
         system: systemPrompt,
         messages: mktAiHistory
