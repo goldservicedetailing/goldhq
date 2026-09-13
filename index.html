@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Gold HQ — Gold Service Detailing</title>
+<title>Gold HQ</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@300;400;500&family=Syne:wght@400;600;800&display=swap" rel="stylesheet">
 <style>
@@ -630,7 +630,7 @@ body::before {
 <aside class="sidebar" id="sidebar">
   <div class="sidebar-logo">
     <div class="wordmark">GOLD HQ</div>
-    <div class="sub">Christ Pierre · GSD</div>
+    <div class="sub" id="topbar-sub">Loading...</div>
   </div>
   <div class="sidebar-status">
     <div class="status-dot"></div>
@@ -668,6 +668,9 @@ body::before {
     </div>
     <div class="nav-item" onclick="showPage('finances')">
       <span class="icon">💰</span> Finances
+    </div>
+    <div class="nav-item" onclick="showPage('settings')">
+      <span class="icon">⚙</span> Settings
     </div>
 
   </nav>
@@ -955,7 +958,7 @@ body::before {
     <div class="section-header mb-20">
       <div>
         <div class="section-title">AI LEAD FINDER</div>
-        <div class="section-sub">Powered by Claude · Searches for qualified fleet businesses near Carteret, NJ</div>
+        <div class="section-sub">Powered by Claude · Search for qualified leads in your service area</div>
       </div>
     </div>
     <div class="grid-2">
@@ -977,7 +980,7 @@ body::before {
           <div class="form-group">
             <label>Location Radius</label>
             <select id="lead-search-radius">
-              <option>Carteret, NJ (5 miles)</option>
+              <option id='search-area-opt'>Your Service Area</option>
               <option>Central NJ (15 miles)</option>
               <option>NJ / NY metro (30 miles)</option>
             </select>
@@ -1071,7 +1074,13 @@ body::before {
        PAGE: FINANCES
   ══════════════════════════════════════ -->
   <div class="page" id="page-finances">
-    <div class="section-title mb-20">FINANCES</div>
+    <div class="section-header mb-16">
+      <div class="section-title">FINANCES</div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-outline btn-sm" onclick="openLogExpense()">+ Log Expense</button>
+        <button class="btn btn-gold btn-sm" onclick="openLogIncome()">+ Log Income</button>
+      </div>
+    </div>
     <div class="grid-3 mb-20">
       <div class="card">
         <div class="card-label">This Month Revenue</div>
@@ -1089,17 +1098,27 @@ body::before {
         <div class="card-sub">Revenue minus expenses</div>
       </div>
     </div>
-    <div class="card">
+    <div class="card mb-16">
       <div class="section-header mb-16">
-        <div class="section-title">P&L TRACKER</div>
-        <button class="btn btn-gold btn-sm" onclick="openModal('modal-log-income')">+ Log Income</button>
+        <div style="font-family:var(--font-display);font-size:1rem;letter-spacing:1px;color:var(--gold)">P&L TRACKER</div>
+        <div style="font-size:0.72rem;color:var(--text-muted);font-family:var(--font-mono)" id="pl-range"></div>
       </div>
       <table class="data-table" id="pl-table">
         <thead><tr>
           <th>Month</th><th>Revenue</th><th>Expenses</th><th>Net Profit</th><th>Margin</th><th>Goal %</th>
         </tr></thead>
-        <tbody id="pl-tbody"><!-- JS --></tbody>
+        <tbody id="pl-tbody"></tbody>
       </table>
+    </div>
+    <div class="grid-2">
+      <div class="card">
+        <div style="font-family:var(--font-display);font-size:0.85rem;letter-spacing:1px;color:var(--gold);margin-bottom:12px">INCOME LOG</div>
+        <div id="income-log-list"><div style="color:var(--text-muted);font-family:var(--font-mono);font-size:0.72rem;text-align:center;padding:12px">No income logged yet</div></div>
+      </div>
+      <div class="card">
+        <div style="font-family:var(--font-display);font-size:0.85rem;letter-spacing:1px;color:var(--gold);margin-bottom:12px">EXPENSE LOG</div>
+        <div id="expense-log-list"><div style="color:var(--text-muted);font-family:var(--font-mono);font-size:0.72rem;text-align:center;padding:12px">No expenses logged yet</div></div>
+      </div>
     </div>
   </div>
 
@@ -1132,7 +1151,7 @@ body::before {
   ══════════════════════════════════════ -->
   <div class="page" id="page-content">
     <div class="section-header mb-20">
-      <div><div class="section-title">CONTENT CALENDAR</div><div class="section-sub">@goldservicedetailing · IG · FB · TikTok</div></div>
+      <div><div class="section-title">CONTENT CALENDAR</div><div class="section-sub">@yourbusiness · IG · FB · TikTok</div></div>
       <button class="btn btn-gold" onclick="generateContent()">🤖 Generate This Week</button>
     </div>
     <div class="card">
@@ -1368,6 +1387,72 @@ body::before {
   </div>
 </div>
 
+
+<div class="page" id="page-settings">
+  <div class="section-header mb-16">
+    <div><div class="section-title">SETTINGS</div><div class="section-sub">All business info pulled from here — no hardcoded values</div></div>
+    <button class="btn btn-gold btn-sm" onclick="saveSettings()">✓ Save All Settings</button>
+  </div>
+
+  <div class="grid-2 mb-16">
+    <!-- BUSINESS INFO -->
+    <div class="card">
+      <div style="font-family:var(--font-display);font-size:0.85rem;letter-spacing:1px;color:var(--gold);margin-bottom:14px">BUSINESS INFO</div>
+      <div class="form-group"><label>Owner Name</label><input type="text" id="set-owner" placeholder="Your name"></div>
+      <div class="form-group"><label>Business Name</label><input type="text" id="set-business" placeholder="Business name"></div>
+      <div class="form-group"><label>Phone</label><input type="tel" id="set-phone" placeholder="(000) 000-0000"></div>
+      <div class="form-group"><label>Email</label><input type="email" id="set-email" placeholder="email@yourbusiness.com"></div>
+      <div class="form-group"><label>Website</label><input type="text" id="set-website" placeholder="www.yourbusiness.com"></div>
+      <div class="form-group"><label>Location / City</label><input type="text" id="set-location" placeholder="City, State"></div>
+      <div class="form-group"><label>Instagram Handle</label><input type="text" id="set-instagram" placeholder="@yourbusiness"></div>
+      <div class="form-group"><label>Other Socials</label><input type="text" id="set-socials" placeholder="FB, TikTok, etc."></div>
+    </div>
+
+    <!-- GOALS & SCHEDULE -->
+    <div class="card">
+      <div style="font-family:var(--font-display);font-size:0.85rem;letter-spacing:1px;color:var(--gold);margin-bottom:14px">GOALS & SCHEDULE</div>
+      <div class="form-group"><label>Monthly Revenue Goal ($)</label><input type="number" id="set-revenue-goal" placeholder="10000"></div>
+      <div class="form-group"><label>Day Job Schedule</label><input type="text" id="set-dayjob-schedule" placeholder="e.g. Sun/Mon/Wed/Thu 10am–8pm"></div>
+      <div class="form-group"><label>Day Job Employer</label><input type="text" id="set-dayjob-employer" placeholder="e.g. Amazon DSP"></div>
+      <div class="form-group"><label>GSD Available Days</label><input type="text" id="set-gsd-days" placeholder="e.g. Tue, Fri, Sat + evenings"></div>
+      <div class="form-group"><label>Service Area</label><input type="text" id="set-service-area" placeholder="e.g. Carteret, NJ — 25 mile radius"></div>
+      <div class="form-group"><label>Services Offered</label><textarea id="set-services" placeholder="e.g. Fleet interior cleaning, exterior wash, ceramic wax..."></textarea></div>
+    </div>
+  </div>
+
+  <div class="grid-2 mb-16">
+    <!-- PRICING -->
+    <div class="card">
+      <div style="font-family:var(--font-display);font-size:0.85rem;letter-spacing:1px;color:var(--gold);margin-bottom:14px">PRICING</div>
+      <div class="form-group"><label>Fleet Rate (per vehicle)</label><input type="text" id="set-fleet-rate" placeholder="e.g. $40.75/vehicle"></div>
+      <div class="form-group"><label>Small Fleet Rate (flat)</label><input type="text" id="set-small-fleet-rate" placeholder="e.g. $70 flat (4 or under)"></div>
+      <div class="form-group"><label>Retail — Exterior Wash</label><input type="text" id="set-price-ext" placeholder="e.g. $60"></div>
+      <div class="form-group"><label>Retail — Interior Detail</label><input type="text" id="set-price-int" placeholder="e.g. $100"></div>
+      <div class="form-group"><label>Retail — Gold Package</label><input type="text" id="set-price-gold" placeholder="e.g. $160"></div>
+      <div class="form-group"><label>Retail — Gold+ Package</label><input type="text" id="set-price-goldplus" placeholder="e.g. $200"></div>
+    </div>
+
+    <!-- BRAND & AI CONTEXT -->
+    <div class="card">
+      <div style="font-family:var(--font-display);font-size:0.85rem;letter-spacing:1px;color:var(--gold);margin-bottom:14px">BRAND & AI CONTEXT</div>
+      <div class="form-group"><label>Brand Description</label><textarea id="set-brand-desc" placeholder="Describe your brand — what makes you different, your style, your mission..."></textarea></div>
+      <div class="form-group"><label>Target Customers</label><textarea id="set-target" placeholder="e.g. Amazon DSP companies, trucking, used car dealerships, retail clients in NJ..."></textarea></div>
+      <div class="form-group"><label>Additional Context for AI</label><textarea id="set-ai-context" placeholder="Anything else the AI should know — current priorities, notes, upcoming plans..."></textarea></div>
+      <div class="form-group"><label>HQ Login Password</label>
+        <div style="display:flex;gap:8px">
+          <input type="password" id="set-password" placeholder="New password (leave blank to keep current)" style="flex:1">
+          <button class="btn btn-outline btn-sm" onclick="togglePwVis()">👁</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div style="text-align:center;padding:8px">
+    <button class="btn btn-gold" style="min-width:200px" onclick="saveSettings()">✓ Save All Settings</button>
+    <div style="font-size:0.72rem;color:var(--text-muted);font-family:var(--font-mono);margin-top:8px" id="settings-saved-msg"></div>
+  </div>
+</div>
+
 </div><!-- /main -->
 
 <!-- ══════════ MODALS ══════════ -->
@@ -1465,24 +1550,44 @@ body::before {
 </div>
 
 <!-- LOG INCOME -->
-<div class="modal-overlay" id="modal-log-income">
+<div class="modal-overlay" id="modal-log-income" onclick="if(event.target===this)closeModal('modal-log-income')">
   <div class="modal">
     <div class="modal-header">
       <div class="modal-title">LOG INCOME</div>
       <button class="modal-close" onclick="closeModal('modal-log-income')">✕</button>
     </div>
     <div class="form-row">
-      <div class="form-group"><label>Month</label>
-        <select id="income-month">
-          <option>January 2026</option><option>February 2026</option><option>March 2026</option>
-          <option>April 2026</option><option selected>May 2026</option><option>June 2026</option>
-          <option>July 2026</option><option>August 2026</option><option>September 2026</option>
-          <option>October 2026</option><option>November 2026</option><option>December 2026</option>
-        </select>
-      </div>
-      <div class="form-group"><label>Revenue ($)</label><input type="number" id="income-amount" placeholder="0.00"></div>
+      <div class="form-group"><label>Date</label><input type="date" id="income-date"></div>
+      <div class="form-group"><label>Amount ($)</label><input type="number" id="income-amount" placeholder="0.00" step="0.01"></div>
     </div>
-    <button class="btn btn-gold" style="width:100%" onclick="logIncome()">✓ Save</button>
+    <div class="form-group"><label>Description</label><input type="text" id="income-desc" placeholder="e.g. Everon Fleet — 20 vehicles, Retail detail"></div>
+    <div class="form-group"><label>Category</label>
+      <select id="income-cat" style="background:var(--surface3);border:1px solid var(--border);color:var(--text);padding:9px 12px;border-radius:3px;width:100%;font-family:var(--font-body);font-size:0.85rem;outline:none">
+        <option>Fleet Service</option><option>Retail Detail</option><option>Dealership</option><option>Other</option>
+      </select>
+    </div>
+    <button class="btn btn-gold" style="width:100%" onclick="logIncome()">✓ Save Income</button>
+  </div>
+</div>
+
+<!-- MODAL: Log Expense -->
+<div class="modal-overlay" id="modal-log-expense" onclick="if(event.target===this)closeModal('modal-log-expense')">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">LOG EXPENSE</div>
+      <button class="modal-close" onclick="closeModal('modal-log-expense')">✕</button>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Date</label><input type="date" id="expense-date"></div>
+      <div class="form-group"><label>Amount ($)</label><input type="number" id="expense-amount" placeholder="0.00" step="0.01"></div>
+    </div>
+    <div class="form-group"><label>Description</label><input type="text" id="expense-desc" placeholder="e.g. Supplies, Car payment, Insurance"></div>
+    <div class="form-group"><label>Category</label>
+      <select id="expense-cat" style="background:var(--surface3);border:1px solid var(--border);color:var(--text);padding:9px 12px;border-radius:3px;width:100%;font-family:var(--font-body);font-size:0.85rem;outline:none">
+        <option>Supplies</option><option>Vehicle</option><option>Insurance</option><option>Fuel</option><option>Equipment</option><option>Marketing</option><option>Other</option>
+      </select>
+    </div>
+    <button class="btn btn-gold" style="width:100%" onclick="logExpense()">✓ Save Expense</button>
   </div>
 </div>
 
@@ -1492,24 +1597,18 @@ body::before {
 <script>
 // ============================================================
 //  GOLD HQ — JAVASCRIPT ENGINE
-//  Christ Pierre / Gold Service Detailing
+//  GoldHQ — Business Command Center
 // ============================================================
 
 // ── CONFIG ──
 const GSD = {
-  name: "Christ Pierre",
-  business: "Gold Service Detailing",
-  phone: "(732) 430-6468",
-  email: "Goldservicedetailing@gmail.com",
-  website: "www.goldservicedetailing.com",
-  instagram: "@goldservicedetailing",
-  location: "Carteret, NJ",
-  goal: 10000,
-  expenses: 585,
-  // IMPORTANT: Replace with your actual Claude API key via a proxy
-  // For GitHub Pages: use a Cloudflare Worker or similar proxy to protect the key
   claudeApiUrl: "https://round-brook-24a2.gold-55e.workers.dev",
 };
+
+// ── biz() — always reads from state.biz (set via Settings page) ──
+function biz(key, fallback) {
+  return (state.biz && state.biz[key]) || fallback || '';
+}
 
 // ── STATE (persists via localStorage) ──
 let state = {
@@ -1518,7 +1617,11 @@ let state = {
   calEvents: [],
   tasks: [],
   income: {},
+  incomeLog: [],
+  expenseLog: [],
   aiHistory: [],
+  biz: {},          // all business settings — populated from Settings page
+  revenueGoal: null,
 };
 
 function loadState() {
@@ -1544,7 +1647,7 @@ function showPage(id) {
   const pageEl = document.getElementById('page-' + id);
   if (!pageEl) { console.warn('No page found for id:', id); return; }
   pageEl.classList.add('active');
-  const titles = { dashboard:'Dashboard', leads:'CRM / Leads', jobs:'Jobs', schedule:'Schedule', 'ai-leads':'AI Lead Finder', automations:'Automations', finances:'Finances', tasks:'Tasks', content:'Content', 'ai-chat':'AI Assistant', clients:'Client List', goals:'Goals & Roadmap', marketing:'Marketing', 'fleet-portal':'Fleet Portal','fleet':'Fleet','marketing':'Marketing & Brand' };
+  const titles = { dashboard:'Dashboard', leads:'CRM / Leads', jobs:'Jobs', schedule:'Schedule', 'ai-leads':'AI Lead Finder', automations:'Automations', finances:'Finances', tasks:'Tasks', content:'Content', 'ai-chat':'AI Assistant', clients:'Client List', goals:'Goals & Roadmap', marketing:'Marketing', 'fleet-portal':'Fleet Portal','fleet':'Fleet','settings':'Settings','marketing':'Marketing & Brand' };
   document.getElementById('page-title').textContent = titles[id] || id.toUpperCase();
   const navItems = document.querySelectorAll('.nav-item');
   navItems.forEach(item => { if (item.textContent.toLowerCase().includes(id.replace('-',' '))) item.classList.add('active'); });
@@ -1555,6 +1658,7 @@ function showPage(id) {
   if (id === 'jobs')         renderJobs();
   if (id === 'clients')      renderClients();
   if (id === 'goals')        renderGoals();
+  if (id === 'settings')  { loadSettings(); }
   if (id === 'marketing') {
     // Reset to list view when navigating to marketing
     const lv = document.getElementById('mkt-list-view');
@@ -1730,8 +1834,8 @@ function addLead() {
 
 function copyEmail(company, category, contact, city) {
   const templates = {
-    trucking: `Hi ${contact || 'Team'},\n\nMy name is Christ Pierre and I run Gold Service Detailing, a professional mobile fleet cleaning service based in Carteret, NJ.\n\nI noticed ${company} operates a fleet out of ${city} and wanted to reach out — we specialize in keeping commercial fleets clean without disrupting your operations.\n\n✦ Mobile service — we come to your yard, no downtime\n✦ Flexible scheduling around dispatch windows\n✦ Monthly and weekly contract pricing\n✦ Before & after photos for every vehicle\n\nWould you be open to a quick 10-minute call this week?\n\nBest,\nChrist Pierre\nGold Service Detailing\n📞 (732) 430-6468\n🌐 www.goldservicedetailing.com`,
-    default: `Hi ${contact || 'Team'},\n\nI run Gold Service Detailing, a mobile commercial fleet cleaning service in Carteret, NJ — and I'd love to keep ${company}'s fleet looking professional.\n\nWe're mobile, local, and work around your schedule with zero downtime.\n\nOpen to a quick 10-minute call this week?\n\nChrist Pierre\nGold Service Detailing\n📞 (732) 430-6468\n🌐 www.goldservicedetailing.com`,
+    trucking: `Hi ${contact || 'Team'},\n\nMy name is ${biz('owner','the owner')} and I run ${biz('business','our company')}, a professional mobile fleet cleaning service based in ${biz('location','our area')}.\n\nI noticed ${company} operates a fleet out of ${city} and wanted to reach out — we specialize in keeping commercial fleets clean without disrupting your operations.\n\n✦ Mobile service — we come to your yard, no downtime\n✦ Flexible scheduling around dispatch windows\n✦ Monthly and weekly contract pricing\n✦ Before & after photos for every vehicle\n\nWould you be open to a quick 10-minute call this week?\n\nBest,\nChrist Pierre\nGold Service Detailing\n📞 (732) 430-6468\n🌐 www.goldservicedetailing.com`,
+    default: `Hi ${contact || 'Team'},\n\nI run ${biz('business','our company')}, a mobile commercial fleet cleaning service in ${biz('location','our area')} — and I'd love to keep ${company}'s fleet looking professional.\n\nWe're mobile, local, and work around your schedule with zero downtime.\n\nOpen to a quick 10-minute call this week?\n\nChrist Pierre\nGold Service Detailing\n📞 (732) 430-6468\n🌐 www.goldservicedetailing.com`,
   };
   const cat = category.toLowerCase();
   const text = (cat.includes('truck') || cat.includes('freight') || cat.includes('logist')) ? templates.trucking : templates.default;
@@ -2045,42 +2149,168 @@ function deleteEvent(id) {
 
 // ── FINANCES ──
 function renderFinances() {
-  const now = new Date();
-  const months = Array.from({length:9},(_,i)=>{const d=new Date(now.getFullYear(),now.getMonth()-2+i,1);return d.toLocaleDateString('en-US',{month:'short',year:'numeric'});});
+  const now   = new Date();
+  const goal  = state.revenueGoal || GSD.goal || 10000;
   const tbody = document.getElementById('pl-tbody');
   if (!tbody) return;
+
+  // Build month list — last 6 months + next 3
+  const months = Array.from({length:9},(_,i) => {
+    const d = new Date(now.getFullYear(), now.getMonth()-5+i, 1);
+    return {
+      key:   d.toLocaleDateString('en-US',{month:'long',year:'numeric'}),
+      short: d.toLocaleDateString('en-US',{month:'short',year:'numeric'}),
+      ym:    d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')
+    };
+  });
+
+  // Build expense totals per month from expenseLog
+  const expByMonth = {};
+  (state.expenseLog||[]).forEach(e => {
+    const ym = e.date.substring(0,7);
+    expByMonth[ym] = (expByMonth[ym]||0) + (+e.amount||0);
+  });
+
+  // Build income totals per month from incomeLog (primary) + legacy state.income
+  const revByMonth = {};
+  (state.incomeLog||[]).forEach(e => {
+    const ym = e.date.substring(0,7);
+    revByMonth[ym] = (revByMonth[ym]||0) + (+e.amount||0);
+  });
+
+  const rangeEl = document.getElementById('pl-range');
+  if (rangeEl) rangeEl.textContent = months[0].short + ' – ' + months[months.length-1].short;
+
   tbody.innerHTML = months.map(m => {
-    const rev = state.income[m] || 0;
-    const net = rev - GSD.expenses;
-    const margin = rev ? ((net/rev)*100).toFixed(0) : 0;
-    const goalPct = rev ? ((rev/GSD.goal)*100).toFixed(0) : 0;
-    return `<tr>
-      <td style="font-family:var(--font-mono);font-size:0.8rem">${m}</td>
-      <td style="font-family:var(--font-mono);color:var(--green)">$${rev.toLocaleString()}</td>
-      <td style="font-family:var(--font-mono);color:var(--red)">-$${GSD.expenses}</td>
-      <td style="font-family:var(--font-mono);color:${net>=0?'var(--green)':'var(--red)'}">$${net.toLocaleString()}</td>
-      <td style="font-family:var(--font-mono)">${rev ? margin+'%' : '—'}</td>
-      <td>
-        <div style="display:flex;align-items:center;gap:8px">
-          <div style="flex:1;height:4px;background:var(--surface3);border-radius:2px;overflow:hidden">
-            <div style="width:${Math.min(100,goalPct)}%;height:100%;background:var(--gold);border-radius:2px"></div>
-          </div>
-          <span style="font-family:var(--font-mono);font-size:0.68rem;color:var(--text-muted)">${goalPct}%</span>
-        </div>
-      </td>
-    </tr>`;
+    // Use incomeLog totals, fall back to legacy state.income
+    const rev = revByMonth[m.ym] || state.income[m.key] || state.income[m.short] || 0;
+    const exp = expByMonth[m.ym] || 0;
+    const net = rev - exp;
+    const margin  = rev ? ((net/rev)*100).toFixed(0) : 0;
+    const goalPct = rev ? Math.min(999,((rev/goal)*100).toFixed(0)) : 0;
+    const isThisMonth = m.ym === now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');
+    return '<tr style="'+(isThisMonth?'background:rgba(201,168,76,0.06)':'')+'">'
+      +'<td style="font-family:var(--font-mono);font-size:0.8rem;font-weight:'+(isThisMonth?'700':'400')+'">'+m.short+(isThisMonth?' ◀':'')+'</td>'
+      +'<td style="font-family:var(--font-mono);color:var(--green)">'+( rev ? '$'+rev.toLocaleString() : '—' )+'</td>'
+      +'<td style="font-family:var(--font-mono);color:var(--red)">'+( exp ? '-$'+exp.toLocaleString() : '—' )+'</td>'
+      +'<td style="font-family:var(--font-mono);color:'+(net>0?'var(--green)':net<0?'var(--red)':'var(--text-muted)')+'">'+( rev||exp ? (net>=0?'$':'-$')+Math.abs(net).toLocaleString() : '—' )+'</td>'
+      +'<td style="font-family:var(--font-mono)">'+( rev ? margin+'%' : '—' )+'</td>'
+      +'<td><div style="display:flex;align-items:center;gap:8px">'
+      +'<div style="flex:1;height:4px;background:var(--surface3);border-radius:2px;overflow:hidden">'
+      +'<div style="width:'+Math.min(100,goalPct)+'%;height:100%;background:var(--gold);border-radius:2px"></div></div>'
+      +'<span style="font-family:var(--font-mono);font-size:0.68rem;color:var(--text-muted)">'+goalPct+'%</span>'
+      +'</div></td></tr>';
   }).join('');
+
+  // INCOME LOG
+  const incomeList = document.getElementById('income-log-list');
+  if (incomeList) {
+    const entries = (state.incomeLog||[]).slice().reverse();
+    incomeList.innerHTML = entries.length ? entries.map(e =>
+      '<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);font-size:0.8rem">'
+      +'<div><span style="font-family:var(--font-mono);color:var(--text-muted);font-size:0.7rem">'+e.date+'</span>'
+      +' <span style="color:var(--text-muted);font-size:0.72rem">['+e.cat+']</span>'
+      +(e.desc?'<div style="font-size:0.75rem;color:var(--text-muted);margin-top:1px">'+e.desc+'</div>':'')+'</div>'
+      +'<div style="display:flex;align-items:center;gap:8px">'
+      +'<span style="font-family:var(--font-mono);color:var(--green);font-weight:700">$'+Number(e.amount).toLocaleString()+'</span>'
+      +('<button onclick="deleteIncomeEntry(\''+e.id+'\')" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:0.7rem;padding:2px 4px">✕</button>')
+      +'</div></div>'
+    ).join('') : '<div style="color:var(--text-muted);font-family:var(--font-mono);font-size:0.72rem;text-align:center;padding:12px">No income logged yet</div>';
+  }
+
+  // EXPENSE LOG
+  const expList = document.getElementById('expense-log-list');
+  if (expList) {
+    const entries = (state.expenseLog||[]).slice().reverse();
+    expList.innerHTML = entries.length ? entries.map(e =>
+      '<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);font-size:0.8rem">'
+      +'<div><span style="font-family:var(--font-mono);color:var(--text-muted);font-size:0.7rem">'+e.date+'</span>'
+      +' <span style="color:var(--text-muted);font-size:0.72rem">['+e.cat+']</span>'
+      +(e.desc?'<div style="font-size:0.75rem;color:var(--text-muted);margin-top:1px">'+e.desc+'</div>':'')+'</div>'
+      +'<div style="display:flex;align-items:center;gap:8px">'
+      +'<span style="font-family:var(--font-mono);color:var(--red);font-weight:700">-$'+Number(e.amount).toLocaleString()+'</span>'
+      +('<button onclick="deleteExpenseEntry(\''+e.id+'\')" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:0.7rem;padding:2px 4px">✕</button>')
+      +'</div></div>'
+    ).join('') : '<div style="color:var(--text-muted);font-family:var(--font-mono);font-size:0.72rem;text-align:center;padding:12px">No expenses logged yet</div>';
+  }
+}
+
+function openLogExpense() {
+  const d = document.getElementById('expense-date');
+  if (d) d.value = new Date().toISOString().split('T')[0];
+  const a = document.getElementById('expense-amount');
+  if (a) a.value = '';
+  const desc = document.getElementById('expense-desc');
+  if (desc) desc.value = '';
+  openModal('modal-log-expense');
+}
+
+function openLogIncome() {
+  const d = document.getElementById('income-date');
+  if (d) d.value = new Date().toISOString().split('T')[0];
+  const a = document.getElementById('income-amount');
+  if (a) a.value = '';
+  const desc = document.getElementById('income-desc');
+  if (desc) desc.value = '';
+  openModal('modal-log-income');
 }
 
 function logIncome() {
-  const month = document.getElementById('income-month').value;
+  const date   = document.getElementById('income-date').value;
   const amount = parseFloat(document.getElementById('income-amount').value) || 0;
-  state.income[month] = amount;
+  const desc   = document.getElementById('income-desc').value.trim();
+  const cat    = document.getElementById('income-cat').value;
+  if (!date)   { showToast('Select a date','error'); return; }
+  if (!amount) { showToast('Enter an amount','error'); return; }
+  if (!state.incomeLog) state.incomeLog = [];
+  state.incomeLog.push({ id: Date.now().toString(), date, amount, desc, cat });
+  // Also update legacy state.income keyed by month for P&L table
+  const monthKey = new Date(date+'T12:00:00').toLocaleDateString('en-US',{month:'long',year:'numeric'});
+  state.income[monthKey] = (state.income[monthKey]||0) + amount;
   saveState();
   closeModal('modal-log-income');
   renderFinances();
   updateDashboardMetrics();
-  showToast(`Income logged for ${month}`, 'success');
+  showToast('$'+amount.toLocaleString()+' income logged','success');
+}
+
+function logExpense() {
+  const date   = document.getElementById('expense-date').value;
+  const amount = parseFloat(document.getElementById('expense-amount').value) || 0;
+  const desc   = document.getElementById('expense-desc').value.trim();
+  const cat    = document.getElementById('expense-cat').value;
+  if (!date)   { showToast('Select a date','error'); return; }
+  if (!amount) { showToast('Enter an amount','error'); return; }
+  if (!state.expenseLog) state.expenseLog = [];
+  state.expenseLog.push({ id: Date.now().toString(), date, amount, desc, cat });
+  saveState();
+  closeModal('modal-log-expense');
+  renderFinances();
+  updateDashboardMetrics();
+  showToast('$'+amount.toLocaleString()+' expense logged','success');
+}
+
+function deleteIncomeEntry(id) {
+  showSelectModal('Delete this income entry?', ['Yes, delete it','Cancel'], (choice) => {
+    if (choice !== 'Yes, delete it') return;
+    const entry = (state.incomeLog||[]).find(e=>e.id===id);
+    if (entry) {
+      const monthKey = new Date(entry.date+'T12:00:00').toLocaleDateString('en-US',{month:'long',year:'numeric'});
+      state.income[monthKey] = Math.max(0,(state.income[monthKey]||0)-entry.amount);
+    }
+    state.incomeLog = (state.incomeLog||[]).filter(e=>e.id!==id);
+    saveState(); renderFinances(); updateDashboardMetrics();
+    showToast('Entry deleted','success');
+  });
+}
+
+function deleteExpenseEntry(id) {
+  showSelectModal('Delete this expense?', ['Yes, delete it','Cancel'], (choice) => {
+    if (choice !== 'Yes, delete it') return;
+    state.expenseLog = (state.expenseLog||[]).filter(e=>e.id!==id);
+    saveState(); renderFinances(); updateDashboardMetrics();
+    showToast('Expense deleted','success');
+  });
 }
 
 // ── DASHBOARD METRICS ──
@@ -2158,8 +2388,8 @@ function updateDashboardMetrics() {
   const fin_exp = document.getElementById('fin-month-exp');
   const fin_net = document.getElementById('fin-month-net');
   if (fin_rev) fin_rev.textContent = '$'+monthRev.toLocaleString();
-  if (fin_exp) fin_exp.textContent = '$'+(GSD.expenses||0).toLocaleString();
-  if (fin_net) { const net=monthRev-(GSD.expenses||0); fin_net.textContent='$'+net.toLocaleString(); fin_net.style.color=net>=0?'var(--green)':'var(--red)'; }
+  if (fin_exp) fin_exp.textContent = '$'+monthExp.toLocaleString();
+  if (fin_net) { const net=monthRev-monthExp; fin_net.textContent=(net>=0?'$':'-$')+Math.abs(net).toLocaleString(); fin_net.style.color=net>=0?'var(--green)':'var(--red)'; }
 }
 
 // ── AI FUNCTIONS ──
@@ -2196,10 +2426,12 @@ function generateBusinessReport() {
   const pendingDmg = fleetCl.flatMap(c=>(c.damages||[]).filter(d=>!d.acknowledged));
   const openReq    = fleetCl.flatMap(c=>(c.requests||[]).filter(r=>r.status==='pending'));
 
-  const pct = Math.min(100,((monthRev/10000)*100)).toFixed(0);
+  const pct = Math.min(100,((monthRev/(state.revenueGoal||10000))*100)).toFixed(0);
+  const ownerName = biz('owner','Owner');
+  const bizName2  = biz('business','GSD');
 
   const lines = [
-    '📊 GSD BUSINESS REPORT',
+    '📊 '+bizName2+' BUSINESS REPORT',
     now.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'}),
     '─'.repeat(40),
     '',
@@ -2265,8 +2497,7 @@ async function sendAiMessage() {
 KEY FACTS:
 - Christ is 31, easy-going but focused, artistic, loves tech
 - Mobile auto detailing business, no physical location
-- Phone: (732) 430-6468 | Email: Goldservicedetailing@gmail.com | Website: www.goldservicedetailing.com
-- Instagram/FB/TikTok: @goldservicedetailing
+// (contact info now dynamic from biz() — see above)
 - Revenue goal: $10,000–$15,000/month by end of 2026
 - Team goal: 2 teams of 2 people in company vans within 6–8 months
 - Amazon DSP schedule: Sun, Mon, Wed, Thu 10am–8pm (home by 8:20–9:15pm)
@@ -2334,7 +2565,7 @@ async function findLeads() {
   const resultsDiv = document.getElementById('lead-finder-results');
   resultsDiv.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-muted);font-family:var(--font-mono)">🤖 Searching for leads...</div>';
 
-  const prompt = `You are a business development researcher for Gold Service Detailing, a mobile fleet detailing service in Carteret, NJ.
+  const prompt = `You are a business development researcher for ${biz('business','our company')}, a mobile fleet detailing service in ${biz('location','our area')}.
 
 Find 5 qualified fleet business leads matching these criteria:
 - Business type: ${type}
@@ -2418,7 +2649,7 @@ async function generateContent() {
   const output = document.getElementById('content-calendar-output');
   output.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-muted);font-family:var(--font-mono)">🤖 Generating your week of content...</div>';
 
-  const prompt = `Generate a 5-post social media content calendar for Gold Service Detailing (@goldservicedetailing), a mobile fleet and auto detailing business in Carteret, NJ run by Christ Pierre.
+  const prompt = `Generate a 5-post social media content calendar for ${biz('business','our company')} (${biz('instagram','')}), a mobile fleet and auto detailing business in ${biz('location','')} run by ${biz('owner','')}.
 
 Create posts for Instagram/Facebook/TikTok. Mix of: fleet pitch, before/after tease, promo reminder, educational tip, community post.
 
@@ -2512,7 +2743,7 @@ function syncAll() {
 <div id="login-screen" style="position:fixed;inset:0;background:#080808;display:flex;align-items:center;justify-content:center;z-index:99999;flex-direction:column">
   <div style="background:#111;border:1px solid rgba(201,168,76,0.4);border-radius:8px;padding:40px 48px;text-align:center;min-width:320px">
     <div style="font-family:var(--font-display);font-size:2.4rem;color:var(--gold);letter-spacing:2px;margin-bottom:4px">GOLD HQ</div>
-    <div style="font-size:0.72rem;color:var(--text-muted);font-family:var(--font-mono);letter-spacing:1px;margin-bottom:28px">GOLD SERVICE DETAILING · COMMAND CENTER</div>
+    <div style="font-size:0.72rem;color:var(--text-muted);font-family:var(--font-mono);letter-spacing:1px;margin-bottom:28px">GOLD HQ · COMMAND CENTER</div>
     <input type="password" id="login-pw" placeholder="••••••••"
       style="width:100%;background:#1a1a1a;border:1px solid rgba(201,168,76,0.3);color:#e8e0d0;padding:12px 16px;border-radius:4px;font-family:var(--font-mono);font-size:0.9rem;text-align:center;letter-spacing:3px;margin-bottom:12px;outline:none;box-sizing:border-box"
       onkeydown="if(event.key==='Enter')doLogin()">
@@ -2997,11 +3228,6 @@ function toggleGoal(i) {
   if (!g.done) markGoalDone(i); else reopenGoal(i);
 }
 
-function deleteGoal(i) {
-  if (!confirm('Delete this goal?')) return;
-  (state.goals||[]).splice(i,1);
-  saveState(); renderGoals();
-}
 
 function editRevenueGoal() {
   const current = state.revenueGoal || 10000;
@@ -3305,7 +3531,7 @@ function closeMktAI() {
 function mktAIPrompt(topic) {
   const input = document.getElementById('mkt-ai-input');
   const campName = viewingCampaignId ? (state.campaigns||[]).find(c=>c.id===viewingCampaignId)?.name : '';
-  input.value = 'Give me ' + topic + ' ideas for Gold Service Detailing' + (campName ? ' — '+campName+' campaign' : '');
+  input.value = 'Give me ' + topic + ' ideas for ' + biz('business','my business') + (campName ? ' — '+campName+' campaign' : '');
   sendMktAI();
 }
 
@@ -3332,9 +3558,9 @@ async function sendMktAI() {
     ? 'Campaign: '+camp.name+' | Type: '+camp.type+' | Target: '+camp.target+' | Status: '+camp.status
     : 'No specific campaign open';
 
-  const systemPrompt = `You are a creative marketing and branding strategist for Gold Service Detailing (GSD), a mobile auto detailing business in Carteret, NJ run by Christ Pierre.
+  const mktSystemPrompt = `You are a creative marketing and branding strategist for ${biz('business','the company')}, a mobile auto detailing business in ${biz('location','')} run by ${biz('owner','')}.
 
-Brand identity: Premium, gold & black color scheme. Professional but approachable. Targets fleet companies (Amazon DSP, trucking), used car dealerships, and retail customers.
+Brand identity: ${biz('brandDesc','Premium and professional.')} Target customers: ${biz('target','fleet companies, dealerships, retail clients')}.
 
 Current campaign context: ${context}
 
@@ -3347,7 +3573,7 @@ Help with: content ideas for Instagram/TikTok/Facebook, video concepts, branding
       body: JSON.stringify({
         model: 'claude-sonnet-4-5',
         max_tokens: 1000,
-        system: systemPrompt,
+        system: mktSystemPrompt,
         messages: mktAiHistory
       })
     });
@@ -3400,6 +3626,9 @@ function initApp() {
   const jobDate = document.getElementById('job-date');
   if (jobDate) jobDate.value = new Date().toISOString().split('T')[0];
   // Load fleet data instantly from localStorage
+  // Set topbar from settings
+  const topSub = document.getElementById('topbar-sub');
+  if (topSub) topSub.textContent = (state.biz?.owner||'') + (state.biz?.business?' · '+state.biz.business:'');
   fleetLoad();
   const badge = document.getElementById('fleet-badge');
   if (badge && fleetST) badge.textContent = fleetST.clients.length;
@@ -3438,6 +3667,62 @@ function showSelectModal(title, options, onSelect) {
     container.appendChild(btn);
   });
   openModal('modal-inline-select');
+}
+
+
+// ── SETTINGS ──
+const SETTINGS_FIELDS = [
+  ['set-owner','owner'],['set-business','business'],['set-phone','phone'],
+  ['set-email','email'],['set-website','website'],['set-location','location'],
+  ['set-instagram','instagram'],['set-socials','socials'],
+  ['set-dayjob-schedule','dayjobSchedule'],['set-dayjob-employer','dayjobEmployer'],
+  ['set-gsd-days','gsdDays'],['set-service-area','serviceArea'],
+  ['set-services','services'],['set-fleet-rate','fleetRate'],
+  ['set-small-fleet-rate','smallFleetRate'],['set-price-ext','priceExt'],
+  ['set-price-int','priceInt'],['set-price-gold','priceGold'],
+  ['set-price-goldplus','priceGoldPlus'],['set-brand-desc','brandDesc'],
+  ['set-target','target'],['set-ai-context','aiContext'],
+];
+
+function loadSettings() {
+  const biz = state.biz || {};
+  SETTINGS_FIELDS.forEach(([id, key]) => {
+    const el = document.getElementById(id);
+    if (el && biz[key]) el.value = biz[key];
+  });
+  // Revenue goal
+  const rg = document.getElementById('set-revenue-goal');
+  if (rg && state.revenueGoal) rg.value = state.revenueGoal;
+}
+
+function saveSettings() {
+  if (!state.biz) state.biz = {};
+  SETTINGS_FIELDS.forEach(([id, key]) => {
+    const el = document.getElementById(id);
+    if (el) state.biz[key] = el.value.trim();
+  });
+  // Revenue goal
+  const rg = document.getElementById('set-revenue-goal');
+  if (rg && rg.value) state.revenueGoal = parseInt(rg.value) || state.revenueGoal;
+  // Password change
+  const pw = document.getElementById('set-password');
+  if (pw && pw.value.trim()) {
+    localStorage.setItem('goldhq_pass_override', pw.value.trim());
+    pw.value = '';
+  }
+  saveState();
+  // Update topbar name if set
+  const sub = document.querySelector('.topbar .sub');
+  if (sub && state.biz.owner) sub.textContent = state.biz.owner + (state.biz.business ? ' · ' + state.biz.business : '');
+  const msg = document.getElementById('settings-saved-msg');
+  if (msg) { msg.textContent = 'Saved at ' + new Date().toLocaleTimeString(); setTimeout(() => msg.textContent = '', 3000); }
+  showToast('Settings saved', 'success');
+  updateDashboardMetrics();
+}
+
+function togglePwVis() {
+  const el = document.getElementById('set-password');
+  if (el) el.type = el.type === 'password' ? 'text' : 'password';
 }
 
 document.addEventListener('DOMContentLoaded', checkAuth);
