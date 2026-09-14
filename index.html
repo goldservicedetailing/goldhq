@@ -911,7 +911,6 @@ body::before {
         <button class="btn btn-outline btn-sm" onclick="calPrev()">‹ Prev</button>
         <button class="btn btn-outline btn-sm" onclick="calToday()">Today</button>
         <button class="btn btn-outline btn-sm" onclick="calNext()">Next ›</button>
-        <a href="https://calendar.google.com" target="_blank" class="btn btn-outline btn-sm">📅 Google Cal ↗</a>
         <button class="btn btn-gold btn-sm" onclick="openAddEvent()">+ Add Event</button>
       </div>
     </div>
@@ -1107,7 +1106,7 @@ body::before {
       </div>
       <table class="data-table" id="pl-table">
         <thead><tr>
-          <th>Month</th><th>Revenue</th><th>Expenses</th><th>Net Profit</th><th>Margin</th><th>Goal %</th>
+          <th>Month</th><th>Revenue</th><th>Expenses</th><th>Net Profit</th><th>Margin</th><th>Goal %</th><th></th>
         </tr></thead>
         <tbody id="pl-tbody"></tbody>
       </table>
@@ -2251,13 +2250,14 @@ function deleteEvent(id) {
 
 // ── FINANCES ──
 function renderFinances() {
-  const now   = new Date();
-  const goal  = state.revenueGoal || GSD.goal || 10000;
+  const now  = new Date();
+  const goal = state.revenueGoal || 10000;
   const tbody = document.getElementById('pl-tbody');
   if (!tbody) return;
 
-  // Build month list — last 6 months + next 3
-  const months = Array.from({length:9},(_,i) => {
+  const thisYM = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0');
+
+  const months = Array.from({length:9}, (_,i) => {
     const d = new Date(now.getFullYear(), now.getMonth()-5+i, 1);
     return {
       key:   d.toLocaleDateString('en-US',{month:'long',year:'numeric'}),
@@ -2266,74 +2266,185 @@ function renderFinances() {
     };
   });
 
-  // Build expense totals per month from expenseLog
   const expByMonth = {};
   (state.expenseLog||[]).forEach(e => {
-    const ym = e.date.substring(0,7);
+    const ym = (e.date||'').substring(0,7);
     expByMonth[ym] = (expByMonth[ym]||0) + (+e.amount||0);
   });
 
-  // Build income totals per month from incomeLog (primary) + legacy state.income
   const revByMonth = {};
   (state.incomeLog||[]).forEach(e => {
-    const ym = e.date.substring(0,7);
+    const ym = (e.date||'').substring(0,7);
     revByMonth[ym] = (revByMonth[ym]||0) + (+e.amount||0);
   });
 
   const rangeEl = document.getElementById('pl-range');
   if (rangeEl) rangeEl.textContent = months[0].short + ' – ' + months[months.length-1].short;
 
-  tbody.innerHTML = months.map(m => {
-    // Use incomeLog totals, fall back to legacy state.income
-    const rev = revByMonth[m.ym] || state.income[m.key] || state.income[m.short] || 0;
-    const exp = expByMonth[m.ym] || 0;
-    const net = rev - exp;
+  // Build table with DOM — no innerHTML onclick hacks
+  tbody.innerHTML = '';
+  months.forEach(m => {
+    const rev     = revByMonth[m.ym] || state.income[m.key] || state.income[m.short] || 0;
+    const exp     = expByMonth[m.ym] || 0;
+    const net     = rev - exp;
     const margin  = rev ? ((net/rev)*100).toFixed(0) : 0;
-    const goalPct = rev ? Math.min(999,((rev/goal)*100).toFixed(0)) : 0;
-    const isThisMonth = m.ym === now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');
-    return '<tr style="'+(isThisMonth?'background:rgba(201,168,76,0.06)':'')+'">'
-      +'<td style="font-family:var(--font-mono);font-size:0.8rem;font-weight:'+(isThisMonth?'700':'400')+'">'+m.short+(isThisMonth?' ◀':'')+'</td>'
-      +'<td style="font-family:var(--font-mono);color:var(--green)">'+( rev ? '$'+rev.toLocaleString() : '—' )+'</td>'
-      +'<td style="font-family:var(--font-mono);color:var(--red)">'+( exp ? '-$'+exp.toLocaleString() : '—' )+'</td>'
-      +'<td style="font-family:var(--font-mono);color:'+(net>0?'var(--green)':net<0?'var(--red)':'var(--text-muted)')+'">'+( rev||exp ? (net>=0?'$':'-$')+Math.abs(net).toLocaleString() : '—' )+'</td>'
-      +'<td style="font-family:var(--font-mono)">'+( rev ? margin+'%' : '—' )+'</td>'
-      +'<td><div style="display:flex;align-items:center;gap:8px">'
-      +'<div style="flex:1;height:4px;background:var(--surface3);border-radius:2px;overflow:hidden">'
-      +'<div style="width:'+Math.min(100,goalPct)+'%;height:100%;background:var(--gold);border-radius:2px"></div></div>'
-      +'<span style="font-family:var(--font-mono);font-size:0.68rem;color:var(--text-muted)">'+goalPct+'%</span>'
-      +'</div></td></tr>';
-  }).join('');
+    const goalPct = rev ? Math.min(100,((rev/goal)*100)).toFixed(0) : 0;
+    const isNow   = m.ym === thisYM;
 
-  // INCOME LOG
+    // ── SUMMARY ROW ──
+    const sumTr = tbody.insertRow();
+    sumTr.style.background = isNow ? 'rgba(201,168,76,0.06)' : '';
+
+    const tdMonth = sumTr.insertCell();
+    tdMonth.style.cssText = 'font-family:var(--font-mono);font-size:0.8rem;font-weight:'+(isNow?'700':'400')+';cursor:pointer;white-space:nowrap';
+    tdMonth.textContent = (isNow ? '▼ ' : '▶ ') + m.short;
+    tdMonth.onclick = function() {
+      const open = this.textContent.startsWith('▼');
+      document.querySelectorAll('.pl-detail-'+m.ym).forEach(r => r.style.display = open ? 'none' : '');
+      this.textContent = (open ? '▶ ' : '▼ ') + m.short;
+    };
+
+    const tdRev = sumTr.insertCell();
+    tdRev.style.cssText = 'font-family:var(--font-mono);color:var(--green)';
+    tdRev.textContent = rev ? '$'+rev.toLocaleString() : '—';
+
+    const tdExp = sumTr.insertCell();
+    tdExp.style.cssText = 'font-family:var(--font-mono);color:var(--red)';
+    tdExp.textContent = exp ? '-$'+exp.toLocaleString() : '—';
+
+    const tdNet = sumTr.insertCell();
+    tdNet.style.cssText = 'font-family:var(--font-mono);color:'+(net>0?'var(--green)':net<0?'var(--red)':'var(--text-muted)');
+    tdNet.textContent = (rev||exp) ? (net>=0?'$':'-$')+Math.abs(net).toLocaleString() : '—';
+
+    const tdMar = sumTr.insertCell();
+    tdMar.style.cssText = 'font-family:var(--font-mono)';
+    tdMar.textContent = rev ? margin+'%' : '—';
+
+    const tdGoal = sumTr.insertCell();
+    tdGoal.innerHTML = '<div style="display:flex;align-items:center;gap:6px">'
+      +'<div style="flex:1;height:4px;background:var(--surface3);border-radius:2px;overflow:hidden">'
+      +'<div style="width:'+goalPct+'%;height:100%;background:var(--gold);border-radius:2px"></div></div>'
+      +'<span style="font-family:var(--font-mono);font-size:0.68rem;color:var(--text-muted)">'+goalPct+'%</span></div>';
+
+    sumTr.insertCell(); // empty actions column for summary
+
+    // ── DETAIL ROWS — income entries ──
+    const incEntries = (state.incomeLog||[]).filter(e => (e.date||'').startsWith(m.ym));
+    const expEntries = (state.expenseLog||[]).filter(e => (e.date||'').startsWith(m.ym));
+
+    incEntries.forEach(e => {
+      const tr = tbody.insertRow();
+      tr.className = 'pl-detail-'+m.ym;
+      tr.style.display = isNow ? '' : 'none';
+      tr.style.background = 'rgba(34,197,94,0.05)';
+
+      const c1 = tr.insertCell();
+      c1.style.cssText = 'font-family:var(--font-mono);font-size:0.7rem;color:var(--text-muted);padding-left:20px';
+      c1.textContent = e.date + ' · ' + (e.cat||'Income');
+
+      const c2 = tr.insertCell();
+      c2.style.cssText = 'font-family:var(--font-mono);font-size:0.75rem;color:var(--green)';
+      c2.textContent = '$'+Number(e.amount).toLocaleString();
+
+      tr.insertCell(); // exp col
+      const c4 = tr.insertCell();
+      c4.style.cssText = 'font-size:0.72rem;color:var(--text-muted)';
+      c4.textContent = e.desc || '';
+      tr.insertCell(); tr.insertCell(); // margin, goal
+
+      const c7 = tr.insertCell();
+      c7.style.whiteSpace = 'nowrap';
+      const eb = document.createElement('button');
+      eb.textContent = '✏';
+      eb.style.cssText = 'background:none;border:1px solid var(--border);color:var(--text-muted);cursor:pointer;font-size:0.6rem;padding:1px 5px;border-radius:3px;margin-right:4px';
+      eb.onclick = (function(id){ return function(){ openEditIncome(id); }; })(e.id);
+      const db = document.createElement('button');
+      db.textContent = '✕';
+      db.style.cssText = 'background:none;border:none;color:var(--red);cursor:pointer;font-size:0.65rem';
+      db.onclick = (function(id){ return function(){ deleteIncomeEntry(id); }; })(e.id);
+      c7.appendChild(eb); c7.appendChild(db);
+    });
+
+    expEntries.forEach(e => {
+      const tr = tbody.insertRow();
+      tr.className = 'pl-detail-'+m.ym;
+      tr.style.display = isNow ? '' : 'none';
+      tr.style.background = 'rgba(231,76,60,0.05)';
+
+      const c1 = tr.insertCell();
+      c1.style.cssText = 'font-family:var(--font-mono);font-size:0.7rem;color:var(--text-muted);padding-left:20px';
+      c1.textContent = e.date + ' · ' + (e.cat||'Expense');
+
+      tr.insertCell(); // rev col
+      const c3 = tr.insertCell();
+      c3.style.cssText = 'font-family:var(--font-mono);font-size:0.75rem;color:var(--red)';
+      c3.textContent = '-$'+Number(e.amount).toLocaleString();
+
+      const c4 = tr.insertCell();
+      c4.style.cssText = 'font-size:0.72rem;color:var(--text-muted)';
+      c4.textContent = e.desc || '';
+      tr.insertCell(); tr.insertCell(); // margin, goal
+
+      const c7 = tr.insertCell();
+      c7.style.whiteSpace = 'nowrap';
+      const eb = document.createElement('button');
+      eb.textContent = '✏';
+      eb.style.cssText = 'background:none;border:1px solid var(--border);color:var(--text-muted);cursor:pointer;font-size:0.6rem;padding:1px 5px;border-radius:3px;margin-right:4px';
+      eb.onclick = (function(id){ return function(){ openEditExpense(id); }; })(e.id);
+      const db = document.createElement('button');
+      db.textContent = '✕';
+      db.style.cssText = 'background:none;border:none;color:var(--red);cursor:pointer;font-size:0.65rem';
+      db.onclick = (function(id){ return function(){ deleteExpenseEntry(id); }; })(e.id);
+      c7.appendChild(eb); c7.appendChild(db);
+    });
+  });
+
+  // INCOME LOG — read only
   const incomeList = document.getElementById('income-log-list');
   if (incomeList) {
     const entries = (state.incomeLog||[]).slice().reverse();
-    incomeList.innerHTML = entries.length ? entries.map(e =>
-      '<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);font-size:0.8rem">'
-      +'<div><span style="font-family:var(--font-mono);color:var(--text-muted);font-size:0.7rem">'+e.date+'</span>'
-      +' <span style="color:var(--text-muted);font-size:0.72rem">['+e.cat+']</span>'
-      +(e.desc?'<div style="font-size:0.75rem;color:var(--text-muted);margin-top:1px">'+e.desc+'</div>':'')+'</div>'
-      +'<div style="display:flex;align-items:center;gap:8px">'
-      +'<span style="font-family:var(--font-mono);color:var(--green);font-weight:700">$'+Number(e.amount).toLocaleString()+'</span>'
-      +('<button onclick="deleteIncomeEntry(\''+e.id+'\')" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:0.7rem;padding:2px 4px">✕</button>')
-      +'</div></div>'
-    ).join('') : '<div style="color:var(--text-muted);font-family:var(--font-mono);font-size:0.72rem;text-align:center;padding:12px">No income logged yet</div>';
+    if (!entries.length) {
+      incomeList.innerHTML = '<div style="color:var(--text-muted);font-family:var(--font-mono);font-size:0.72rem;text-align:center;padding:12px">No income logged yet</div>';
+    } else {
+      incomeList.innerHTML = '';
+      entries.forEach(e => {
+        const row = document.createElement('div');
+        row.style.cssText = 'display:flex;justify-content:space-between;align-items:flex-start;padding:7px 0;border-bottom:1px solid var(--border);font-size:0.78rem';
+        const info = document.createElement('div');
+        info.innerHTML = '<span style="font-family:var(--font-mono);color:var(--text-muted);font-size:0.68rem">'+e.date+'</span>'
+          +' <span style="color:var(--text-muted);font-size:0.7rem">['+( e.cat||'')+']</span>'
+          +(e.desc?'<div style="font-size:0.72rem;color:var(--text-muted);margin-top:1px">'+e.desc+'</div>':'');
+        const amt = document.createElement('span');
+        amt.style.cssText = 'font-family:var(--font-mono);color:var(--green);font-weight:700;font-size:0.8rem;white-space:nowrap';
+        amt.textContent = '$'+Number(e.amount).toLocaleString();
+        row.appendChild(info); row.appendChild(amt);
+        incomeList.appendChild(row);
+      });
+    }
   }
 
-  // EXPENSE LOG
+  // EXPENSE LOG — read only
   const expList = document.getElementById('expense-log-list');
   if (expList) {
     const entries = (state.expenseLog||[]).slice().reverse();
-    expList.innerHTML = entries.length ? entries.map(e =>
-      '<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);font-size:0.8rem">'
-      +'<div><span style="font-family:var(--font-mono);color:var(--text-muted);font-size:0.7rem">'+e.date+'</span>'
-      +' <span style="color:var(--text-muted);font-size:0.72rem">['+e.cat+']</span>'
-      +(e.desc?'<div style="font-size:0.75rem;color:var(--text-muted);margin-top:1px">'+e.desc+'</div>':'')+'</div>'
-      +'<div style="display:flex;align-items:center;gap:8px">'
-      +'<span style="font-family:var(--font-mono);color:var(--red);font-weight:700">-$'+Number(e.amount).toLocaleString()+'</span>'
-      +('<button onclick="deleteExpenseEntry(\''+e.id+'\')" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:0.7rem;padding:2px 4px">✕</button>')
-      +'</div></div>'
-    ).join('') : '<div style="color:var(--text-muted);font-family:var(--font-mono);font-size:0.72rem;text-align:center;padding:12px">No expenses logged yet</div>';
+    if (!entries.length) {
+      expList.innerHTML = '<div style="color:var(--text-muted);font-family:var(--font-mono);font-size:0.72rem;text-align:center;padding:12px">No expenses logged yet</div>';
+    } else {
+      expList.innerHTML = '';
+      entries.forEach(e => {
+        const row = document.createElement('div');
+        row.style.cssText = 'display:flex;justify-content:space-between;align-items:flex-start;padding:7px 0;border-bottom:1px solid var(--border);font-size:0.78rem';
+        const info = document.createElement('div');
+        info.innerHTML = '<span style="font-family:var(--font-mono);color:var(--text-muted);font-size:0.68rem">'+e.date+'</span>'
+          +' <span style="color:var(--text-muted);font-size:0.7rem">['+( e.cat||'')+']</span>'
+          +(e.desc?'<div style="font-size:0.72rem;color:var(--text-muted);margin-top:1px">'+e.desc+'</div>':'');
+        const amt = document.createElement('span');
+        amt.style.cssText = 'font-family:var(--font-mono);color:var(--red);font-weight:700;font-size:0.8rem;white-space:nowrap';
+        amt.textContent = '-$'+Number(e.amount).toLocaleString();
+        row.appendChild(info); row.appendChild(amt);
+        expList.appendChild(row);
+      });
+    }
   }
 }
 
