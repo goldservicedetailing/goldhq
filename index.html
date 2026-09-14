@@ -2255,6 +2255,37 @@ function renderFinances() {
   const tbody = document.getElementById('pl-tbody');
   if (!tbody) return;
 
+  // ── AUTO-MIGRATE legacy state.income keys → incomeLog, then clear ──
+  if (state.income && Object.keys(state.income).length > 0) {
+    if (!state.incomeLog) state.incomeLog = [];
+    Object.entries(state.income).forEach(([monthStr, amount]) => {
+      if (!amount || amount <= 0) return;
+      // Only migrate if no incomeLog entry already covers this month
+      const existing = state.incomeLog.find(e => {
+        const ym = (e.date||'').substring(0,7);
+        // Try to match month string like "May 2026" to YYYY-MM
+        const d = new Date(monthStr + ' 1');
+        if (isNaN(d)) return false;
+        const legacyYM = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
+        return ym === legacyYM;
+      });
+      if (!existing) {
+        // Migrate as a single entry on the 1st of that month
+        const d = new Date(monthStr + ' 1');
+        if (!isNaN(d)) {
+          const dateStr = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-01';
+          state.incomeLog.push({
+            id: 'migrated-'+Date.now()+Math.random(),
+            date: dateStr, amount: +amount,
+            desc: 'Migrated from legacy data', cat: 'Other'
+          });
+        }
+      }
+    });
+    state.income = {};
+    saveState();
+  }
+
   const thisYM = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0');
 
   const months = Array.from({length:9}, (_,i) => {
