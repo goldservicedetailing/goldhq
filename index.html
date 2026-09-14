@@ -907,10 +907,11 @@ body::before {
         <div class="section-title">SCHEDULE</div>
         <div class="section-sub" id="cal-month-label">Loading...</div>
       </div>
-      <div style="display:flex;gap:8px;align-items:center">
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
         <button class="btn btn-outline btn-sm" onclick="calPrev()">‹ Prev</button>
         <button class="btn btn-outline btn-sm" onclick="calToday()">Today</button>
         <button class="btn btn-outline btn-sm" onclick="calNext()">Next ›</button>
+        <a href="https://calendar.google.com" target="_blank" class="btn btn-outline btn-sm">📅 Google Cal ↗</a>
         <button class="btn btn-gold btn-sm" onclick="openAddEvent()">+ Add Event</button>
       </div>
     </div>
@@ -1077,6 +1078,7 @@ body::before {
     <div class="section-header mb-16">
       <div class="section-title">FINANCES</div>
       <div style="display:flex;gap:8px">
+        <button class="btn btn-outline btn-sm" onclick="openAuditLog()">📋 Audit Log</button>
         <button class="btn btn-outline btn-sm" onclick="openLogExpense()">+ Log Expense</button>
         <button class="btn btn-gold btn-sm" onclick="openLogIncome()">+ Log Income</button>
       </div>
@@ -1276,7 +1278,7 @@ body::before {
     <!-- CAMPAIGN STATUS FILTER -->
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px">
       <button class="tab-btn active" id="mkt-filter-all" onclick="filterCampaigns('all',this)">All</button>
-      <button class="tab-btn" onclick="filterCampaigns('Ideation',this)">💡 Ideation</button>
+      <button class="tab-btn" onclick="filterCampaigns('Planning',this)">💡 Planning</button>
       <button class="tab-btn" onclick="filterCampaigns('In Progress',this)">⚡ In Progress</button>
       <button class="tab-btn" onclick="filterCampaigns('Review',this)">👀 Review</button>
       <button class="tab-btn" onclick="filterCampaigns('Live',this)">🟢 Live</button>
@@ -1619,6 +1621,7 @@ let state = {
   income: {},
   incomeLog: [],
   expenseLog: [],
+  auditLog: [],
   aiHistory: [],
   biz: {},          // all business settings — populated from Settings page
   revenueGoal: null,
@@ -1741,56 +1744,62 @@ function renderLeads() {
 // ── GOOGLE SHEETS LEAD SYNC ──
 const LEADS_SHEET_URL = 'https://script.google.com/macros/s/AKfycbxLgM7pXlaOnO5sPvlHo0daWb1x_K2aNGz1vVfkgPre9McNsd2PeZikLYMClufd4OrX/exec';
 
-async function syncLeadsFromSheets() {
+function syncLeadsFromSheets() {
   const btn = document.getElementById('sheets-sync-btn');
-  if (btn) { btn.textContent = '⟳ Syncing...'; btn.disabled = true; }
   const statusEl = document.getElementById('leads-sync-time');
-  try {
-    const res = await fetch(LEADS_SHEET_URL + '?action=getLeads');
-    if (!res.ok) throw new Error('HTTP ' + res.status);
-    const data = await res.json();
-    const rows = Array.isArray(data) ? data : (data.leads || data.data || []);
-    if (!rows.length) throw new Error('No data returned');
+  if (btn) { btn.textContent = '⟳ Syncing...'; btn.disabled = true; }
 
-    // Merge — add new leads, don't overwrite existing ones that have been updated
-    const existing = state.leads || [];
-    const existingIds = new Set(existing.map(l => (l.company||'').toLowerCase().trim()));
-    let added = 0;
-
-    rows.forEach(row => {
-      const company = (row.company || row.Company || row['Company Name'] || '').trim();
-      if (!company) return;
-      if (existingIds.has(company.toLowerCase())) return; // already have it
-      existing.push({
-        id: Date.now() + Math.random(),
-        company,
-        category: row.category || row.Category || row['Business Type'] || '',
-        city:     row.city     || row.City     || row.Location || '',
-        contact:  row.contact  || row.Contact  || row['Contact Name'] || '',
-        phone:    row.phone    || row.Phone    || '',
-        email:    row.email    || row.Email    || '',
-        fleet:    row.fleet    || row.Fleet    || row['Fleet Size'] || '',
-        status:   row.status   || row.Status   || 'To Contact',
-        priority: false,
-        notes:    row.notes    || row.Notes    || '',
-      });
-      existingIds.add(company.toLowerCase());
-      added++;
-    });
-
-    state.leads = existing;
-    saveState();
-    renderLeads();
-    const now = new Date().toLocaleTimeString();
-    if (statusEl) statusEl.innerHTML = 'Last sync: ' + now + ' · <span id="leads-total-count">' + state.leads.length + '</span> leads · ' + added + ' new';
-    showToast(added + ' new leads imported from Sheets', 'success');
-  } catch(e) {
-    console.warn('Sheets sync failed:', e.message);
-    showToast('Sheets sync failed: ' + e.message, 'error');
-    if (statusEl) statusEl.innerHTML = '⚠ Sync failed · <span id="leads-total-count">' + (state.leads||[]).length + '</span> leads';
-  } finally {
+  // JSONP pattern — avoids CORS entirely
+  const callbackName = 'gsdLeadsCallback_' + Date.now();
+  const script = document.createElement('script');
+  const timeout = setTimeout(() => {
+    script.remove();
+    delete window[callbackName];
     if (btn) { btn.textContent = '⟳ Sync Sheets'; btn.disabled = false; }
-  }
+    showToast('Sync timed out — check your Apps Script is deployed as Anyone', 'error');
+  }, 10000);
+
+  window[callbackName] = function(data) {
+    clearTimeout(timeout);
+    script.remove();
+    delete window[callbackName];
+    if (btn) { btn.textContent = '⟳ Sync Sheets'; btn.disabled = false; }
+    try {
+      const rows = Array.isArray(data) ? data : (data.leads || data.data || []);
+      const existing = state.leads || [];
+      const existingIds = new Set(existing.map(l=>(l.company||'').toLowerCase().trim()));
+      let added = 0;
+      rows.forEach(row => {
+        const company = (row.company||row.Company||row['Company Name']||'').trim();
+        if (!company || existingIds.has(company.toLowerCase())) return;
+        existing.push({
+          id: Date.now().toString()+Math.random(),
+          company,
+          category: row.category||row.Category||row['Business Type']||'',
+          city:     row.city||row.City||row.Location||'',
+          contact:  row.contact||row.Contact||row['Contact Name']||'',
+          phone:    row.phone||row.Phone||'',
+          email:    row.email||row.Email||'',
+          fleet:    row.fleet||row.Fleet||row['Fleet Size']||'',
+          status:   row.status||row.Status||'To Contact',
+          priority: false,
+          notes:    row.notes||row.Notes||''
+        });
+        existingIds.add(company.toLowerCase());
+        added++;
+      });
+      state.leads = existing;
+      saveState(); renderLeads();
+      const now = new Date().toLocaleTimeString();
+      if (statusEl) statusEl.innerHTML = 'Last sync: '+now+' · <span id="leads-total-count">'+state.leads.length+'</span> leads · '+added+' new';
+      showToast(added+' new leads imported from Sheets','success');
+    } catch(e) {
+      showToast('Sync error: '+e.message,'error');
+    }
+  };
+
+  script.src = LEADS_SHEET_URL + '?callback=' + callbackName;
+  document.body.appendChild(script);
 }
 
 function filterLeads() { renderLeads(); }
@@ -1801,12 +1810,34 @@ function updateLeadStatus(idx, status) {
   const filtered = filter === 'all' ? state.leads : state.leads.filter(l => l.status === filter);
   const lead = filtered[idx];
   const realIdx = state.leads.indexOf(lead);
-  if (realIdx >= 0) {
-    state.leads[realIdx].status = status;
-    saveState();
-    renderLeads();
-    showToast(`${lead.company} → ${status}`, 'success');
+  if (realIdx < 0) return;
+  state.leads[realIdx].status = status;
+  // Auto-add to Clients tab when marked Closed Won
+  if (status === 'Closed Won') {
+    if (!state.clients) state.clients = [];
+    const alreadyClient = state.clients.find(cl =>
+      (cl.company||'').toLowerCase() === (lead.company||'').toLowerCase()
+    );
+    if (!alreadyClient) {
+      state.clients.push({
+        id:       Date.now().toString(),
+        company:  lead.company,
+        category: lead.category || '',
+        contact:  lead.contact  || '',
+        phone:    lead.phone    || '',
+        email:    lead.email    || '',
+        fleet:    lead.fleet    || '',
+        notes:    lead.notes    || '',
+        status:   'Active',
+        added:    new Date().toISOString().split('T')[0]
+      });
+      showToast(lead.company + ' added to Clients ✓', 'success');
+    }
   }
+  saveState();
+  renderLeads();
+  updateDashboardMetrics();
+  showToast(lead.company + ' → ' + status, 'success');
 }
 
 function addLead() {
@@ -1866,28 +1897,71 @@ function renderJobs() {
   const tbody = document.getElementById('jobs-tbody');
   if (!tbody) return;
   if (!state.jobs.length) {
-    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text-muted);padding:32px;font-family:var(--font-mono);font-size:0.75rem;">NO JOBS LOGGED YET — HIT "+ LOG JOB" TO START</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--text-muted);padding:32px;font-family:var(--font-mono);font-size:0.75rem;">NO JOBS LOGGED YET — HIT "+ LOG JOB" TO START</td></tr>';
     return;
   }
-  const sorted = [...state.jobs].sort((a,b) => new Date(b.date) - new Date(a.date));
-  tbody.innerHTML = sorted.map(j => `
-    <tr>
-      <td style="font-family:var(--font-mono);font-size:0.75rem">${j.date}</td>
-      <td><strong>${j.client}</strong></td>
-      <td style="font-size:0.8rem">${j.service}</td>
-      <td style="font-family:var(--font-mono);text-align:center;color:var(--gold)">${j.vehicles}</td>
-      <td style="font-family:var(--font-mono);color:var(--green)">$${j.revenue.toFixed(2)}</td>
-      <td style="font-size:0.75rem;color:var(--text-muted)">${j.notes || '—'}</td>
-    </tr>
-  `).join('');
+  const sorted = [...state.jobs].map((j,origIdx) => ({...j, origIdx})).sort((a,b) => new Date(b.date) - new Date(a.date));
+  tbody.innerHTML = sorted.map(j => {
+    const oi = j.origIdx;
+    return '<tr>'
+      +'<td style="font-family:var(--font-mono);font-size:0.75rem">'+j.date+'</td>'
+      +'<td><strong>'+j.client+'</strong></td>'
+      +'<td style="font-size:0.8rem">'+j.service+'</td>'
+      +'<td style="font-family:var(--font-mono);text-align:center;color:var(--gold)">'+j.vehicles+'</td>'
+      +'<td style="font-family:var(--font-mono);color:var(--green)">$'+(+j.revenue).toFixed(2)+'</td>'
+      +'<td style="font-size:0.75rem;color:var(--text-muted)">'+(j.notes||'—')+'</td>'
+      +'<td style="white-space:nowrap">'
+      +'<button onclick="openEditJob('+oi+')" style="background:none;border:1px solid var(--border);color:var(--text-muted);cursor:pointer;font-size:0.65rem;padding:2px 6px;border-radius:3px;margin-right:4px">✏</button>'
+      +'<button onclick="deleteJob('+oi+')" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:0.7rem;padding:2px 4px">✕</button>'
+      +'</td></tr>';
+  }).join('');
 
   const thisMonth = new Date().getMonth();
   const monthJobs = state.jobs.filter(j => new Date(j.date).getMonth() === thisMonth);
-  const monthRev = monthJobs.reduce((s,j) => s + j.revenue, 0);
-  const avgRev = monthJobs.length ? monthRev / monthJobs.length : 0;
-  if (document.getElementById('month-revenue')) document.getElementById('month-revenue').textContent = '$' + monthRev.toFixed(0);
-  if (document.getElementById('month-jobs')) document.getElementById('month-jobs').textContent = monthJobs.length;
-  if (document.getElementById('avg-job')) document.getElementById('avg-job').textContent = '$' + avgRev.toFixed(0);
+  const monthRev  = monthJobs.reduce((s,j) => s + (+j.revenue||0), 0);
+  const avgRev    = monthJobs.length ? monthRev / monthJobs.length : 0;
+  const mrEl = document.getElementById('month-revenue');
+  const mjEl = document.getElementById('month-jobs');
+  const ajEl = document.getElementById('avg-job');
+  if (mrEl) mrEl.textContent = '$' + monthRev.toFixed(0);
+  if (mjEl) mjEl.textContent = monthJobs.length;
+  if (ajEl) ajEl.textContent = '$' + avgRev.toFixed(0);
+}
+
+function openEditJob(idx) {
+  const j = state.jobs[idx];
+  if (!j) return;
+  document.getElementById('edit-job-idx').value    = idx;
+  document.getElementById('edit-job-date').value   = j.date;
+  document.getElementById('edit-job-client').value = j.client;
+  document.getElementById('edit-job-service').value= j.service;
+  document.getElementById('edit-job-vehicles').value=j.vehicles;
+  document.getElementById('edit-job-revenue').value = j.revenue;
+  document.getElementById('edit-job-notes').value  = j.notes||'';
+  openModal('modal-edit-job');
+}
+
+function saveEditJob() {
+  const idx = parseInt(document.getElementById('edit-job-idx').value);
+  if (isNaN(idx) || !state.jobs[idx]) return;
+  const j = state.jobs[idx];
+  j.date     = document.getElementById('edit-job-date').value;
+  j.client   = document.getElementById('edit-job-client').value;
+  j.service  = document.getElementById('edit-job-service').value;
+  j.vehicles = parseInt(document.getElementById('edit-job-vehicles').value)||j.vehicles;
+  j.revenue  = parseFloat(document.getElementById('edit-job-revenue').value)||j.revenue;
+  j.notes    = document.getElementById('edit-job-notes').value;
+  saveState(); closeModal('modal-edit-job'); renderJobs(); updateDashboardMetrics();
+  showToast('Job updated','success');
+}
+
+function deleteJob(idx) {
+  showSelectModal('Delete this job?', ['Yes, delete it','Cancel'], (choice) => {
+    if (choice !== 'Yes, delete it') return;
+    state.jobs.splice(idx, 1);
+    saveState(); renderJobs(); updateDashboardMetrics();
+    showToast('Job deleted','success');
+  });
 }
 
 // ── TASKS ──
@@ -2127,17 +2201,45 @@ function viewEvent(id) {
   const col = EVT_COLORS[evt.type] || EVT_COLORS.other;
   const d = new Date(evt.date+'T12:00:00');
   document.getElementById('view-evt-title').textContent = evt.title;
-  document.getElementById('view-evt-body').innerHTML = `
-    <div style="display:flex;flex-direction:column;gap:8px">
-      <div><span style="color:var(--text-muted);font-family:var(--font-mono);font-size:0.72rem">TYPE</span><br>
-        <span style="color:${col};font-weight:600">${EVT_LABELS[evt.type]||evt.type}</span></div>
-      <div><span style="color:var(--text-muted);font-family:var(--font-mono);font-size:0.72rem">DATE</span><br>
-        ${d.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'})}</div>
-      ${evt.time?`<div><span style="color:var(--text-muted);font-family:var(--font-mono);font-size:0.72rem">TIME</span><br>${evt.time}${evt.endTime?' – '+evt.endTime:''}</div>`:''}
-      ${evt.notes?`<div><span style="color:var(--text-muted);font-family:var(--font-mono);font-size:0.72rem">NOTES</span><br>${evt.notes}</div>`:''}
-    </div>`;
+  document.getElementById('view-evt-body').innerHTML =
+    '<div style="display:flex;flex-direction:column;gap:8px">'
+    +'<div><span style="color:var(--text-muted);font-family:var(--font-mono);font-size:0.72rem">TYPE</span><br>'
+    +'<span style="color:'+col+';font-weight:600">'+(EVT_LABELS[evt.type]||evt.type)+'</span></div>'
+    +'<div><span style="color:var(--text-muted);font-family:var(--font-mono);font-size:0.72rem">DATE</span><br>'
+    +d.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'})+'</div>'
+    +(evt.time?'<div><span style="color:var(--text-muted);font-family:var(--font-mono);font-size:0.72rem">TIME</span><br>'+evt.time+(evt.endTime?' – '+evt.endTime:'')+'</div>':'')
+    +(evt.notes?'<div><span style="color:var(--text-muted);font-family:var(--font-mono);font-size:0.72rem">NOTES</span><br>'+evt.notes+'</div>':'')
+    +'</div>';
   document.getElementById('view-evt-delete').onclick = () => { deleteEvent(id); closeModal('modal-view-event'); };
+  document.getElementById('view-evt-edit').onclick   = () => { openEditEvent(id); closeModal('modal-view-event'); };
   openModal('modal-view-event');
+}
+
+function openEditEvent(id) {
+  const evt = (state.calEvents||[]).find(e => e.id === id);
+  if (!evt) return;
+  document.getElementById('edit-evt-id').value    = id;
+  document.getElementById('edit-evt-title').value = evt.title;
+  document.getElementById('edit-evt-date').value  = evt.date;
+  document.getElementById('edit-evt-type').value  = evt.type || 'other';
+  document.getElementById('edit-evt-start').value = evt.time || '';
+  document.getElementById('edit-evt-end').value   = evt.endTime || '';
+  document.getElementById('edit-evt-notes').value = evt.notes || '';
+  openModal('modal-edit-event');
+}
+
+function saveEditEvent() {
+  const id  = document.getElementById('edit-evt-id').value;
+  const evt = (state.calEvents||[]).find(e => e.id === id);
+  if (!evt) return;
+  evt.title   = document.getElementById('edit-evt-title').value.trim() || evt.title;
+  evt.date    = document.getElementById('edit-evt-date').value;
+  evt.type    = document.getElementById('edit-evt-type').value;
+  evt.time    = document.getElementById('edit-evt-start').value;
+  evt.endTime = document.getElementById('edit-evt-end').value;
+  evt.notes   = document.getElementById('edit-evt-notes').value;
+  saveState(); closeModal('modal-edit-event'); renderSchedule();
+  showToast('Event updated','success');
 }
 
 function deleteEvent(id) {
@@ -2264,6 +2366,7 @@ function logIncome() {
   if (!amount) { showToast('Enter an amount','error'); return; }
   if (!state.incomeLog) state.incomeLog = [];
   state.incomeLog.push({ id: Date.now().toString(), date, amount, desc, cat });
+  plAudit('ADD INCOME', '$'+amount+' | '+date+' | '+(desc||'')+' | '+cat);
   // Also update legacy state.income keyed by month for P&L table
   const monthKey = new Date(date+'T12:00:00').toLocaleDateString('en-US',{month:'long',year:'numeric'});
   state.income[monthKey] = (state.income[monthKey]||0) + amount;
@@ -2283,6 +2386,7 @@ function logExpense() {
   if (!amount) { showToast('Enter an amount','error'); return; }
   if (!state.expenseLog) state.expenseLog = [];
   state.expenseLog.push({ id: Date.now().toString(), date, amount, desc, cat });
+  plAudit('ADD EXPENSE', '$'+amount+' | '+date+' | '+(desc||'')+' | '+cat);
   saveState();
   closeModal('modal-log-expense');
   renderFinances();
@@ -2290,13 +2394,85 @@ function logExpense() {
   showToast('$'+amount.toLocaleString()+' expense logged','success');
 }
 
+// ── P&L AUDIT LOGGER ──
+function plAudit(action, details) {
+  if (!state.auditLog) state.auditLog = [];
+  state.auditLog.unshift({
+    action,
+    details,
+    by:  biz('owner','Admin'),
+    at:  new Date().toISOString(),
+    ts:  new Date().toLocaleString()
+  });
+  if (state.auditLog.length > 200) state.auditLog = state.auditLog.slice(0,200);
+}
+
+function openAuditLog() {
+  const el = document.getElementById('audit-log-content');
+  const logs = state.auditLog || [];
+  if (!logs.length) {
+    el.innerHTML = '<div style="color:var(--text-muted);text-align:center;padding:24px">No changes logged yet</div>';
+  } else {
+    el.innerHTML = logs.map(l => `
+      <div style="padding:8px 0;border-bottom:1px solid var(--border)">
+        <div style="display:flex;justify-content:space-between;margin-bottom:2px">
+          <span style="color:${l.action.includes('DELETE')?'var(--red)':l.action.includes('EDIT')?'var(--gold)':'var(--green)'}">
+            ${l.action}
+          </span>
+          <span style="color:var(--text-muted);font-size:0.68rem">${l.ts}</span>
+        </div>
+        <div style="color:var(--text-muted);font-size:0.68rem">${l.details}</div>
+        <div style="color:var(--text-muted);font-size:0.65rem">by ${l.by}</div>
+      </div>`).join('');
+  }
+  openModal('modal-audit-log');
+}
+
+// ── EDIT INCOME ──
+function openEditIncome(id) {
+  const e = (state.incomeLog||[]).find(e=>e.id===id);
+  if (!e) return;
+  document.getElementById('edit-income-id').value    = id;
+  document.getElementById('edit-income-date').value  = e.date;
+  document.getElementById('edit-income-amount').value= e.amount;
+  document.getElementById('edit-income-desc').value  = e.desc||'';
+  const catSel = document.getElementById('edit-income-cat');
+  if (catSel) catSel.value = e.cat||'Fleet Service';
+  openModal('modal-edit-income');
+}
+
+function saveEditIncome() {
+  const id     = document.getElementById('edit-income-id').value;
+  const entry  = (state.incomeLog||[]).find(e=>e.id===id);
+  if (!entry) return;
+  const before = `$${entry.amount} | ${entry.date} | ${entry.desc||''} | ${entry.cat||''}`;
+  // Update legacy income keyed by month
+  const oldMonthKey = new Date(entry.date+'T12:00:00').toLocaleDateString('en-US',{month:'long',year:'numeric'});
+  state.income[oldMonthKey] = Math.max(0,(state.income[oldMonthKey]||0)-(+entry.amount));
+  // Apply edits
+  entry.date   = document.getElementById('edit-income-date').value;
+  entry.amount = parseFloat(document.getElementById('edit-income-amount').value)||entry.amount;
+  entry.desc   = document.getElementById('edit-income-desc').value.trim();
+  entry.cat    = document.getElementById('edit-income-cat').value;
+  entry.editedAt = new Date().toISOString();
+  // Update legacy income for new month
+  const newMonthKey = new Date(entry.date+'T12:00:00').toLocaleDateString('en-US',{month:'long',year:'numeric'});
+  state.income[newMonthKey] = (state.income[newMonthKey]||0)+(+entry.amount);
+  const after = `$${entry.amount} | ${entry.date} | ${entry.desc||''} | ${entry.cat||''}`;
+  plAudit('EDIT INCOME', `Before: ${before} → After: ${after}`);
+  saveState(); closeModal('modal-edit-income'); renderFinances(); updateDashboardMetrics();
+  showToast('Income entry updated','success');
+}
+
+// ── DELETE INCOME ──
 function deleteIncomeEntry(id) {
   showSelectModal('Delete this income entry?', ['Yes, delete it','Cancel'], (choice) => {
     if (choice !== 'Yes, delete it') return;
     const entry = (state.incomeLog||[]).find(e=>e.id===id);
     if (entry) {
       const monthKey = new Date(entry.date+'T12:00:00').toLocaleDateString('en-US',{month:'long',year:'numeric'});
-      state.income[monthKey] = Math.max(0,(state.income[monthKey]||0)-entry.amount);
+      state.income[monthKey] = Math.max(0,(state.income[monthKey]||0)-(+entry.amount));
+      plAudit('DELETE INCOME', `$${entry.amount} | ${entry.date} | ${entry.desc||''} | ${entry.cat||''}`);
     }
     state.incomeLog = (state.incomeLog||[]).filter(e=>e.id!==id);
     saveState(); renderFinances(); updateDashboardMetrics();
@@ -2304,9 +2480,41 @@ function deleteIncomeEntry(id) {
   });
 }
 
+// ── EDIT EXPENSE ──
+function openEditExpense(id) {
+  const e = (state.expenseLog||[]).find(e=>e.id===id);
+  if (!e) return;
+  document.getElementById('edit-expense-id').value     = id;
+  document.getElementById('edit-expense-date').value   = e.date;
+  document.getElementById('edit-expense-amount').value = e.amount;
+  document.getElementById('edit-expense-desc').value   = e.desc||'';
+  const catSel = document.getElementById('edit-expense-cat');
+  if (catSel) catSel.value = e.cat||'Supplies';
+  openModal('modal-edit-expense');
+}
+
+function saveEditExpense() {
+  const id    = document.getElementById('edit-expense-id').value;
+  const entry = (state.expenseLog||[]).find(e=>e.id===id);
+  if (!entry) return;
+  const before = `$${entry.amount} | ${entry.date} | ${entry.desc||''} | ${entry.cat||''}`;
+  entry.date    = document.getElementById('edit-expense-date').value;
+  entry.amount  = parseFloat(document.getElementById('edit-expense-amount').value)||entry.amount;
+  entry.desc    = document.getElementById('edit-expense-desc').value.trim();
+  entry.cat     = document.getElementById('edit-expense-cat').value;
+  entry.editedAt= new Date().toISOString();
+  const after   = `$${entry.amount} | ${entry.date} | ${entry.desc||''} | ${entry.cat||''}`;
+  plAudit('EDIT EXPENSE', `Before: ${before} → After: ${after}`);
+  saveState(); closeModal('modal-edit-expense'); renderFinances(); updateDashboardMetrics();
+  showToast('Expense updated','success');
+}
+
+// ── DELETE EXPENSE ──
 function deleteExpenseEntry(id) {
   showSelectModal('Delete this expense?', ['Yes, delete it','Cancel'], (choice) => {
     if (choice !== 'Yes, delete it') return;
+    const entry = (state.expenseLog||[]).find(e=>e.id===id);
+    if (entry) plAudit('DELETE EXPENSE', `$${entry.amount} | ${entry.date} | ${entry.desc||''} | ${entry.cat||''}`);
     state.expenseLog = (state.expenseLog||[]).filter(e=>e.id!==id);
     saveState(); renderFinances(); updateDashboardMetrics();
     showToast('Expense deleted','success');
@@ -2315,14 +2523,30 @@ function deleteExpenseEntry(id) {
 
 // ── DASHBOARD METRICS ──
 function updateDashboardMetrics() {
-  const thisMonth = new Date().getMonth();
-  const today = new Date().toISOString().split('T')[0];
-  const monthJobs = (state.jobs||[]).filter(j => new Date(j.date).getMonth() === thisMonth);
-  const monthRev = monthJobs.reduce((s,j) => s + j.revenue, 0);
-  const pct = Math.min(100, (monthRev / (state.revenueGoal||GSD.goal||10000)) * 100);
-  // Update BOTH dashboard and goals page — same data, same goal
-  const goal = state.revenueGoal || GSD.goal || 10000;
-  const _pct = Math.min(100, (monthRev / goal) * 100);
+  const now = new Date();
+  const thisMonth = now.getMonth();
+  const thisYear  = now.getFullYear();
+  const thisYM    = thisYear + '-' + String(thisMonth + 1).padStart(2, '0');
+  const today     = now.toISOString().split('T')[0];
+
+  // Revenue = jobs logged THIS month + income manually logged THIS month
+  const monthJobs = (state.jobs||[]).filter(j => {
+    const d = new Date(j.date);
+    return d.getMonth() === thisMonth && d.getFullYear() === thisYear;
+  });
+  const jobRev    = monthJobs.reduce((s,j) => s + (+j.revenue||0), 0);
+  const logRev    = (state.incomeLog||[])
+    .filter(e => e.date && e.date.startsWith(thisYM))
+    .reduce((s,e) => s + (+e.amount||0), 0);
+  const monthRev  = jobRev + logRev;
+
+  // Expenses = expense log THIS month
+  const monthExp  = (state.expenseLog||[])
+    .filter(e => e.date && e.date.startsWith(thisYM))
+    .reduce((s,e) => s + (+e.amount||0), 0);
+
+  const goal  = state.revenueGoal || 10000;
+  const _pct  = Math.min(100, (monthRev / goal) * 100);
 
   // Dashboard elements
   const _cmrr = document.getElementById('current-mrr');
@@ -2467,7 +2691,7 @@ function generateBusinessReport() {
     '📣 MARKETING',
     `  Campaigns      : ${campaigns.length}`,
     `  Live / Active  : ${campaigns.filter(c=>['Live','In Progress'].includes(c.status)).length}`,
-    `  In Ideation    : ${campaigns.filter(c=>c.status==='Ideation').length}`,
+    `  In Planning    : ${campaigns.filter(c=>['Planning','Ideation'].includes(c.status)).length}`,
   ];
 
   return lines.join('\n');
@@ -2893,31 +3117,35 @@ function renderClients() {
   const grid = document.getElementById('clients-grid');
   if (!grid) return;
   const clients = state.clients || [];
-  if (viewingClientIdx !== null && clients[viewingClientIdx]) {
-    renderClientDetail(viewingClientIdx);
-    return;
-  }
   if (!clients.length) {
-    grid.innerHTML = '<div style="text-align:center;padding:48px;color:var(--text-muted);font-family:var(--font-mono);font-size:0.75rem;border:1px dashed rgba(201,168,76,0.2);border-radius:4px">NO CLIENTS YET — ADD YOUR FIRST CLIENT</div>';
+    grid.innerHTML = '<div style="text-align:center;padding:48px;color:var(--text-muted);font-family:var(--font-mono);font-size:0.75rem;border:1px dashed rgba(201,168,76,0.2);border-radius:4px">NO CLIENTS YET — CLOSE A LEAD TO AUTO-ADD, OR HIT + ADD CLIENT</div>';
     return;
   }
   grid.innerHTML = '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px">' +
-    clients.map((cl, i) => `
-      <div onclick="viewClientDetail(${i})" style="background:var(--surface2);border:1px solid var(--border);border-radius:4px;padding:18px;cursor:pointer;transition:border-color 0.2s"
-        onmouseenter="this.style.borderColor='var(--gold)'" onmouseleave="this.style.borderColor='var(--border)'">
-        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">
-          <div>
-            <div style="font-family:var(--font-display);font-size:1rem;color:var(--gold);letter-spacing:1px">${cl.company}</div>
-            <div style="font-size:0.72rem;color:var(--text-muted);font-family:var(--font-mono)">${cl.category||'—'}</div>
-          </div>
-          <span class="pill pill-won" style="font-size:0.6rem">${cl.status}</span>
-        </div>
-        ${cl.contact?`<div style="font-size:0.78rem;margin-bottom:4px">${cl.contact}${cl.phone?' · '+cl.phone:''}</div>`:''}
-        ${cl.fleet?`<div style="font-size:0.78rem;color:var(--gold);font-family:var(--font-mono);margin-bottom:4px">Fleet: ${cl.fleet} ${cl.rate?'· '+cl.rate:''}</div>`:''}
-        ${cl.notes?`<div style="font-size:0.72rem;color:var(--text-muted);margin-top:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${cl.notes}</div>`:''}
-        <div style="margin-top:12px;font-size:0.68rem;color:var(--gold);font-family:var(--font-mono)">Tap to view full profile →</div>
-      </div>`
-    ).join('') + '</div>';
+    clients.map((cl, i) => {
+      const card = document.createElement('div');
+      return '<div style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:18px">'
+        +'<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">'
+        +'<div><div style="font-family:var(--font-display);font-size:1rem;color:var(--gold);letter-spacing:1px">'+cl.company+'</div>'
+        +'<div style="font-size:0.72rem;color:var(--text-muted);font-family:var(--font-mono)">'+(cl.category||'—')+'</div></div>'
+        +'<span class="pill pill-won" style="font-size:0.6rem">'+(cl.status||'Active')+'</span></div>'
+        +(cl.contact?'<div style="font-size:0.78rem;margin-bottom:4px">'+cl.contact+(cl.phone?' · '+cl.phone:'')+'</div>':'')
+        +(cl.email?'<div style="font-size:0.78rem;margin-bottom:4px"><a href="mailto:'+cl.email+'" style="color:var(--gold)">'+cl.email+'</a></div>':'')
+        +(cl.fleet?'<div style="font-size:0.78rem;color:var(--gold);font-family:var(--font-mono);margin-bottom:4px">Fleet: '+cl.fleet+'</div>':'')
+        +(cl.notes?'<div style="font-size:0.72rem;color:var(--text-muted);margin-top:6px">'+cl.notes+'</div>':'')
+        +'<div style="display:flex;gap:6px;margin-top:12px">'
+        +'<button class="btn btn-danger btn-sm" style="font-size:0.6rem" onclick="removeClient('+i+')">✕ Remove</button>'
+        +'</div></div>';
+    }).join('') + '</div>';
+}
+
+function removeClient(i) {
+  showSelectModal('Remove this client?', ['Yes, remove','Cancel'], (choice) => {
+    if (choice !== 'Yes, remove') return;
+    (state.clients||[]).splice(i,1);
+    saveState(); renderClients(); updateDashboardMetrics();
+    showToast('Client removed','success');
+  });
 }
 
 function viewClientDetail(i) {
@@ -3786,8 +4014,37 @@ document.addEventListener('DOMContentLoaded', checkAuth);
     </div>
     <div id="view-evt-body" style="font-size:0.88rem;line-height:1.8;color:var(--text)"></div>
     <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px">
-      <button class="btn btn-danger btn-sm" id="view-evt-delete" onclick="">Delete Event</button>
+      <button class="btn btn-danger btn-sm" id="view-evt-delete" onclick="">Delete</button>
+      <button class="btn btn-outline btn-sm" id="view-evt-edit" onclick="">✏ Edit</button>
       <button class="btn btn-outline" onclick="closeModal('modal-view-event')">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Edit Event -->
+<div class="modal-overlay" id="modal-edit-event" onclick="if(event.target===this)closeModal('modal-edit-event')">
+  <div class="modal">
+    <div class="modal-header"><div class="modal-title">EDIT EVENT</div><button class="modal-close" onclick="closeModal('modal-edit-event')">✕</button></div>
+    <input type="hidden" id="edit-evt-id">
+    <div class="form-group"><label>Event Title</label><input type="text" id="edit-evt-title"></div>
+    <div class="form-row">
+      <div class="form-group"><label>Date</label><input type="date" id="edit-evt-date"></div>
+      <div class="form-group"><label>Type</label>
+        <select id="edit-evt-type" style="background:var(--surface3);border:1px solid var(--border);color:var(--text);padding:9px 12px;border-radius:3px;width:100%;font-family:var(--font-body);font-size:0.85rem;outline:none">
+          <option value="job">GSD Job</option><option value="meeting">Meeting</option>
+          <option value="deadline">Deadline</option><option value="off">Day Off / Personal</option>
+          <option value="amazon">Amazon DSP</option><option value="other">Other</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Start Time</label><input type="time" id="edit-evt-start"></div>
+      <div class="form-group"><label>End Time</label><input type="time" id="edit-evt-end"></div>
+    </div>
+    <div class="form-group"><label>Notes</label><textarea id="edit-evt-notes"></textarea></div>
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button class="btn btn-outline" onclick="closeModal('modal-edit-event')">Cancel</button>
+      <button class="btn btn-gold" onclick="saveEditEvent()">✓ Save Changes</button>
     </div>
   </div>
 </div>
@@ -4335,15 +4592,8 @@ function fleetLog(action, detail) {
 async function fleetAddClient() {
   const name = document.getElementById('fac-name').value.trim();
   if (!name) { showToast('Enter a company name','error'); return; }
-  if (!code) { showToast('Enter a client code','error'); return; }
-  // Auto-load fleet data if not yet loaded
-  if (!fleetST) {
-    showToast('Connecting to fleet data...', 'success');
-    fleetLoad();
-  }
-  if (!fleetST) { showToast('Could not connect — check internet and try again','error'); return; }
-  const existing = fleetST.clients.find(c => c.code === code);
-  if (existing) { showToast('Code already in use','error'); return; }
+  if (!fleetST) fleetLoad();
+  if (!fleetST) { fleetST = {actLog:[],clients:[]}; }
   const client = {
     id:       Date.now().toString(),
     name,
@@ -4621,6 +4871,85 @@ showPage = function(id) {
     </div>
     <div id="inline-select-options" style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px"></div>
     <button class="btn btn-outline" style="width:100%" onclick="closeModal('modal-inline-select')">Cancel</button>
+  </div>
+</div>
+
+
+<!-- MODAL: Edit Income Entry -->
+<div class="modal-overlay" id="modal-edit-income" onclick="if(event.target===this)closeModal('modal-edit-income')">
+  <div class="modal">
+    <div class="modal-header"><div class="modal-title">EDIT INCOME ENTRY</div><button class="modal-close" onclick="closeModal('modal-edit-income')">✕</button></div>
+    <input type="hidden" id="edit-income-id">
+    <div class="form-row">
+      <div class="form-group"><label>Date</label><input type="date" id="edit-income-date"></div>
+      <div class="form-group"><label>Amount ($)</label><input type="number" id="edit-income-amount" step="0.01"></div>
+    </div>
+    <div class="form-group"><label>Description</label><input type="text" id="edit-income-desc"></div>
+    <div class="form-group"><label>Category</label>
+      <select id="edit-income-cat" style="background:var(--surface3);border:1px solid var(--border);color:var(--text);padding:9px 12px;border-radius:3px;width:100%;font-family:var(--font-body);font-size:0.85rem;outline:none">
+        <option>Fleet Service</option><option>Retail Detail</option><option>Dealership</option><option>Other</option>
+      </select>
+    </div>
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button class="btn btn-outline" onclick="closeModal('modal-edit-income')">Cancel</button>
+      <button class="btn btn-gold" onclick="saveEditIncome()">✓ Save Changes</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Edit Expense Entry -->
+<div class="modal-overlay" id="modal-edit-expense" onclick="if(event.target===this)closeModal('modal-edit-expense')">
+  <div class="modal">
+    <div class="modal-header"><div class="modal-title">EDIT EXPENSE</div><button class="modal-close" onclick="closeModal('modal-edit-expense')">✕</button></div>
+    <input type="hidden" id="edit-expense-id">
+    <div class="form-row">
+      <div class="form-group"><label>Date</label><input type="date" id="edit-expense-date"></div>
+      <div class="form-group"><label>Amount ($)</label><input type="number" id="edit-expense-amount" step="0.01"></div>
+    </div>
+    <div class="form-group"><label>Description</label><input type="text" id="edit-expense-desc"></div>
+    <div class="form-group"><label>Category</label>
+      <select id="edit-expense-cat" style="background:var(--surface3);border:1px solid var(--border);color:var(--text);padding:9px 12px;border-radius:3px;width:100%;font-family:var(--font-body);font-size:0.85rem;outline:none">
+        <option>Supplies</option><option>Vehicle</option><option>Insurance</option><option>Fuel</option><option>Equipment</option><option>Marketing</option><option>Other</option>
+      </select>
+    </div>
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button class="btn btn-outline" onclick="closeModal('modal-edit-expense')">Cancel</button>
+      <button class="btn btn-gold" onclick="saveEditExpense()">✓ Save Changes</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Audit Log -->
+<div class="modal-overlay" id="modal-audit-log" onclick="if(event.target===this)closeModal('modal-audit-log')">
+  <div class="modal" style="max-width:600px">
+    <div class="modal-header"><div class="modal-title">P&L AUDIT LOG</div><button class="modal-close" onclick="closeModal('modal-audit-log')">✕</button></div>
+    <div id="audit-log-content" style="max-height:400px;overflow-y:auto;font-family:var(--font-mono);font-size:0.75rem"></div>
+    <div style="margin-top:12px;text-align:right">
+      <button class="btn btn-outline" onclick="closeModal('modal-audit-log')">Close</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- MODAL: Edit Job -->
+<div class="modal-overlay" id="modal-edit-job" onclick="if(event.target===this)closeModal('modal-edit-job')">
+  <div class="modal">
+    <div class="modal-header"><div class="modal-title">EDIT JOB</div><button class="modal-close" onclick="closeModal('modal-edit-job')">✕</button></div>
+    <input type="hidden" id="edit-job-idx">
+    <div class="form-row">
+      <div class="form-group"><label>Date</label><input type="date" id="edit-job-date"></div>
+      <div class="form-group"><label>Client</label><input type="text" id="edit-job-client"></div>
+    </div>
+    <div class="form-group"><label>Service</label><input type="text" id="edit-job-service"></div>
+    <div class="form-row">
+      <div class="form-group"><label>Vehicles</label><input type="number" id="edit-job-vehicles" min="1"></div>
+      <div class="form-group"><label>Revenue ($)</label><input type="number" id="edit-job-revenue" step="0.01"></div>
+    </div>
+    <div class="form-group"><label>Notes</label><textarea id="edit-job-notes"></textarea></div>
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button class="btn btn-outline" onclick="closeModal('modal-edit-job')">Cancel</button>
+      <button class="btn btn-gold" onclick="saveEditJob()">✓ Save Changes</button>
+    </div>
   </div>
 </div>
 
