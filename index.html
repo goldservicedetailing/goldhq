@@ -2,7 +2,14 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#C9A84C">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Gold HQ">
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Gold HQ</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@300;400;500&family=Syne:wght@400;600;800&display=swap" rel="stylesheet">
@@ -1103,7 +1110,14 @@ body::before {
     <div class="card mb-16">
       <div class="section-header mb-16">
         <div style="font-family:var(--font-display);font-size:1rem;letter-spacing:1px;color:var(--gold)">P&L TRACKER</div>
-        <div style="font-size:0.72rem;color:var(--text-muted);font-family:var(--font-mono)" id="pl-range"></div>
+        <div style="display:flex;align-items:center;gap:10px">
+          <button class="btn btn-outline btn-sm" onclick="openAuditLog()">📋 Audit Log</button>
+          <div style="display:flex;align-items:center;gap:6px">
+            <button onclick="plYearShift(-1)" style="background:none;border:1px solid var(--border);color:var(--text-muted);cursor:pointer;padding:3px 8px;border-radius:3px;font-size:0.75rem">‹</button>
+            <span id="pl-year-label" style="font-family:var(--font-mono);font-size:0.8rem;color:var(--gold);min-width:36px;text-align:center"></span>
+            <button onclick="plYearShift(1)" style="background:none;border:1px solid var(--border);color:var(--text-muted);cursor:pointer;padding:3px 8px;border-radius:3px;font-size:0.75rem">›</button>
+          </div>
+        </div>
       </div>
       <table class="data-table" id="pl-table">
         <thead><tr>
@@ -1115,11 +1129,11 @@ body::before {
     <div class="grid-2">
       <div class="card">
         <div style="font-family:var(--font-display);font-size:0.85rem;letter-spacing:1px;color:var(--gold);margin-bottom:12px">INCOME LOG</div>
-        <div id="income-log-list"><div style="color:var(--text-muted);font-family:var(--font-mono);font-size:0.72rem;text-align:center;padding:12px">No income logged yet</div></div>
+        <div id="income-log-list"></div>
       </div>
       <div class="card">
         <div style="font-family:var(--font-display);font-size:0.85rem;letter-spacing:1px;color:var(--gold);margin-bottom:12px">EXPENSE LOG</div>
-        <div id="expense-log-list"><div style="color:var(--text-muted);font-family:var(--font-mono);font-size:0.72rem;text-align:center;padding:12px">No expenses logged yet</div></div>
+        <div id="expense-log-list"></div>
       </div>
     </div>
   </div>
@@ -1190,9 +1204,17 @@ body::before {
           </div>
         </div>
       </div>
-      <div class="ai-input-row">
-        <input class="ai-input" id="ai-input" placeholder="Ask anything about your business..." onkeydown="if(event.key==='Enter')sendAiMessage()">
-        <button class="ai-send-btn" id="ai-send" onclick="sendAiMessage()">Send</button>
+      <div class="ai-input-row" style="flex-direction:column;gap:8px">
+        <div id="ai-image-preview" style="display:none;position:relative;width:fit-content">
+          <img id="ai-image-thumb" style="max-height:80px;border-radius:4px;border:1px solid var(--gold)" />
+          <button onclick="clearAiImage()" style="position:absolute;top:-6px;right:-6px;background:var(--red);color:white;border:none;border-radius:50%;width:18px;height:18px;cursor:pointer;font-size:0.65rem;display:flex;align-items:center;justify-content:center;padding:0">✕</button>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <input type="file" id="ai-image-input" accept="image/*" style="display:none" onchange="previewAiImage(event)">
+          <button onclick="document.getElementById('ai-image-input').click()" title="Attach photo — receipts, statements, invoices" style="background:none;border:1px solid var(--border);color:var(--text-muted);cursor:pointer;padding:8px 10px;border-radius:4px;font-size:1rem;flex-shrink:0">📎</button>
+          <input class="ai-input" id="ai-input" placeholder="Ask anything — or attach a photo of receipts/expenses..." onkeydown="if(event.key==='Enter')sendAiMessage()" style="flex:1">
+          <button class="ai-send-btn" id="ai-send" onclick="sendAiMessage()">Send</button>
+        </div>
       </div>
     </div>
   </div>
@@ -2352,35 +2374,38 @@ function deleteEvent(id) {
 }
 
 // ── FINANCES ──
+// ── P&L year state ──
+let plYear = new Date().getFullYear();
+
+function plYearShift(dir) {
+  plYear += dir;
+  renderFinances();
+}
+
 function renderFinances() {
   const now  = new Date();
   const goal = state.revenueGoal || 10000;
   const tbody = document.getElementById('pl-tbody');
   if (!tbody) return;
 
-  // ── AUTO-MIGRATE legacy state.income keys → incomeLog, then clear ──
+  // ── AUTO-MIGRATE legacy state.income → incomeLog ──
   if (state.income && Object.keys(state.income).length > 0) {
     if (!state.incomeLog) state.incomeLog = [];
     Object.entries(state.income).forEach(([monthStr, amount]) => {
       if (!amount || amount <= 0) return;
-      // Only migrate if no incomeLog entry already covers this month
       const existing = state.incomeLog.find(e => {
-        const ym = (e.date||'').substring(0,7);
-        // Try to match month string like "May 2026" to YYYY-MM
         const d = new Date(monthStr + ' 1');
         if (isNaN(d)) return false;
         const legacyYM = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
-        return ym === legacyYM;
+        return (e.date||'').substring(0,7) === legacyYM;
       });
       if (!existing) {
-        // Migrate as a single entry on the 1st of that month
         const d = new Date(monthStr + ' 1');
         if (!isNaN(d)) {
-          const dateStr = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-01';
           state.incomeLog.push({
             id: 'migrated-'+Date.now()+Math.random(),
-            date: dateStr, amount: +amount,
-            desc: 'Migrated from legacy data', cat: 'Other'
+            date: d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-01',
+            amount: +amount, desc: 'Migrated from legacy data', cat: 'Other'
           });
         }
       }
@@ -2389,43 +2414,48 @@ function renderFinances() {
     saveState();
   }
 
-  const thisYM = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0');
+  // ── Year selector ──
+  const yearLabel = document.getElementById('pl-year-label');
+  if (yearLabel) yearLabel.textContent = plYear;
+  const thisYM = now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');
 
-  const months = Array.from({length:9}, (_,i) => {
-    const d = new Date(now.getFullYear(), now.getMonth()-5+i, 1);
+  // All 12 months of selected year
+  const months = Array.from({length:12}, (_,i) => {
+    const d = new Date(plYear, i, 1);
     return {
-      key:   d.toLocaleDateString('en-US',{month:'long',year:'numeric'}),
       short: d.toLocaleDateString('en-US',{month:'short',year:'numeric'}),
-      ym:    d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')
+      ym:    plYear+'-'+String(i+1).padStart(2,'0')
     };
   });
 
+  // Build totals per month
   const expByMonth = {};
   (state.expenseLog||[]).forEach(e => {
     const ym = (e.date||'').substring(0,7);
     expByMonth[ym] = (expByMonth[ym]||0) + (+e.amount||0);
   });
-
   const revByMonth = {};
   (state.incomeLog||[]).forEach(e => {
     const ym = (e.date||'').substring(0,7);
     revByMonth[ym] = (revByMonth[ym]||0) + (+e.amount||0);
   });
 
-  const rangeEl = document.getElementById('pl-range');
-  if (rangeEl) rangeEl.textContent = months[0].short + ' – ' + months[months.length-1].short;
+  // Year totals
+  const yearRev = months.reduce((s,m) => s+(revByMonth[m.ym]||0), 0);
+  const yearExp = months.reduce((s,m) => s+(expByMonth[m.ym]||0), 0);
+  const yearNet = yearRev - yearExp;
 
-  // Build table with DOM — no innerHTML onclick hacks
+  // Build table
   tbody.innerHTML = '';
   months.forEach(m => {
-    const rev     = revByMonth[m.ym] || state.income[m.key] || state.income[m.short] || 0;
+    const rev     = revByMonth[m.ym] || 0;
     const exp     = expByMonth[m.ym] || 0;
     const net     = rev - exp;
     const margin  = rev ? ((net/rev)*100).toFixed(0) : 0;
     const goalPct = rev ? Math.min(100,((rev/goal)*100)).toFixed(0) : 0;
     const isNow   = m.ym === thisYM;
 
-    // ── SUMMARY ROW ──
+    // Summary row
     const sumTr = tbody.insertRow();
     sumTr.style.background = isNow ? 'rgba(201,168,76,0.06)' : '';
 
@@ -2460,13 +2490,10 @@ function renderFinances() {
       +'<div style="width:'+goalPct+'%;height:100%;background:var(--gold);border-radius:2px"></div></div>'
       +'<span style="font-family:var(--font-mono);font-size:0.68rem;color:var(--text-muted)">'+goalPct+'%</span></div>';
 
-    sumTr.insertCell(); // empty actions column for summary
+    sumTr.insertCell(); // actions col
 
-    // ── DETAIL ROWS — income entries ──
-    const incEntries = (state.incomeLog||[]).filter(e => (e.date||'').startsWith(m.ym));
-    const expEntries = (state.expenseLog||[]).filter(e => (e.date||'').startsWith(m.ym));
-
-    incEntries.forEach(e => {
+    // Detail rows — income
+    (state.incomeLog||[]).filter(e=>(e.date||'').startsWith(m.ym)).forEach(e => {
       const tr = tbody.insertRow();
       tr.className = 'pl-detail-'+m.ym;
       tr.style.display = isNow ? '' : 'none';
@@ -2474,17 +2501,17 @@ function renderFinances() {
 
       const c1 = tr.insertCell();
       c1.style.cssText = 'font-family:var(--font-mono);font-size:0.7rem;color:var(--text-muted);padding-left:20px';
-      c1.textContent = e.date + ' · ' + (e.cat||'Income');
+      c1.textContent = e.date + ' · '+(e.cat||'Income');
 
       const c2 = tr.insertCell();
       c2.style.cssText = 'font-family:var(--font-mono);font-size:0.75rem;color:var(--green)';
       c2.textContent = '$'+Number(e.amount).toLocaleString();
 
-      tr.insertCell(); // exp col
+      tr.insertCell();
       const c4 = tr.insertCell();
       c4.style.cssText = 'font-size:0.72rem;color:var(--text-muted)';
       c4.textContent = e.desc || '';
-      tr.insertCell(); tr.insertCell(); // margin, goal
+      tr.insertCell(); tr.insertCell();
 
       const c7 = tr.insertCell();
       c7.style.whiteSpace = 'nowrap';
@@ -2499,7 +2526,8 @@ function renderFinances() {
       c7.appendChild(eb); c7.appendChild(db);
     });
 
-    expEntries.forEach(e => {
+    // Detail rows — expenses
+    (state.expenseLog||[]).filter(e=>(e.date||'').startsWith(m.ym)).forEach(e => {
       const tr = tbody.insertRow();
       tr.className = 'pl-detail-'+m.ym;
       tr.style.display = isNow ? '' : 'none';
@@ -2507,9 +2535,9 @@ function renderFinances() {
 
       const c1 = tr.insertCell();
       c1.style.cssText = 'font-family:var(--font-mono);font-size:0.7rem;color:var(--text-muted);padding-left:20px';
-      c1.textContent = e.date + ' · ' + (e.cat||'Expense');
+      c1.textContent = e.date + ' · '+(e.cat||'Expense');
 
-      tr.insertCell(); // rev col
+      tr.insertCell();
       const c3 = tr.insertCell();
       c3.style.cssText = 'font-family:var(--font-mono);font-size:0.75rem;color:var(--red)';
       c3.textContent = '-$'+Number(e.amount).toLocaleString();
@@ -2517,7 +2545,7 @@ function renderFinances() {
       const c4 = tr.insertCell();
       c4.style.cssText = 'font-size:0.72rem;color:var(--text-muted)';
       c4.textContent = e.desc || '';
-      tr.insertCell(); tr.insertCell(); // margin, goal
+      tr.insertCell(); tr.insertCell();
 
       const c7 = tr.insertCell();
       c7.style.whiteSpace = 'nowrap';
@@ -2533,49 +2561,95 @@ function renderFinances() {
     });
   });
 
-  // INCOME LOG — read only
+  // ── YEAR TOTALS ROW ──
+  const totTr = tbody.insertRow();
+  totTr.style.cssText = 'background:rgba(201,168,76,0.1);font-weight:700;border-top:2px solid var(--gold)';
+  const t1 = totTr.insertCell();
+  t1.style.cssText = 'font-family:var(--font-mono);font-size:0.8rem;color:var(--gold)';
+  t1.textContent = plYear + ' TOTAL';
+  const t2 = totTr.insertCell();
+  t2.style.cssText = 'font-family:var(--font-mono);color:var(--green)';
+  t2.textContent = yearRev ? '$'+yearRev.toLocaleString() : '—';
+  const t3 = totTr.insertCell();
+  t3.style.cssText = 'font-family:var(--font-mono);color:var(--red)';
+  t3.textContent = yearExp ? '-$'+yearExp.toLocaleString() : '—';
+  const t4 = totTr.insertCell();
+  t4.style.cssText = 'font-family:var(--font-mono);color:'+(yearNet>0?'var(--green)':yearNet<0?'var(--red)':'var(--text-muted)');
+  t4.textContent = (yearRev||yearExp) ? (yearNet>=0?'$':'-$')+Math.abs(yearNet).toLocaleString() : '—';
+  const t5 = totTr.insertCell();
+  t5.style.cssText = 'font-family:var(--font-mono);color:var(--text-muted);font-size:0.72rem';
+  t5.textContent = yearRev ? ((yearNet/yearRev)*100).toFixed(0)+'%' : '—';
+  totTr.insertCell(); totTr.insertCell();
+
+  // ── INCOME LOG (year-filtered, with edit/delete) ──
   const incomeList = document.getElementById('income-log-list');
   if (incomeList) {
-    const entries = (state.incomeLog||[]).slice().reverse();
+    const entries = (state.incomeLog||[])
+      .filter(e => (e.date||'').startsWith(String(plYear)))
+      .slice().reverse();
     if (!entries.length) {
-      incomeList.innerHTML = '<div style="color:var(--text-muted);font-family:var(--font-mono);font-size:0.72rem;text-align:center;padding:12px">No income logged yet</div>';
+      incomeList.innerHTML = '<div style="color:var(--text-muted);font-family:var(--font-mono);font-size:0.72rem;text-align:center;padding:12px">No income logged for '+plYear+'</div>';
     } else {
       incomeList.innerHTML = '';
       entries.forEach(e => {
         const row = document.createElement('div');
-        row.style.cssText = 'display:flex;justify-content:space-between;align-items:flex-start;padding:7px 0;border-bottom:1px solid var(--border);font-size:0.78rem';
+        row.style.cssText = 'display:flex;justify-content:space-between;align-items:flex-start;padding:7px 0;border-bottom:1px solid var(--border)';
         const info = document.createElement('div');
         info.innerHTML = '<span style="font-family:var(--font-mono);color:var(--text-muted);font-size:0.68rem">'+e.date+'</span>'
           +' <span style="color:var(--text-muted);font-size:0.7rem">['+( e.cat||'')+']</span>'
           +(e.desc?'<div style="font-size:0.72rem;color:var(--text-muted);margin-top:1px">'+e.desc+'</div>':'');
+        const right = document.createElement('div');
+        right.style.cssText = 'display:flex;align-items:center;gap:6px;white-space:nowrap';
         const amt = document.createElement('span');
-        amt.style.cssText = 'font-family:var(--font-mono);color:var(--green);font-weight:700;font-size:0.8rem;white-space:nowrap';
+        amt.style.cssText = 'font-family:var(--font-mono);color:var(--green);font-weight:700;font-size:0.8rem';
         amt.textContent = '$'+Number(e.amount).toLocaleString();
-        row.appendChild(info); row.appendChild(amt);
+        const eb = document.createElement('button');
+        eb.textContent = '✏';
+        eb.style.cssText = 'background:none;border:1px solid var(--border);color:var(--text-muted);cursor:pointer;font-size:0.6rem;padding:1px 5px;border-radius:3px';
+        eb.onclick = (function(id){ return function(){ openEditIncome(id); }; })(e.id);
+        const db = document.createElement('button');
+        db.textContent = '✕';
+        db.style.cssText = 'background:none;border:none;color:var(--red);cursor:pointer;font-size:0.65rem';
+        db.onclick = (function(id){ return function(){ deleteIncomeEntry(id); }; })(e.id);
+        right.appendChild(amt); right.appendChild(eb); right.appendChild(db);
+        row.appendChild(info); row.appendChild(right);
         incomeList.appendChild(row);
       });
     }
   }
 
-  // EXPENSE LOG — read only
+  // ── EXPENSE LOG (year-filtered, with edit/delete) ──
   const expList = document.getElementById('expense-log-list');
   if (expList) {
-    const entries = (state.expenseLog||[]).slice().reverse();
+    const entries = (state.expenseLog||[])
+      .filter(e => (e.date||'').startsWith(String(plYear)))
+      .slice().reverse();
     if (!entries.length) {
-      expList.innerHTML = '<div style="color:var(--text-muted);font-family:var(--font-mono);font-size:0.72rem;text-align:center;padding:12px">No expenses logged yet</div>';
+      expList.innerHTML = '<div style="color:var(--text-muted);font-family:var(--font-mono);font-size:0.72rem;text-align:center;padding:12px">No expenses logged for '+plYear+'</div>';
     } else {
       expList.innerHTML = '';
       entries.forEach(e => {
         const row = document.createElement('div');
-        row.style.cssText = 'display:flex;justify-content:space-between;align-items:flex-start;padding:7px 0;border-bottom:1px solid var(--border);font-size:0.78rem';
+        row.style.cssText = 'display:flex;justify-content:space-between;align-items:flex-start;padding:7px 0;border-bottom:1px solid var(--border)';
         const info = document.createElement('div');
         info.innerHTML = '<span style="font-family:var(--font-mono);color:var(--text-muted);font-size:0.68rem">'+e.date+'</span>'
           +' <span style="color:var(--text-muted);font-size:0.7rem">['+( e.cat||'')+']</span>'
           +(e.desc?'<div style="font-size:0.72rem;color:var(--text-muted);margin-top:1px">'+e.desc+'</div>':'');
+        const right = document.createElement('div');
+        right.style.cssText = 'display:flex;align-items:center;gap:6px;white-space:nowrap';
         const amt = document.createElement('span');
-        amt.style.cssText = 'font-family:var(--font-mono);color:var(--red);font-weight:700;font-size:0.8rem;white-space:nowrap';
+        amt.style.cssText = 'font-family:var(--font-mono);color:var(--red);font-weight:700;font-size:0.8rem';
         amt.textContent = '-$'+Number(e.amount).toLocaleString();
-        row.appendChild(info); row.appendChild(amt);
+        const eb = document.createElement('button');
+        eb.textContent = '✏';
+        eb.style.cssText = 'background:none;border:1px solid var(--border);color:var(--text-muted);cursor:pointer;font-size:0.6rem;padding:1px 5px;border-radius:3px';
+        eb.onclick = (function(id){ return function(){ openEditExpense(id); }; })(e.id);
+        const db = document.createElement('button');
+        db.textContent = '✕';
+        db.style.cssText = 'background:none;border:none;color:var(--red);cursor:pointer;font-size:0.65rem';
+        db.onclick = (function(id){ return function(){ deleteExpenseEntry(id); }; })(e.id);
+        right.appendChild(amt); right.appendChild(eb); right.appendChild(db);
+        row.appendChild(info); row.appendChild(right);
         expList.appendChild(row);
       });
     }
@@ -2944,40 +3018,77 @@ function generateBusinessReport() {
 
 async function sendAiMessage() {
   const input = document.getElementById('ai-input');
-  const msg = input.value.trim();
-  if (!msg) return;
+  const msg   = input.value.trim();
+  if (!msg && !aiImageBase64) return;
   input.value = '';
-  appendAiMessage('user', msg);
-  state.aiHistory.push({ role: 'user', content: msg });
-
-  // ── LOCAL REPORT COMMAND ──
-  if (/report|all the data|snapshot|how.*doing|business summary/i.test(msg)) {
-    const report = generateBusinessReport();
-    appendAiMessage('assistant', report);
-    state.aiHistory.push({ role:'assistant', content: report });
-    return;
-  }
 
   const btn = document.getElementById('ai-send');
   btn.disabled = true; btn.textContent = '...';
 
-  const systemPrompt = `You are the Gold HQ AI assistant for Christ Pierre, owner of Gold Service Detailing (GSD) in Carteret, NJ.
+  // Build user message content — text + optional image
+  let userContent;
+  if (aiImageBase64) {
+    const imgType = aiImageType || 'image/jpeg';
+    const imgB64  = aiImageBase64;
+    const displayMsg = msg || 'Please read this image and extract all income and expense data you can find. For each item identify: date, amount, description, and whether it is income or an expense. Then ask me to confirm before logging anything.';
+    userContent = [
+      { type: 'image', source: { type: 'base64', media_type: imgType, data: imgB64 } },
+      { type: 'text',  text: displayMsg }
+    ];
+    appendAiMessage('user', (msg || 'Attached a photo — please extract income/expense data.') + ' 📎');
+    state.aiHistory.push({ role: 'user', content: userContent });
+    clearAiImage();
+  } else {
+    userContent = msg;
+    appendAiMessage('user', msg);
+    state.aiHistory.push({ role: 'user', content: msg });
+  }
+
+  // ── LOCAL REPORT COMMAND ──
+  if (typeof msg === 'string' && /report|all the data|snapshot|how.*doing|business summary/i.test(msg)) {
+    const report = generateBusinessReport();
+    appendAiMessage('assistant', report);
+    state.aiHistory.push({ role:'assistant', content: report });
+    btn.disabled = false; btn.textContent = 'Send';
+    return;
+  }
+
+  const _owner   = biz('owner','the owner');
+  const _biz     = biz('business','Gold Service Detailing');
+  const _loc     = biz('location','Carteret, NJ');
+  const _sched   = biz('dayjobSchedule','');
+  const _avail   = biz('gsdDays','Tue, Fri, Sat + evenings');
+  const _target  = biz('target','fleet companies and dealerships');
+  const _brand   = biz('brandDesc','');
+  const _aiCtx   = biz('aiContext','');
+  const _goal    = state.revenueGoal || 10000;
+  const _thisYM2 = new Date().getFullYear()+'-'+String(new Date().getMonth()+1).padStart(2,'0');
+  const _mthInc  = (state.incomeLog||[]).filter(e=>(e.date||'').startsWith(_thisYM2)).reduce((s,e)=>s+(+e.amount||0),0);
+  const _mthExp  = (state.expenseLog||[]).filter(e=>(e.date||'').startsWith(_thisYM2)).reduce((s,e)=>s+(+e.amount||0),0);
+  const _fleetCl = (fleetST?.clients||[]).map(fc=>fc.name+' ('+( fc.vehicles||[]).length+' vehicles)').join(', ')||'none yet';
+  const _leads   = (state.leads||[]).length;
+  const systemPrompt = `You are the Gold HQ AI assistant for ${_owner}, owner of ${_biz}${_loc?' in '+_loc:''}.
 
 KEY FACTS:
-- Christ is 31, easy-going but focused, artistic, loves tech
-- Mobile auto detailing business, no physical location
-// (contact info now dynamic from biz() — see above)
-- Revenue goal: $10,000–$15,000/month by end of 2026
-- Team goal: 2 teams of 2 people in company vans within 6–8 months
-- Amazon DSP schedule: Sun, Mon, Wed, Thu 10am–8pm (home by 8:20–9:15pm)
-- Available for GSD: Tue, Fri, Sat (full days) + evenings after Amazon
-- Current fleet client: Amazon DSP employer, 20 vehicles, interior only, monthly, doing 10/week
-- Fleet pricing: T1 Interior bi-weekly $31–35/vehicle, monthly $36–40/vehicle
-- 59 fleet prospects in pipeline
-- Leads: Import from Google Sheet or add manually in CRM / Leads
-- Monthly fixed expenses: $585 (car payment $300, insurance $190, gas $40, supplies $55)
+- Business: ${_biz} — mobile auto detailing, no physical location
+- Owner: ${_owner} | Location: ${_loc}
+- Revenue goal: $${_goal.toLocaleString()}/month
+- This month: $${_mthInc.toLocaleString()} income · $${_mthExp.toLocaleString()} expenses · $${(_mthInc-_mthExp).toLocaleString()} net
+- Day job schedule: ${_sched||'not set — update in Settings'}
+- GSD available: ${_avail}
+- Fleet clients: ${_fleetCl}
+- Leads in pipeline: ${_leads}
+- Target customers: ${_target}
+- Brand: ${_brand}${_aiCtx?'\n- Additional context: '+_aiCtx:''}
 
-Be direct, practical, and business-focused. Help Christ grow GSD. Write outreach emails, proposals, content, strategies, scripts, or whatever he needs. Keep responses concise unless detail is needed.`;
+When you extract financial data from an image or document, format it as a JSON block so it can be auto-logged:
+\`\`\`json
+{"income":[{"date":"YYYY-MM-DD","amount":0,"desc":"description","cat":"Fleet Service"}],"expenses":[{"date":"YYYY-MM-DD","amount":0,"desc":"description","cat":"Supplies"}]}
+\`\`\`
+Categories for income: Fleet Service, Retail Detail, Dealership, Other
+Categories for expenses: Supplies, Vehicle, Insurance, Fuel, Equipment, Marketing, Other
+
+Be direct, practical, and business-focused. Help ${_owner} grow ${_biz}.`;
 
   try {
     const response = await fetch(GSD.claudeApiUrl, {
@@ -2998,19 +3109,61 @@ Be direct, practical, and business-focused. Help Christ grow GSD. Write outreach
       return;
     }
     const data = await response.json();
-    console.log('AI response:', JSON.stringify(data).substring(0,400));
     const reply = data.content?.[0]?.text
       || (data.error?.message ? '⚠️ API error: ' + data.error.message : null)
       || (data.type === 'error' ? '⚠️ ' + (data.message || JSON.stringify(data).substring(0,200)) : null)
       || 'No response returned.';
     state.aiHistory.push({ role: 'assistant', content: reply });
     appendAiMessage('assistant', reply);
+
+    // ── AUTO-LOG P&L — if AI extracted financial data, offer to log it ──
+    if (/```json/.test(reply)) {
+      try {
+        const jsonMatch = reply.match(/```json\s*([\s\S]*?)```/);
+        if (jsonMatch) {
+          const extracted = JSON.parse(jsonMatch[1]);
+          if (extracted.income || extracted.expenses) {
+            offerToLogExtracted(extracted);
+          }
+        }
+      } catch(e) { /* not JSON — that's fine */ }
+    }
   } catch(e) {
     console.error('AI fetch exception:', e);
     appendAiMessage('assistant', '⚠️ Could not reach AI — check your internet connection. (' + e.message + ')');
   }
   btn.disabled = false; btn.textContent = 'Send';
   saveState();
+}
+
+function offerToLogExtracted(data) {
+  const income   = data.income   || [];
+  const expenses = data.expenses || [];
+  if (!income.length && !expenses.length) return;
+  const summary = [
+    income.length   ? income.length   + ' income entries totalling $'  + income.reduce((s,e)=>s+(+e.amount||0),0).toLocaleString()   : '',
+    expenses.length ? expenses.length + ' expense entries totalling $' + expenses.reduce((s,e)=>s+(+e.amount||0),0).toLocaleString() : '',
+  ].filter(Boolean).join(' and ');
+
+  showSelectModal('Log extracted data to P&L? (' + summary + ')', ['Yes, log it','No thanks'], choice => {
+    if (choice !== 'Yes, log it') return;
+    const today = new Date().toISOString().split('T')[0];
+    income.forEach(e => {
+      if (!state.incomeLog) state.incomeLog = [];
+      state.incomeLog.push({ id: Date.now().toString()+Math.random(), date: e.date||today, amount: +e.amount||0, desc: e.desc||e.description||'', cat: e.cat||'Other' });
+      plAudit('ADD INCOME (AI)', '$'+(e.amount||0)+' | '+(e.date||today)+' | '+(e.desc||''));
+    });
+    expenses.forEach(e => {
+      if (!state.expenseLog) state.expenseLog = [];
+      state.expenseLog.push({ id: Date.now().toString()+Math.random(), date: e.date||today, amount: +e.amount||0, desc: e.desc||e.description||'', cat: e.cat||'Other' });
+      plAudit('ADD EXPENSE (AI)', '$'+(e.amount||0)+' | '+(e.date||today)+' | '+(e.desc||''));
+    });
+    saveState();
+    renderFinances();
+    updateDashboardMetrics();
+    showToast('Logged ' + (income.length+expenses.length) + ' entries to P&L', 'success');
+    appendAiMessage('assistant', '✓ Logged ' + (income.length+expenses.length) + ' entries to your P&L. Open Finances to review.');
+  });
 }
 
 function appendAiMessage(role, text) {
@@ -4298,7 +4451,48 @@ function importClientToFleet(cl) {
   showToast(cl.company + ' added to fleet roster', 'success');
 }
 
+
+// ── AI IMAGE UPLOAD ──
+let aiImageBase64 = null;
+let aiImageType   = null;
+
+function previewAiImage(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const dataUrl = e.target.result;
+    aiImageType   = file.type || 'image/jpeg';
+    aiImageBase64 = dataUrl.split(',')[1];
+    const preview = document.getElementById('ai-image-preview');
+    const thumb   = document.getElementById('ai-image-thumb');
+    if (preview && thumb) {
+      thumb.src = dataUrl;
+      preview.style.display = 'block';
+    }
+  };
+  reader.readAsDataURL(file);
+}
+
+function clearAiImage() {
+  aiImageBase64 = null;
+  aiImageType   = null;
+  const preview = document.getElementById('ai-image-preview');
+  const fileInput = document.getElementById('ai-image-input');
+  if (preview) preview.style.display = 'none';
+  if (fileInput) fileInput.value = '';
+}
+
 document.addEventListener('DOMContentLoaded', checkAuth);
+
+// ── PWA SERVICE WORKER ──
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js')
+      .then(reg => console.log('SW registered:', reg.scope))
+      .catch(err => console.log('SW registration failed:', err));
+  });
+}
 </script>
 
 <!-- MODAL: Add Calendar Event -->
