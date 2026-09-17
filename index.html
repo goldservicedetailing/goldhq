@@ -689,6 +689,7 @@ body::before {
       <div class="topbar-title" id="page-title">DASHBOARD</div>
     </div>
     <div class="topbar-right">
+      <span id="sync-indicator" style="font-family:var(--font-mono);font-size:0.65rem;color:var(--text-muted);margin-right:8px"></span>
       <div class="topbar-date" id="today-date"></div>
       <button class="sync-btn" onclick="syncAll()">↻ Sync</button>
     </div>
@@ -1325,6 +1326,7 @@ body::before {
 <div class="page" id="page-fleet">
   <div class="section-header mb-16">
     <div><div class="section-title">FLEET</div><div class="section-sub" id="fleet-sync-status">Loading...</div></div>
+    <button class="btn btn-outline btn-sm" onclick="openImportFromClients()">⬆ Import from Clients</button>
     <button class="btn btn-gold btn-sm" onclick="openModal('modal-fleet-add-client')">+ Add Client</button>
   </div>
   <div class="tab-bar" style="margin-bottom:16px">
@@ -1602,6 +1604,12 @@ body::before {
 // ============================================================
 
 // ── CONFIG ──
+// ── HQ STATE SYNC (JSONBin) ──
+const HQ_BIN_URL = 'https://api.jsonbin.io/v3/b/6a98f4be3919920ec4859051';
+const HQ_BIN_KEY = '$2a$10$jaBNXrBoHENhiCFuFwW9muhIyQ4bNYYkiTzN.Tr2WHj/MJakubvhu';
+let _syncTimer = null;
+let _lastSyncedJSON = null;
+
 const GSD = {
   claudeApiUrl: "https://round-brook-24a2.gold-55e.workers.dev",
 };
@@ -1626,6 +1634,7 @@ let state = {
   revenueGoal: null,
 };
 
+// ── LOAD: localStorage first (instant), then sync from cloud ──
 function loadState() {
   try {
     const saved = localStorage.getItem('goldhq_state');
@@ -1633,13 +1642,107 @@ function loadState() {
       const parsed = JSON.parse(saved);
       state = { ...state, ...parsed };
     }
-    if (!state.leads.length) state.leads = getDefaultLeads();
-    if (!state.tasks.length) state.tasks = getDefaultTasks();
+    if (!state.leads) state.leads = getDefaultLeads();
+    if (!state.tasks) state.tasks = getDefaultTasks();
+    if (!state.incomeLog)  state.incomeLog  = [];
+    if (!state.expenseLog) state.expenseLog = [];
+    if (!state.auditLog)   state.auditLog   = [];
+    if (!state.biz)        state.biz        = {};
+    if (!state.clients)    state.clients    = [];
+    if (!state.goals)      state.goals      = [];
+    if (!state.campaigns)  state.campaigns  = [];
+    if (!state.calEvents)  state.calEvents  = [];
   } catch(e) { console.error('State load error:', e); }
 }
 
+// ── SAVE: localStorage immediately + cloud debounced ──
 function saveState() {
   localStorage.setItem('goldhq_state', JSON.stringify(state));
+  // Debounce cloud sync — don't hammer the API on every keystroke
+  if (_syncTimer) clearTimeout(_syncTimer);
+  _syncTimer = setTimeout(pushStateToCloud, 1500);
+}
+
+// ── CLOUD PUSH ──
+async function pushStateToCloud() {
+  const json = JSON.stringify(state);
+  if (json === _lastSyncedJSON) return; // nothing changed
+  try {
+    const res = await fetch(HQ_BIN_URL, {
+      method: 'PUT',
+      mode: 'cors',
+      headers: {'X-Master-Key': HQ_BIN_KEY, 'X-Access-Key': HQ_BIN_KEY, 'Content-Type': 'application/json'},
+      body: json
+    });
+    if (res.ok) {
+      _lastSyncedJSON = json;
+      updateSyncIndicator('✓ Synced', 'var(--green)');
+    } else {
+      updateSyncIndicator('⚠ Cloud error', 'var(--red)');
+    }
+  } catch(e) {
+    updateSyncIndicator('⚠ Offline', 'var(--text-muted)');
+  }
+}
+
+// ── CLOUD PULL — called on login, and on manual sync ──
+async function pullStateFromCloud() {
+  updateSyncIndicator('Syncing...', 'var(--gold)');
+  try {
+    const res = await fetch(HQ_BIN_URL + '/latest', {
+      method: 'GET', mode: 'cors',
+      headers: {'X-Master-Key': HQ_BIN_KEY, 'X-Access-Key': HQ_BIN_KEY, 'X-Bin-Meta': 'false'}
+    });
+    if (res.status === 404) {
+      // First time — push local state to cloud
+      await pushStateToCloud();
+      updateSyncIndicator('✓ Synced (new)', 'var(--green)');
+      return;
+    }
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const cloud = await res.json();
+    if (!cloud || typeof cloud !== 'object' || !Array.isArray(cloud.leads)) {
+      // Cloud is empty/invalid — push local up
+      await pushStateToCloud();
+      return;
+    }
+    // Use cloud if it has more data than local
+    const localLeads  = (state.leads||[]).length;
+    const cloudLeads  = (cloud.leads||[]).length;
+    const localIncome = (state.incomeLog||[]).length;
+    const cloudIncome = (cloud.incomeLog||[]).length;
+    // Take cloud if it has more entries in any key category
+    if (cloudLeads >= localLeads && cloudIncome >= localIncome) {
+      state = { ...state, ...cloud };
+      localStorage.setItem('goldhq_state', JSON.stringify(state));
+      _lastSyncedJSON = JSON.stringify(state);
+      updateSyncIndicator('✓ Synced', 'var(--green)');
+      // Re-render everything
+      updateDashboardMetrics();
+      renderLeads();
+      renderJobs();
+      renderTasks();
+    } else {
+      // Local has more — push local to cloud
+      await pushStateToCloud();
+    }
+  } catch(e) {
+    console.warn('Cloud pull failed:', e.message);
+    updateSyncIndicator('⚠ Using local data', 'var(--text-muted)');
+  }
+}
+
+function updateSyncIndicator(msg, color) {
+  const el = document.getElementById('sync-indicator');
+  if (el) { el.textContent = msg; el.style.color = color; }
+}
+
+// Manual sync button handler
+function manualSync() {
+  pullStateFromCloud().then(() => {
+    renderFinances();
+    renderGoals();
+  });
 }
 
 // ── NAVIGATION ──
@@ -3276,6 +3379,7 @@ function renderClients() {
         +(cl.fleet?'<div style="font-size:0.78rem;color:var(--gold);font-family:var(--font-mono);margin-bottom:4px">Fleet: '+cl.fleet+'</div>':'')
         +(cl.notes?'<div style="font-size:0.72rem;color:var(--text-muted);margin-top:6px">'+cl.notes+'</div>':'')
         +'<div style="display:flex;gap:6px;margin-top:12px">'
+        +'<button class="btn btn-outline btn-sm" style="font-size:0.6rem" onclick="openEditClient('+i+')">✏ Edit</button>'
         +'<button class="btn btn-danger btn-sm" style="font-size:0.6rem" onclick="removeClient('+i+')">✕ Remove</button>'
         +'</div></div>';
     }).join('') + '</div>';
@@ -3288,6 +3392,41 @@ function removeClient(i) {
     saveState(); renderClients(); updateDashboardMetrics();
     showToast('Client removed','success');
   });
+}
+
+function openEditClient(i) {
+  const cl = (state.clients||[])[i];
+  if (!cl) return;
+  document.getElementById('edit-client-idx').value     = i;
+  document.getElementById('edit-client-company').value = cl.company  || '';
+  document.getElementById('edit-client-category').value= cl.category || '';
+  document.getElementById('edit-client-contact').value = cl.contact  || '';
+  document.getElementById('edit-client-phone').value   = cl.phone    || '';
+  document.getElementById('edit-client-email').value   = cl.email    || '';
+  document.getElementById('edit-client-fleet').value   = cl.fleet    || '';
+  document.getElementById('edit-client-rate').value    = cl.rate     || '';
+  document.getElementById('edit-client-notes').value   = cl.notes    || '';
+  document.getElementById('edit-client-status').value  = cl.status   || 'Active';
+  openModal('modal-edit-client');
+}
+
+function saveEditClient() {
+  const i  = parseInt(document.getElementById('edit-client-idx').value);
+  const cl = (state.clients||[])[i];
+  if (!cl) return;
+  cl.company  = document.getElementById('edit-client-company').value.trim()  || cl.company;
+  cl.category = document.getElementById('edit-client-category').value.trim();
+  cl.contact  = document.getElementById('edit-client-contact').value.trim();
+  cl.phone    = document.getElementById('edit-client-phone').value.trim();
+  cl.email    = document.getElementById('edit-client-email').value.trim();
+  cl.fleet    = document.getElementById('edit-client-fleet').value.trim();
+  cl.rate     = document.getElementById('edit-client-rate').value.trim();
+  cl.notes    = document.getElementById('edit-client-notes').value.trim();
+  cl.status   = document.getElementById('edit-client-status').value;
+  saveState();
+  closeModal('modal-edit-client');
+  renderClients();
+  showToast(cl.company + ' updated', 'success');
 }
 
 function viewClientDetail(i) {
@@ -4093,6 +4232,70 @@ function saveSettings() {
 function togglePwVis() {
   const el = document.getElementById('set-password');
   if (el) el.type = el.type === 'password' ? 'text' : 'password';
+}
+
+
+function openImportFromClients() {
+  const list = document.getElementById('import-client-list');
+  const clients = state.clients || [];
+  const fleetNames = new Set((fleetST?.clients||[]).map(fc=>fc.name.toLowerCase().trim()));
+
+  // Filter out clients already in fleet
+  const available = clients.filter(cl => !fleetNames.has((cl.company||'').toLowerCase().trim()));
+
+  if (!available.length) {
+    list.innerHTML = '<div style="text-align:center;padding:24px;color:var(--text-muted);font-family:var(--font-mono);font-size:0.75rem">'
+      + (clients.length ? 'All clients are already in your fleet roster' : 'No clients yet — add clients in the Clients tab first')
+      + '</div>';
+  } else {
+    list.innerHTML = '';
+    available.forEach(cl => {
+      const btn = document.createElement('div');
+      btn.style.cssText = 'background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:14px;cursor:pointer;transition:border-color 0.15s';
+      btn.onmouseenter = () => btn.style.borderColor = 'var(--gold)';
+      btn.onmouseleave = () => btn.style.borderColor = 'var(--border)';
+      btn.innerHTML = '<div style="display:flex;justify-content:space-between;align-items:center">'
+        + '<div>'
+        + '<div style="font-family:var(--font-display);font-size:0.95rem;color:var(--gold)">' + cl.company + '</div>'
+        + '<div style="font-size:0.72rem;color:var(--text-muted);font-family:var(--font-mono);margin-top:2px">'
+        + (cl.contact||'') + (cl.phone?' · '+cl.phone:'') + (cl.fleet?' · Fleet: '+cl.fleet:'') + '</div>'
+        + '</div>'
+        + '<button class="btn btn-gold btn-sm" style="font-size:0.65rem">Import →</button>'
+        + '</div>';
+      btn.querySelector('button').onclick = () => importClientToFleet(cl);
+      list.appendChild(btn);
+    });
+  }
+  openModal('modal-import-fleet');
+}
+
+function importClientToFleet(cl) {
+  if (!fleetST) fleetLoad();
+  if (!fleetST) { fleetST = {actLog:[], clients:[]}; }
+  // Check not already imported
+  const exists = fleetST.clients.find(fc => fc.name.toLowerCase().trim() === (cl.company||'').toLowerCase().trim());
+  if (exists) { showToast(cl.company + ' is already in fleet', 'error'); return; }
+  fleetST.clients.push({
+    id:       Date.now().toString(),
+    name:     cl.company  || '',
+    contact:  cl.contact  || '',
+    phone:    cl.phone    || '',
+    email:    cl.email    || '',
+    address:  '',
+    rate:     cl.rate     || '',
+    days:     '',
+    hours:    '',
+    notes:    cl.notes    || '',
+    disabled: false,
+    vehicles: [], damages: [], requests: [], payments: [], services: []
+  });
+  fleetLog('Imported from Clients', cl.company);
+  fleetSaveCloud();
+  closeModal('modal-import-fleet');
+  fleetTab('clients', null);
+  renderFleetClients();
+  renderFleetDash();
+  showToast(cl.company + ' added to fleet roster', 'success');
 }
 
 document.addEventListener('DOMContentLoaded', checkAuth);
@@ -5091,6 +5294,51 @@ showPage = function(id) {
     <div style="display:flex;gap:8px;justify-content:flex-end">
       <button class="btn btn-outline" onclick="closeModal('modal-edit-job')">Cancel</button>
       <button class="btn btn-gold" onclick="saveEditJob()">✓ Save Changes</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- MODAL: Edit Client -->
+<div class="modal-overlay" id="modal-edit-client" onclick="if(event.target===this)closeModal('modal-edit-client')">
+  <div class="modal">
+    <div class="modal-header"><div class="modal-title">EDIT CLIENT</div><button class="modal-close" onclick="closeModal('modal-edit-client')">✕</button></div>
+    <input type="hidden" id="edit-client-idx">
+    <div class="form-group"><label>Company Name</label><input type="text" id="edit-client-company"></div>
+    <div class="form-row">
+      <div class="form-group"><label>Category</label><input type="text" id="edit-client-category" placeholder="e.g. Fleet, Retail, Dealership"></div>
+      <div class="form-group"><label>Status</label>
+        <select id="edit-client-status" style="background:var(--surface3);border:1px solid var(--border);color:var(--text);padding:9px 12px;border-radius:3px;width:100%;font-family:var(--font-body);font-size:0.85rem;outline:none">
+          <option>Active</option><option>Inactive</option><option>Paused</option><option>On Hold</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Contact Name</label><input type="text" id="edit-client-contact"></div>
+      <div class="form-group"><label>Phone</label><input type="tel" id="edit-client-phone"></div>
+    </div>
+    <div class="form-group"><label>Email</label><input type="email" id="edit-client-email"></div>
+    <div class="form-row">
+      <div class="form-group"><label>Fleet Size</label><input type="text" id="edit-client-fleet"></div>
+      <div class="form-group"><label>Rate</label><input type="text" id="edit-client-rate"></div>
+    </div>
+    <div class="form-group"><label>Notes</label><textarea id="edit-client-notes"></textarea></div>
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button class="btn btn-outline" onclick="closeModal('modal-edit-client')">Cancel</button>
+      <button class="btn btn-gold" onclick="saveEditClient()">✓ Save Changes</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- MODAL: Import Client to Fleet -->
+<div class="modal-overlay" id="modal-import-fleet" onclick="if(event.target===this)closeModal('modal-import-fleet')">
+  <div class="modal" style="max-width:520px">
+    <div class="modal-header"><div class="modal-title">IMPORT FROM CLIENTS</div><button class="modal-close" onclick="closeModal('modal-import-fleet')">✕</button></div>
+    <div style="font-size:0.82rem;color:var(--text-muted);margin-bottom:14px">Select a client to add to your fleet roster. Their info will be pre-filled — you can add vehicles and service details after.</div>
+    <div id="import-client-list" style="display:flex;flex-direction:column;gap:8px;max-height:340px;overflow-y:auto"></div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:14px">
+      <button class="btn btn-outline" onclick="closeModal('modal-import-fleet')">Cancel</button>
     </div>
   </div>
 </div>
