@@ -5003,14 +5003,64 @@ function fleetAddVehicle() {
 }
 
 function fleetRemoveVehicle(cid, vid) {
-  if (!confirm('Remove vehicle '+vid+'?')) return;
+  showSelectModal('Remove vehicle '+vid+'?', ['Yes, remove','Cancel'], choice => {
+    if (choice !== 'Yes, remove') return;
+    const cl = fleetST.clients.find(c=>c.id===cid);
+    if (!cl) return;
+    const v = (cl.vehicles||[]).find(v=>v.id===vid);
+    fleetLog('Removed vehicle', vid + (v?' ('+v.plate+', '+v.type+')':'') + ' from '+cl.name);
+    cl.vehicles = (cl.vehicles||[]).filter(v=>v.id!==vid);
+    fleetSaveCloud();
+    renderFleetDetail(cid);
+    showToast(vid+' removed','success');
+  });
+}
+
+// ── FLEET VEHICLE EDIT ──
+function fleetOpenEditVehicle(cid, vid) {
   const cl = fleetST.clients.find(c=>c.id===cid);
   if (!cl) return;
-  cl.vehicles = (cl.vehicles||[]).filter(v=>v.id!==vid);
-  fleetLog('Removed vehicle', vid+' from '+cl.name);
+  const v = (cl.vehicles||[]).find(v=>v.id===vid);
+  if (!v) return;
+  document.getElementById('fev-cid').value    = cid;
+  document.getElementById('fev-vid').value    = vid;
+  document.getElementById('fev-id').value     = v.id;
+  document.getElementById('fev-plate').value  = v.plate  || '';
+  document.getElementById('fev-type').value   = v.type   || 'Sprinter Van';
+  document.getElementById('fev-notes').value  = v.notes  || '';
+  document.getElementById('fev-status').value = v.status || 'no_status';
+  openModal('modal-fleet-edit-vehicle');
+}
+
+function fleetSaveEditVehicle() {
+  const cid    = document.getElementById('fev-cid').value;
+  const oldVid = document.getElementById('fev-vid').value;
+  const cl     = fleetST.clients.find(c=>c.id===cid);
+  if (!cl) return;
+  const v = (cl.vehicles||[]).find(v=>v.id===oldVid);
+  if (!v) return;
+
+  const before = JSON.stringify({id:v.id, plate:v.plate, type:v.type, notes:v.notes, status:v.status});
+
+  const newId  = document.getElementById('fev-id').value.trim().toUpperCase() || oldVid;
+  // Check ID collision (excluding self)
+  if (newId !== oldVid && (cl.vehicles||[]).find(vv=>vv.id===newId)) {
+    showToast('Vehicle ID already in use','error'); return;
+  }
+  v.id     = newId;
+  v.plate  = document.getElementById('fev-plate').value.trim();
+  v.type   = document.getElementById('fev-type').value;
+  v.notes  = document.getElementById('fev-notes').value.trim();
+  v.status = document.getElementById('fev-status').value;
+  v.lastUpdated = new Date().toISOString();
+
+  const after = JSON.stringify({id:v.id, plate:v.plate, type:v.type, notes:v.notes, status:v.status});
+  fleetLog('Edited vehicle', oldVid + ' on ' + cl.name + ' | before: ' + before + ' | after: ' + after);
+
   fleetSaveCloud();
+  closeModal('modal-fleet-edit-vehicle');
   renderFleetDetail(cid);
-  showToast(vid+' removed','success');
+  showToast(v.id + ' updated', 'success');
 }
 
 function fleetOpenLogService(cid) {
@@ -5339,6 +5389,40 @@ showPage = function(id) {
     <div id="import-client-list" style="display:flex;flex-direction:column;gap:8px;max-height:340px;overflow-y:auto"></div>
     <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:14px">
       <button class="btn btn-outline" onclick="closeModal('modal-import-fleet')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- MODAL: Edit Fleet Vehicle -->
+<div class="modal-overlay" id="modal-fleet-edit-vehicle" onclick="if(event.target===this)closeModal('modal-fleet-edit-vehicle')">
+  <div class="modal">
+    <div class="modal-header"><div class="modal-title">EDIT VEHICLE</div><button class="modal-close" onclick="closeModal('modal-fleet-edit-vehicle')">✕</button></div>
+    <input type="hidden" id="fev-cid">
+    <input type="hidden" id="fev-vid">
+    <div class="form-row">
+      <div class="form-group"><label>Vehicle ID</label><input type="text" id="fev-id" style="font-family:var(--font-mono)"></div>
+      <div class="form-group"><label>License Plate</label><input type="text" id="fev-plate"></div>
+    </div>
+    <div class="form-group"><label>Vehicle Type</label>
+      <select id="fev-type" style="background:var(--surface3);border:1px solid var(--border);color:var(--text);padding:9px 12px;border-radius:3px;width:100%;font-family:var(--font-body);font-size:0.85rem;outline:none">
+        <option>Sprinter Van</option><option>Cargo Van</option><option>Box Truck</option>
+        <option>SUV</option><option>Sedan</option><option>Pickup Truck</option><option>Other</option>
+      </select>
+    </div>
+    <div class="form-group"><label>Status</label>
+      <select id="fev-status" style="background:var(--surface3);border:1px solid var(--border);color:var(--text);padding:9px 12px;border-radius:3px;width:100%;font-family:var(--font-body);font-size:0.85rem;outline:none">
+        <option value="no_status">No Status</option>
+        <option value="clean">Clean</option>
+        <option value="needs_cleaning">Needs Cleaning</option>
+        <option value="cleaning_done">Cleaning Done</option>
+        <option value="out_of_service">Out of Service</option>
+      </select>
+    </div>
+    <div class="form-group"><label>Notes</label><textarea id="fev-notes" placeholder="Any notes about this vehicle..."></textarea></div>
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button class="btn btn-outline" onclick="closeModal('modal-fleet-edit-vehicle')">Cancel</button>
+      <button class="btn btn-gold" onclick="fleetSaveEditVehicle()">✓ Save Changes</button>
     </div>
   </div>
 </div>
