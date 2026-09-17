@@ -4739,19 +4739,22 @@ function renderFleetDetail(cid) {
         <div style="font-family:var(--font-display);font-size:0.85rem;letter-spacing:1px;color:var(--gold)">FLEET VEHICLES (${vehicles.length})</div>
         <button class="btn btn-outline btn-sm" onclick="fleetOpenAddVehicle('${cl.id}')">+ Add Vehicle</button>
       </div>
-      ${vehicles.length ? `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px">` +
+      ${vehicles.length ? `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px">` +
         vehicles.map(v=>{
           const sc = fleetVehicleStatusColor(v.status);
           const sl = fleetVehicleStatusLabel(v.status);
+          const cid = cl.id;
+          const vid = v.id;
           return `<div style="background:var(--surface3);border:1px solid var(--border);border-top:3px solid ${sc};border-radius:4px;padding:12px">
             <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px">
               <div style="font-family:var(--font-mono);font-size:0.88rem;font-weight:700;color:var(--gold)">${v.id}</div>
               <span style="font-size:0.58rem;padding:2px 6px;border-radius:10px;background:${sc}22;color:${sc};font-family:var(--font-mono)">${sl}</span>
             </div>
-            <div style="font-size:0.68rem;color:var(--text-muted);margin-bottom:2px">${v.type}</div>
-            ${v.plate?`<div style="font-size:0.68rem;font-family:var(--font-mono);color:var(--text-muted);margin-bottom:8px">Plate: ${v.plate}</div>`:'<div style="margin-bottom:8px"></div>'}
+            <div style="font-size:0.68rem;color:var(--text-muted);margin-bottom:2px">${v.type||''}</div>
+            ${v.plate?`<div style="font-size:0.68rem;font-family:var(--font-mono);color:var(--text-muted);margin-bottom:4px">Plate: ${v.plate}</div>`:''}
+            ${v.notes?`<div style="font-size:0.63rem;color:var(--text-muted);font-style:italic;margin-bottom:4px">${v.notes}</div>`:''}
             <div style="margin-bottom:8px">
-              <select onchange="fleetSetVehicleStatus('${cl.id}','${v.id}',this.value)"
+              <select onchange="fleetSetVehicleStatus('${cid}','${vid}',this.value)"
                 style="width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:5px 8px;border-radius:3px;font-family:var(--font-mono);font-size:0.65rem;outline:none">
                 <option value="no_status" ${v.status==='no_status'||!v.status?'selected':''}>No Status</option>
                 <option value="clean" ${v.status==='clean'?'selected':''}>Clean</option>
@@ -4760,7 +4763,10 @@ function renderFleetDetail(cid) {
                 <option value="out_of_service" ${v.status==='out_of_service'?'selected':''}>Out of Service</option>
               </select>
             </div>
-            <button class="btn btn-danger btn-sm" style="font-size:0.58rem;width:100%" onclick="fleetRemoveVehicle('${cl.id}','${v.id}')">Remove</button>
+            <div style="display:flex;gap:4px">
+              <button class="btn btn-outline btn-sm" style="font-size:0.58rem;flex:1" onclick="fleetOpenEditVehicle('${cid}','${vid}')">✏ Edit</button>
+              <button class="btn btn-danger btn-sm" style="font-size:0.58rem;flex:1" onclick="fleetRemoveVehicle('${cid}','${vid}')">Remove</button>
+            </div>
           </div>`;
         }).join('') + '</div>' :
         '<div style="color:var(--text-muted);font-family:var(--font-mono);font-size:0.72rem;padding:8px 0">No vehicles added — click + Add Vehicle</div>'}
